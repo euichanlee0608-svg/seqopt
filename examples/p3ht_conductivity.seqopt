@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "name": "Example — P3HT:CNT conductivity",
- "created": "2026-09-04T17:03:34+09:00",
+ "created": "2026-09-04T20:12:26+09:00",
  "objective": {
   "name": "Conductivity",
   "unit": "S/cm",
@@ -10,7 +10,7 @@
  },
  "inputs": [
   {
-   "name": "P3HT content (%)",
+   "name": "P3HT content",
    "unit": "%",
    "type": "continuous",
    "min": 15.0,
@@ -18,7 +18,7 @@
    "levels": []
   },
   {
-   "name": "D1 content (%)",
+   "name": "D1 content",
    "unit": "%",
    "type": "continuous",
    "min": 0.0,
@@ -26,7 +26,7 @@
    "levels": []
   },
   {
-   "name": "D2 content (%)",
+   "name": "D2 content",
    "unit": "%",
    "type": "continuous",
    "min": 0.0,
@@ -34,7 +34,7 @@
    "levels": []
   },
   {
-   "name": "D6 content (%)",
+   "name": "D6 content",
    "unit": "%",
    "type": "continuous",
    "min": 0.0,
@@ -42,7 +42,7 @@
    "levels": []
   },
   {
-   "name": "D8 content (%)",
+   "name": "D8 content",
    "unit": "%",
    "type": "continuous",
    "min": 0.0,
@@ -971,35 +971,35 @@
    {
     "key": "P3HT content (%)",
     "role": "input",
-    "name": "P3HT content (%)",
+    "name": "P3HT content",
     "unit": "%",
     "type": "continuous"
    },
    {
     "key": "D1 content (%)",
     "role": "input",
-    "name": "D1 content (%)",
+    "name": "D1 content",
     "unit": "%",
     "type": "continuous"
    },
    {
     "key": "D2 content (%)",
     "role": "input",
-    "name": "D2 content (%)",
+    "name": "D2 content",
     "unit": "%",
     "type": "continuous"
    },
    {
     "key": "D6 content (%)",
     "role": "input",
-    "name": "D6 content (%)",
+    "name": "D6 content",
     "unit": "%",
     "type": "continuous"
    },
    {
     "key": "D8 content (%)",
     "role": "input",
-    "name": "D8 content (%)",
+    "name": "D8 content",
     "unit": "%",
     "type": "continuous"
    },

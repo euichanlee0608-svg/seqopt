@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>순차 최적화란 무엇인가 — seqopt</title>
+<meta name="description" content="측정 한 번이 비쌀 때, 다음에 무엇을 재야 하는가. 직접 해보며 이해하는 순차 최적화 — 그리고 조언을 거부할 줄 아는 프로그램.">
+<meta property="og:title" content="What is sequential optimization? — seqopt">
+<meta property="og:description" content="When each measurement is expensive, what should you measure next? Try it yourself.">
+<meta property="og:type" content="website">
+<link rel="icon" href="./favicon.svg">
+<style>
+  :root{
+    --bg:#ffffff; --surface:#f6f8fa; --surface2:#fbfcfd;
+    --line:#d0d7de; --line2:#afb8c1;
+    --ink:#1f2328; --muted:#59636e; --faint:#818b98;
+    --accent:#0969da; --accent-soft:#ddf4ff;
+    --ok:#1a7f37; --ok-soft:#dafbe1;
+    --warn:#9a6700; --warn-soft:#fff8c5;
+    --fail:#cf222e; --fail-soft:#ffebe9;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --maxw:920px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
+    word-break:keep-all; overflow-wrap:break-word;
+    -webkit-text-size-adjust:100%;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 20px}
+
+  /* ── top bar ── */
+  header{
+    position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92);
+    backdrop-filter:saturate(180%) blur(8px); border-bottom:1px solid var(--line);
+  }
+  .bar{display:flex; align-items:center; gap:12px; height:56px}
+  .brand{font-weight:700; letter-spacing:-.01em; font-size:17px; margin-right:auto}
+  .brand span{color:var(--muted); font-weight:400; font-size:14px}
+  .lang{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden}
+  .lang button{
+    font:inherit; font-size:13px; font-weight:600; padding:6px 14px; border:0;
+    background:transparent; color:var(--muted); cursor:pointer; min-height:32px;
+  }
+  .lang button.on{background:var(--accent); color:#fff}
+  .ghlink{
+    font-size:14px; color:var(--ink); text-decoration:none; border:1px solid var(--line);
+    border-radius:8px; padding:6px 12px; white-space:nowrap;
+  }
+  .ghlink:hover{border-color:var(--accent); color:var(--accent)}
+
+  /* ── hero ── */
+  .hero{padding:64px 0 40px; border-bottom:1px solid var(--line)}
+  .kick{
+    font:12px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:16px;
+  }
+  h1{font-size:clamp(28px,5vw,42px); line-height:1.28; letter-spacing:-.02em; margin:0 0 18px}
+  .lead{font-size:clamp(17px,2.2vw,19px); color:var(--muted); margin:0 0 8px; max-width:44em}
+  .lead b{color:var(--ink)}
+
+  /* ── sections ── */
+  section{padding:56px 0; border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(22px,3.4vw,28px); letter-spacing:-.015em; margin:0 0 8px}
+  h3{font-size:18px; margin:32px 0 8px; letter-spacing:-.01em}
+  .sub{color:var(--muted); margin:0 0 28px; max-width:46em}
+  p{margin:0 0 16px; max-width:46em}
+  .step{
+    font:12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase;
+    color:var(--faint); margin-bottom:10px;
+  }
+
+  /* ── playground ── */
+  .play{
+    border:1px solid var(--line); border-radius:14px; background:var(--bg);
+    overflow:hidden; margin:26px 0 18px;
+  }
+  .play-top{
+    display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+    padding:12px 14px; background:var(--surface); border-bottom:1px solid var(--line);
+  }
+  .play-top .hint{font-size:13.5px; color:var(--muted); margin-right:auto}
+  button.act{
+    font:inherit; font-size:14px; font-weight:500; padding:8px 14px; min-height:38px;
+    border:1px solid var(--line); border-radius:8px; background:var(--bg);
+    color:var(--ink); cursor:pointer;
+  }
+  button.act:hover:not(:disabled){border-color:var(--line2); background:var(--surface2)}
+  button.act:disabled{opacity:.45; cursor:default}
+  button.act.primary{background:var(--accent); border-color:#0a58ca; color:#fff; font-weight:600}
+  button.act.primary:hover:not(:disabled){background:#0860c4}
+  canvas{display:block; width:100%; height:auto; touch-action:manipulation; cursor:crosshair}
+  .play-bot{
+    display:flex; flex-wrap:wrap; gap:18px 26px; padding:12px 14px;
+    border-top:1px solid var(--line); background:var(--surface); font-size:14px;
+  }
+  .stat b{font:15px/1 var(--mono); color:var(--ink)}
+  .stat span{color:var(--muted)}
+  .say{
+    margin:0; padding:12px 14px; border-radius:10px; background:var(--accent-soft);
+    color:#0a3069; font-size:14.5px; border:1px solid #b6e3ff;
+  }
+  .say.ok{background:var(--ok-soft); color:#0f5323; border-color:#aceebb}
+  .say.warn{background:var(--warn-soft); color:#7a4f01; border-color:#f5e5a0}
+
+  /* ── figures & cards ── */
+  figure{margin:26px 0}
+  figure img{width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:10px}
+  figcaption{font-size:13.5px; color:var(--muted); margin-top:10px}
+  .shot img{box-shadow:0 1px 3px rgba(31,35,40,.08)}
+
+  table{border-collapse:collapse; width:100%; margin:22px 0; font-size:14.5px}
+  th,td{border:1px solid var(--line); padding:10px 12px; text-align:left; vertical-align:top}
+  th{background:var(--surface); font-weight:600}
+  td.n{width:2.4em; text-align:center; color:var(--muted); font-family:var(--mono)}
+
+  .note{
+    border-left:3px solid var(--accent); background:var(--surface);
+    padding:14px 16px; border-radius:0 8px 8px 0; margin:22px 0; font-size:15px;
+  }
+  .note.fail{border-left-color:var(--fail); background:var(--fail-soft)}
+
+  .cta{display:flex; flex-wrap:wrap; gap:10px; margin:26px 0 8px}
+  .cta a{
+    font-size:15px; font-weight:600; text-decoration:none; padding:11px 18px;
+    border-radius:9px; border:1px solid var(--line); color:var(--ink); background:var(--bg);
+  }
+  .cta a.primary{background:var(--accent); border-color:#0a58ca; color:#fff}
+  .cta a:hover{border-color:var(--accent)}
+
+  footer{padding:36px 0 56px; font-size:14px; color:var(--muted)}
+  footer a{color:var(--muted)}
+  .backlink{margin-top:14px}
+  .backlink a{color:var(--accent); text-decoration:none; font-weight:600}
+
+  @media (max-width:640px){
+    .hero{padding:40px 0 30px}
+    section{padding:40px 0}
+    .bar{height:52px; gap:8px}
+    .brand span{display:none}
+    .play-bot{gap:10px 18px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap bar">
+    <div class="brand">seqopt <span data-k="brand_sub">· 순차 최적화란</span></div>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="ko" class="on" type="button">한국어</button>
+      <button id="en" type="button">English</button>
+    </div>
+    <a class="ghlink" href="https://github.com/euichanlee0608-svg/seqopt" data-k="nav_gh">GitHub</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="kick" data-k="hero_kick">SEQUENTIAL OPTIMIZATION, EXPLAINED</div>
+    <h1 data-k="hero_h1">측정 한 번이 비쌀 때,<br>다음에 무엇을 재야 하는가</h1>
+    <p class="lead" data-k="hero_lead">실험 한 번에 하루가 들고 시료가 소모된다면, 조건을 전부 훑어 볼 수는 없습니다. <b>순차 최적화</b>는 몇 점만 재고 그 결과로 지형을 짐작한 뒤, <b>다음에 잴 한 점</b>을 고르는 방식입니다. 아래에서 직접 해보시면 5분 안에 감이 옵니다.</p>
+    <p class="lead" data-k="hero_lead2">그리고 이 페이지의 후반부는 조금 다른 이야기입니다 — <b>데이터가 나쁠 때 조언을 거부하는 법</b>에 대한 것입니다.</p>
+  </div>
+
+  <!-- ════════ ACT 1 ════════ -->
+  <section>
+    <div class="step" data-k="s1_step">1부 · 직접 해보기</div>
+    <h2 data-k="s1_h">숨겨진 곡선에서 가장 높은 곳 찾기</h2>
+    <p class="sub" data-k="s1_sub">아래 회색 판이 실험실이라고 생각해 보세요. 어떤 조건(가로축)을 고르면 결과값(세로축)이 나오는데, <b>그 관계는 보이지 않습니다.</b> 재 봐야만 알 수 있고, 한 번 재는 데 비용이 듭니다. 판을 눌러 측정해 보세요.</p>
+
+    <div class="play">
+      <div class="play-top">
+        <span class="hint" data-k="pl_hint">판을 눌러 그 조건을 측정합니다</span>
+        <button class="act" id="btnSuggest" type="button" data-k="pl_suggest">다음 지점 제안받기</button>
+        <button class="act" id="btnAuto" type="button" data-k="pl_auto">5회 자동 진행</button>
+        <button class="act" id="btnReveal" type="button" data-k="pl_reveal">정답 곡선 보기</button>
+        <button class="act" id="btnReset" type="button" data-k="pl_reset">초기화</button>
+      </div>
+      <canvas id="cv" width="1720" height="900" aria-label="measurement playground"></canvas>
+      <div class="play-bot">
+        <span class="stat"><span data-k="st_n">측정 횟수</span> <b id="stN">0</b></span>
+        <span class="stat"><span data-k="st_best">지금까지 최고값</span> <b id="stBest">—</b></span>
+        <span class="stat"><span data-k="st_gap">진짜 최고값까지</span> <b id="stGap">—</b></span>
+      </div>
+    </div>
+    <p class="say" id="say" data-k="say_0">아무 데나 세 번 눌러 보세요. 세 점이 모이면 모델이 지형을 그리기 시작합니다.</p>
+
+    <h3 data-k="s1_h2">모델이 그리는 두 가지</h3>
+    <p data-k="s1_p1"><b>파란 선</b>은 모델이 짐작한 응답면입니다. 그 둘레의 <b>옅은 띠</b>는 “이 근처는 잘 모르겠다”는 불확실성입니다. 재 본 점 근처에서는 띠가 좁고, 안 가 본 곳에서는 넓어집니다.</p>
+    <p data-k="s1_p2">아래쪽 <b>주황 곡선</b>이 핵심입니다. 각 지점을 “재면 얼마나 이득일까”를 점수로 매긴 것으로, <b>기대개선량(EI)</b>이라고 합니다. 좋아 보이는 정도와 모르는 정도를 함께 저울질하기 때문에, 이미 재 본 곳은 점수가 0에 가깝고 <b>좋을 것 같으면서도 안 가 본 곳</b>에서 가장 높습니다. 순차 최적화는 그 꼭대기를 다음 측정 지점으로 고릅니다.</p>
+
+    <div class="note" data-k="s1_note"><b>격자로 훑는 것과 무엇이 다른가</b> — 격자는 계획을 미리 다 짜 둡니다. 순차는 <b>앞의 결과가 뒤의 계획을 바꿉니다.</b> 그래서 “아직 재지 않은 값을 미리 보는 것”이 절대 허용되지 않습니다 — 그건 컨닝이니까요.</p>
+  </section>
+
+  <!-- ════════ ACT 2 ════════ -->
+  <section>
+    <div class="step" data-k="s2_step">2부 · 이 도구가 다른 점</div>
+    <h2 data-k="s2_h">조언을 하기 전에, 그 조언을 믿어도 되는지 먼저 본다</h2>
+    <p class="sub" data-k="s2_sub">위 놀이터에서는 곡선이 매끄러웠습니다. 실제 실험 데이터는 그렇지 않을 때가 많습니다. 그런데 <b>보통의 최적화 도구는 그런 데이터에도 매끄러운 응답면과 그럴듯한 다음 후보를 내놓습니다.</b> 그걸 믿고 실험하면 시간과 시료를 버립니다.</p>
+
+    <h3 data-k="s2_h1">① 모델이 정말 배우고 있는가</h3>
+    <p data-k="s2_p1">조건을 하나씩 빼고 나머지로 학습해 그 조건을 맞혀 보게 합니다. 잘 맞히면 점들이 대각선에 붙습니다. 못 맞히면 <b>빨간 가로선(전체 평균)</b> 쪽으로 몰립니다 — “뭘 물어도 평균이라고 답하는” 상태이고, 이때 R²는 음수가 됩니다.</p>
+    <figure>
+      <img src="./figures/learnability.png" alt="Leave-one-out prediction, learnable versus not learnable" loading="lazy">
+      <figcaption data-k="fig1_cap">왼쪽은 배우고 있습니다(R² = +0.90). 오른쪽은 아무것도 못 배웠습니다(R² = −0.14) — 이 상태에서는 <b>모델을 바꿔도 소용없습니다.</b> 배울 신호가 데이터에 없기 때문입니다.</figcaption>
+    </figure>
+
+    <h3 data-k="s2_h2">② 조건 차이가 측정 흔들림보다 큰가</h3>
+    <p data-k="s2_p2">같은 조건을 다시 재도 값은 조금씩 흔들립니다. 조건을 바꿔서 생긴 차이가 그 흔들림보다 작다면, 어느 조건이 나은지는 잡음과 구별되지 않습니다. 잴 때마다 ±2 kg씩 튀는 저울로 1 kg 차이를 가리려는 것과 같습니다 — 저울 탓이지 사람 탓이 아닙니다.</p>
+    <figure>
+      <img src="./figures/discriminability.png" alt="Replicate scatter, distinguishable versus drowned in noise" loading="lazy">
+      <figcaption data-k="fig2_cap">회색 점이 개별 측정, 파란 선이 조건 평균입니다. 왼쪽은 조건 차이가 흔들림 위로 또렷하고(D = 5.8), 오른쪽은 묻혔습니다(D = 0.9). 이 값이 1보다 작으면 최적화를 돌릴 이유가 없습니다.</figcaption>
+    </figure>
+
+    <h3 data-k="s2_h3">네 가지 요건</h3>
+    <p data-k="s2_p3">seqopt는 추천을 내기 전에 아래 넷을 검사합니다. 하나라도 미달이면 <b>추천 기능이 잠깁니다.</b></p>
+    <table>
+      <tr><th></th><th data-k="t_h1">요건</th><th data-k="t_h2">무엇을 보는가</th><th data-k="t_h3">미달이면</th></tr>
+      <tr><td class="n">①</td><td data-k="t_r1a">조건 수</td><td data-k="t_r1b">고를 후보가 예산보다 많은가</td><td data-k="t_r1c">전수 측정이 낫습니다</td></tr>
+      <tr><td class="n">②</td><td data-k="t_r2a">응답면 학습</td><td data-k="t_r2b">모델이 지형을 배우고 있는가</td><td data-k="t_r2c">모델을 바꿔도 소용없습니다</td></tr>
+      <tr><td class="n">③</td><td data-k="t_r3a">판별력</td><td data-k="t_r3b">조건 차이가 흔들림보다 큰가</td><td data-k="t_r3c">반복 측정을 늘려야 합니다</td></tr>
+      <tr><td class="n">④</td><td data-k="t_r4a">반복 측정</td><td data-k="t_r4b">같은 조건을 다시 잰 적이 있는가</td><td data-k="t_r4c">흔들림 크기 자체를 알 수 없습니다</td></tr>
+    </table>
+
+    <div class="note fail" data-k="s2_note"><b>거부하는 것이 기능입니다.</b> 이 프로그램이 만들어진 계기가 그것입니다 — 한 실험실에 순차 최적화를 도입할지 검토했는데, 공개 데이터에서는 측정 횟수가 실제로 줄었지만 그 실험실의 데이터는 네 요건을 통과하지 못했습니다. 그래서 결론은 “아직 도입하지 마시라”였고, 그때 쓴 판정 기준이 이 프로그램의 관문이 됐습니다.</p>
+  </section>
+
+  <!-- ════════ ACT 3 ════════ -->
+  <section>
+    <div class="step" data-k="s3_step">3부 · 프로그램</div>
+    <h2 data-k="s3_h">그래서 seqopt가 하는 일</h2>
+    <p class="sub" data-k="s3_sub">엑셀을 열어 측정값을 넣으면, 이 데이터를 써도 되는지 판정하고, 통과했을 때만 다음에 잴 조건을 알려 주는 데스크톱 프로그램입니다. 파이썬이 없는 PC에서도 실행파일 하나로 돕니다.</p>
+
+    <figure class="shot">
+      <img src="./figures/app_diagnose.png" alt="The Diagnose screen, gate passing" loading="lazy">
+      <figcaption data-k="fig3_cap"><b>진단 화면</b> — 네 요건의 판정이 문장으로 나오고, 모든 숫자는 계산 과정을 펼쳐 볼 수 있습니다. 오른쪽 처방표는 “권장 수준에 닿으려면 조건당 몇 번씩 더 재야 하는지”를 역산해 줍니다.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <img src="./figures/app_locked.png" alt="The Recommend screen, locked" loading="lazy">
+      <figcaption data-k="fig4_cap"><b>요건 미달일 때</b> — 추천이 나오지 않고 이유가 나옵니다. 이때 제안은 화면에서 감춰진 것이 아니라 <b>애초에 만들어지지 않습니다.</b> 그래도 진행하려면 강제 실행을 켤 수 있지만, 그렇게 만든 리포트에는 모든 쪽에 도장이 찍힙니다.</figcaption>
+    </figure>
+
+    <figure class="shot">
+      <img src="./figures/app_model.png" alt="The Model screen, response surface" loading="lazy">
+      <figcaption data-k="fig5_cap"><b>모델 화면</b> — 1부에서 본 것과 같은 응답면·불확실성·EI를 실제 데이터로 그립니다. 변수가 3개 이상이면 절단면과 슬라이더로 바뀌고, 학습되지 않은 응답면에는 도장이 찍혀 캡처해 가도 경고가 따라갑니다.</figcaption>
+    </figure>
+
+    <h3 data-k="s3_h2">고를 것이 없습니다</h3>
+    <p data-k="s3_p1">다른 도구는 대리모델·획득함수·solver를 드롭다운으로 고르게 합니다. 이 프로그램은 전부 고정돼 있습니다. <b>고정할 수 있는 이유가 관문입니다</b> — 데이터가 나쁠 때 사용자가 모델을 바꿔가며 헤맬 필요가 없습니다. “모델을 바꿔도 소용없다”고 도구가 판정해 주기 때문입니다. 바꾸고 싶으면 각 화면의 「고급 설정」에 다 있습니다. 없앤 것이 아니라 미뤄 둔 것입니다.</p>
+
+    <div class="cta">
+      <a class="primary" href="https://github.com/euichanlee0608-svg/seqopt#windows--just-run-it-no-python-needed" data-k="cta_dl">윈도우용 내려받기</a>
+      <a href="https://github.com/euichanlee0608-svg/seqopt" data-k="cta_repo">소스 코드 보기</a>
+    </div>
+    <p style="font-size:14px;color:var(--muted)" data-k="s3_foot">사용법은 프로그램 안 도움말에 있습니다 — 항목마다 그 설명의 근거가 되는 코드 위치가 적혀 있습니다. MIT 라이선스.</p>
+  </section>
+
+  <footer>
+    <div data-k="ft_1">이 페이지의 계산은 브라우저에서 실제로 돌아갑니다. 1부의 가우시안 프로세스는 scikit-learn과 수치 대조로 검증했고, 2부의 그림은 프로그램의 진단 코드가 직접 만든 것입니다.</div>
+    <div class="backlink"><a href="https://euichanlee0608-svg.github.io/" data-k="ft_2">전체 포트폴리오 보기 →</a></div>
+  </footer>
+
+</div>
+
+<script src="./gp.js"></script>
+<script src="./app.js"></script>
+<script src="./i18n.js"></script>
+
+<script>
+(function(){
+  var WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby6J7xGChz7atOL6sVnbiWui8Z1lXVjeF8WUGTj3MXNgEn7EioTz8xZXb522vkAxkgeXA/exec';
+  var SITE = 'seqopt-explained';
+  try {
+    if (location.search.indexOf('owner=1') !== -1) {
+      localStorage.setItem('__is_owner__', '1');
+    } else if (localStorage.getItem('__is_owner__') !== '1'
+               && location.protocol !== 'file:'
+               && location.hostname !== 'localhost'
+               && location.hostname !== '127.0.0.1') {
+      var img = new Image();
+      img.src = WEBAPP_URL
+        + '?t=pv&s=' + encodeURIComponent(SITE)
+        + '&p=' + encodeURIComponent(location.pathname + location.hash)
+        + '&r=' + encodeURIComponent(document.referrer || 'direct')
+        + '&v=' + encodeURIComponent(vid());
+    }
+  } catch (e) {}
+
+  function vid(){
+    try {
+      var k = '__vid__', v = localStorage.getItem(k);
+      if (!v) { v = Math.random().toString(36).slice(2) + Date.now().toString(36);
+                localStorage.setItem(k, v); }
+      return v;
+    } catch (e) { return ''; }
+  }
+})();
+</script>
+</body>
+</html>

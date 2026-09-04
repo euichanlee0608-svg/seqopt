@@ -18,6 +18,8 @@ repository github.com/PV-Lab/Benchmarking (tests/data/p3ht.csv).
 """
 from __future__ import annotations
 
+import re
+
 import sys
 from pathlib import Path
 
@@ -35,6 +37,15 @@ BUDGET = 40
 RESPONSE = "Conductivity (measured) (S/cm)"
 
 
+def bare(col: str) -> str:
+    """Strip a trailing unit from a CSV header.
+
+    The headers read "D2 content (%)", but the app appends the unit itself
+    when it renders a label — leave it in and every axis reads "(%) (%)".
+    """
+    return re.sub(r"\s*\([^()]*\)\s*$", "", col).strip() or col
+
+
 def main() -> None:
     rows = read_csv(str(ROOT / "tests" / "data" / "p3ht.csv"))
     cols = [c for c in rows[0] if c != RESPONSE]
@@ -47,7 +58,7 @@ def main() -> None:
         if len(keep) == N_CONDITIONS:
             break
 
-    inputs = [VarSpec(c, "%", "continuous",
+    inputs = [VarSpec(bare(c), "%", "continuous",
                       float(min(k[i] for k in keep)), float(max(k[i] for k in keep)))
               for i, c in enumerate(cols)]
     project = Project(
@@ -57,7 +68,7 @@ def main() -> None:
         budget_total=BUDGET,
         import_profile=ImportProfile(
             kind="csv", header_row=1,
-            columns=[ColumnMap(c, "input", c, "%") for c in cols]
+            columns=[ColumnMap(c, "input", bare(c), "%") for c in cols]
             + [ColumnMap(RESPONSE, "response", "Conductivity", "S/cm")]),
     )
     for key, vals in keep.items():
