@@ -13,6 +13,7 @@
 
   var C = {
     axis: "#8a9099", grid: "#eceff1", ink: "#1f2328", muted: "#59636e",
+    faint: "#98a1ab",
     mean: "#0969da", band: "rgba(9,105,218,.16)",
     point: "#1f2328", best: "#cf222e", ei: "#f57c00",
     eiFill: "rgba(245,124,0,.20)", truth: "#1a7f37", ghost: "#c8d1da"
@@ -43,13 +44,25 @@
     return Math.sqrt(-2 * Math.log(rand() + 1e-12)) * Math.cos(2 * Math.PI * rand());
   }
 
-  /* ── geometry ───────────────────────────────────────────────── */
+  /* ── geometry ───────────────────────────────────────────────────
+     A fixed 0.52 aspect turned the panel into a 348x181 letterbox on a
+     phone, where the two stacked plots had ~120px and ~55px to live in.
+     Narrow screens get a portrait panel instead: height grows past the
+     width, and the paddings and type shrink to match. */
   var DPR = Math.min(window.devicePixelRatio || 1, 2);
-  var W = 0, H = 0, PAD = { l: 56, r: 18, t: 18, b: 34 }, SPLIT = 0.68, GAPY = 26;
+  var NARROW = 520;
+  var W = 0, H = 0, PAD = null, SPLIT = 0.68, GAPY = 26, SMALL = false;
 
   function resize() {
     var cssW = cv.clientWidth || 860;
-    var cssH = Math.round(cssW * 0.52);
+    if (!cssW) return;                 // hidden pane: nothing to measure yet
+    SMALL = cssW < NARROW;
+    var cssH = SMALL
+      ? Math.round(Math.min(cssW * 1.16, 440))
+      : Math.round(Math.min(Math.max(cssW * 0.48, 320), 430));
+    PAD = SMALL ? { l: 32, r: 12, t: 14, b: 26 } : { l: 52, r: 18, t: 18, b: 32 };
+    SPLIT = SMALL ? 0.60 : 0.68;
+    GAPY = SMALL ? 34 : 30;
     cv.width = Math.round(cssW * DPR);
     cv.height = Math.round(cssH * DPR);
     cv.style.height = cssH + "px";
@@ -67,6 +80,7 @@
     return { x: t.x, y: t.y + t.h + GAPY, w: t.w,
              h: (H - PAD.t - PAD.b - GAPY) * (1 - SPLIT) };
   }
+  function fnt(px) { return (SMALL ? px - 1 : px) + "px "; }
   var Y_LO = 0.0, Y_HI = 1.30;
   function sx(b, x) { return b.x + x * b.w; }
   function sy(b, y) { return b.y + b.h - ((y - Y_LO) / (Y_HI - Y_LO)) * b.h; }
@@ -89,12 +103,13 @@
   }
 
   /* ── drawing ────────────────────────────────────────────────── */
-  function axes(b, label, yTicks) {
+  function axes(b, label, yTicks, xTicks) {
     ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
-    ctx.fillStyle = C.muted; ctx.font = "11px ui-monospace,Menlo,monospace";
-    var i, gx;
-    for (i = 0; i <= 10; i++) {
-      gx = sx(b, i / 10);
+    ctx.fillStyle = C.muted;
+    ctx.font = fnt(11) + "ui-monospace,Menlo,monospace";
+    var i, gx, nx = SMALL ? 5 : 10;
+    for (i = 0; i <= nx; i++) {
+      gx = sx(b, i / nx);
       ctx.beginPath(); ctx.moveTo(gx, b.y); ctx.lineTo(gx, b.y + b.h); ctx.stroke();
     }
     if (yTicks) {
@@ -102,24 +117,46 @@
         var gy = sy(b, v);
         ctx.beginPath(); ctx.moveTo(b.x, gy); ctx.lineTo(b.x + b.w, gy); ctx.stroke();
         ctx.textAlign = "right"; ctx.textBaseline = "middle";
-        ctx.fillText(v.toFixed(1), b.x - 8, gy);
+        ctx.fillText(v.toFixed(1), b.x - 7, gy);
       });
     }
     ctx.strokeStyle = C.axis; ctx.lineWidth = 1.2;
     ctx.beginPath();
     ctx.moveTo(b.x, b.y); ctx.lineTo(b.x, b.y + b.h); ctx.lineTo(b.x + b.w, b.y + b.h);
     ctx.stroke();
+    /* The suggestion is announced as "x = 0.94"; without a scale under the
+       axis there is no way to find 0.94 on the panel. */
+    if (xTicks) {
+      ctx.fillStyle = C.muted; ctx.textBaseline = "top";
+      [0, 0.5, 1].forEach(function (v) {
+        ctx.textAlign = v === 0 ? "left" : (v === 1 ? "right" : "center");
+        ctx.fillText(v.toFixed(1), sx(b, v), b.y + b.h + 6);
+      });
+    }
     ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.font = "12px -apple-system,system-ui,sans-serif";
+    ctx.font = fnt(12) + "-apple-system,system-ui,sans-serif";
     ctx.fillText(label, b.x + 4, b.y + 4);
+  }
+
+  /* Everything plotted is clipped to its panel. With three points the +-2s
+     band is genuinely taller than the axis range, and without a clip it spills
+     over the frame and reads as a rendering fault rather than as doubt. */
+  function clipTo(b, fn) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(b.x, b.y, b.w, b.h);
+    ctx.clip();
+    fn();
+    ctx.restore();
   }
 
   function draw() {
     ctx.clearRect(0, 0, W, H);
     var top = topBox(), bot = botBox(), m = model(), i, x, p;
 
-    axes(top, T("ax_top"), true);
+    axes(top, T("ax_top"), true, false);
 
+    clipTo(top, function () {
     if (revealed) {                       // the answer, only when asked for
       ctx.strokeStyle = C.truth; ctx.lineWidth = 2; ctx.setLineDash([6, 5]);
       ctx.beginPath();
@@ -149,22 +186,34 @@
       }
       ctx.stroke();
     }
-
-    var best = bestMeasured();            // measured points
-    xs.forEach(function (x, k) {
-      var isBest = ys[k] === best;
-      ctx.beginPath();
-      ctx.arc(sx(top, x), sy(top, ys[k]), isBest ? 7 : 5, 0, 6.2832);
-      ctx.fillStyle = isBest ? C.best : C.point;
-      ctx.fill();
-      ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6; ctx.stroke();
     });
 
-    axes(bot, T("ax_bot"), false);
+    if (!xs.length) {                     // an empty panel should say what to do
+      ctx.fillStyle = C.faint;
+      ctx.font = fnt(14) + "-apple-system,system-ui,sans-serif";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(T("pl_empty"), top.x + top.w / 2, top.y + top.h / 2);
+      ctx.textAlign = "left";
+    }
+
+    var best = bestMeasured();            // measured points
+    clipTo(top, function () {
+      xs.forEach(function (x, k) {
+        var isBest = ys[k] === best;
+        ctx.beginPath();
+        ctx.arc(sx(top, x), sy(top, ys[k]), isBest ? 7 : 5, 0, 6.2832);
+        ctx.fillStyle = isBest ? C.best : C.point;
+        ctx.fill();
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6; ctx.stroke();
+      });
+    });
+
+    axes(bot, T("ax_bot"), false, true);
     if (m) {
       var e = eiCurve(m, 200), emax = 0;
       e.forEach(function (d) { emax = Math.max(emax, d.v); });
       var scale = emax > 1e-9 ? (bot.h - 10) / emax : 0;
+      clipTo(bot, function () {
       ctx.fillStyle = C.eiFill;
       ctx.beginPath();
       ctx.moveTo(sx(bot, 0), bot.y + bot.h);
@@ -178,6 +227,7 @@
         if (k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
       });
       ctx.stroke();
+      });
 
       if (suggestion !== null) {          // where EI says to go next
         [top, bot].forEach(function (b) {
@@ -191,6 +241,16 @@
         ctx.lineTo(sx(top, suggestion) - 6, sy(top, Y_LO) - 14);
         ctx.lineTo(sx(top, suggestion) + 6, sy(top, Y_LO) - 14);
         ctx.closePath(); ctx.fillStyle = C.ei; ctx.fill();
+
+        var lx = sx(bot, suggestion), tw, lab = suggestion.toFixed(2);
+        ctx.font = fnt(11) + "ui-monospace,Menlo,monospace";
+        tw = ctx.measureText(lab).width + 10;
+        lx = Math.max(bot.x, Math.min(bot.x + bot.w - tw, lx - tw / 2));
+        ctx.fillStyle = C.ei;
+        ctx.fillRect(lx, bot.y + bot.h + 3, tw, 15);
+        ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText(lab, lx + tw / 2, bot.y + bot.h + 11);
+        ctx.textAlign = "left";
       }
     } else {
       ctx.fillStyle = C.muted;
@@ -287,6 +347,7 @@
     return (window.I18N && window.I18N.t(k)) || "";
   }
   window.__playgroundRedraw = update;
+  window.__playgroundResize = resize;
 
   window.addEventListener("resize", resize);
   resize();

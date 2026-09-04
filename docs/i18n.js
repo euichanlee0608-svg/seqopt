@@ -10,14 +10,15 @@
     brand_sub: "· sequential optimization",
     nav_gh: "GitHub",
 
+    tab_1: "Try it",
+    tab_2: "The four gates",
+    tab_3: "The program",
+    go_2: "Part 2 · The four gates \u2192",
+    go_3: "Part 3 · The program \u2192",
+
     hero_kick: "SEQUENTIAL OPTIMIZATION, EXPLAINED",
     hero_h1: "When one measurement is expensive,<br>what should you measure next?",
-    hero_lead: "If a single experiment costs a day and consumes a sample, you cannot sweep every setting. <b>Sequential optimization</b> measures a few points, guesses the terrain from them, and picks <b>the one point to measure next</b>. Five minutes in the playground below is faster than any explanation.",
-    hero_lead2: "The second half of this page is a different story — about <b>refusing to advise when the data cannot support advice.</b>",
-
-    s1_step: "PART 1 · TRY IT",
-    s1_h: "Find the highest point on a hidden curve",
-    s1_sub: "Think of the panel below as your lab. Choosing a setting (horizontal axis) produces a result (vertical axis), but <b>the relationship is invisible.</b> Only measuring reveals it, and measuring costs. Click the panel to measure.",
+    hero_lead: "If a single experiment costs a day and consumes a sample, you cannot sweep every setting. <b>Sequential optimization</b> measures a few points, guesses the terrain from them, and picks <b>the one point to measure next</b>. The panel below is that lab: choosing a setting (horizontal axis) produces a result (vertical axis), but <b>the relationship is invisible until you measure.</b>",
     pl_hint: "Click the panel to measure that setting",
     pl_suggest: "Suggest the next point",
     pl_auto: "Run 5 automatically",
@@ -31,10 +32,8 @@
     s1_p1: "The <b>blue line</b> is the model's guess at the response surface. The <b>pale band</b> around it is uncertainty — \"I am not sure around here\". Near measured points the band is narrow; where nobody has been, it widens.",
     s1_p2: "The <b>orange curve</b> below is the heart of it. It scores every setting by \"how much would measuring here gain me\", and it is called <b>expected improvement (EI)</b>. Because it weighs looking-good against being-unknown together, already-measured places score near zero and the peak lands where something <b>looks promising and nobody has been yet</b>. Sequential optimization measures at that peak.",
     s1_note: "<b>How this differs from sweeping a grid</b> — a grid plans everything up front. Sequential lets <b>each result change the next plan.</b> Which is exactly why peeking at a value you have not measured is never allowed — that would be cheating.",
-
-    s2_step: "PART 2 · WHAT MAKES THIS TOOL DIFFERENT",
     s2_h: "Before advising, check whether the advice can be trusted",
-    s2_sub: "The curve in the playground was smooth. Real experimental data often is not. And yet <b>an ordinary optimization tool will hand you a smooth surface and a plausible next candidate anyway.</b> Trust that, and you spend time and samples on noise.",
+    s2_sub: "The curve in part 1 was smooth. Real experimental data often is not. And yet <b>an ordinary optimization tool will hand you a smooth surface and a plausible next candidate anyway.</b> Trust that, and you spend time and samples on noise.",
 
     s2_h1: "① Is the model actually learning?",
     s2_p1: "Leave each condition out in turn, fit on the rest, and have it predict the one left out. When it learns, the points hug the diagonal. When it does not, they collapse onto the <b>red horizontal line (the overall mean)</b> — the state of \"answering the average no matter what you ask\" — and R² goes negative.",
@@ -52,10 +51,11 @@
     t_r3a: "discriminability", t_r3b: "differences above the wobble?", t_r3c: "raise the replicate count",
     t_r4a: "replicates", t_r4b: "has any condition been re-measured?", t_r4c: "the wobble itself is unknowable",
     s2_note: "<b>Refusing is the feature.</b> That is where this program came from — a study of whether one device lab should adopt sequential optimization. On public datasets the method genuinely saved measurements; on that lab's own data, every dataset failed the four requirements. So the answer was \"not yet\", and the criteria used to reach it became this program's gate.",
-
-    s3_step: "PART 3 · THE PROGRAM",
     s3_h: "So, what seqopt does",
     s3_sub: "A desktop program: open your spreadsheet, put the measurements in, and it judges whether this data can be used — handing you the next condition to measure only when it can. It runs from a single executable on PCs with no Python.",
+    g_1: "Diagnose",
+    g_2: "When the gate shuts",
+    g_3: "Model",
     fig3_cap: "<b>The Diagnose screen</b> — each requirement's verdict is a sentence, and every number unfolds into its calculation. The prescription table on the right back-computes how many more replicates per condition the recommended level would cost.",
     fig4_cap: "<b>When the requirements are unmet</b> — no recommendation appears, but the reasons do. The suggestions are not hidden from the screen; they are <b>never constructed in the first place.</b> You can force a run anyway, but the resulting report is stamped on every page.",
     fig5_cap: "<b>The Model screen</b> — the same surface, uncertainty and EI you saw in Part 1, drawn from real data. Three or more variables switch it to slices with sliders, and an unlearned surface gets a stamp so a screenshot carries the warning with it.",
@@ -69,6 +69,7 @@
     ft_2: "See the full portfolio →",
 
     /* runtime strings for the playground */
+    pl_empty: "click anywhere to measure",
     ax_top: "result",
     ax_bot: "expected improvement (EI)",
     need3: "three measurements and the model starts drawing",
@@ -83,6 +84,7 @@
   };
 
   var KO = {
+    pl_empty: "아무 곳이나 눌러 측정",
     ax_top: "결과값",
     ax_bot: "기대개선량 (EI)",
     need3: "세 번 재면 모델이 그리기 시작합니다",

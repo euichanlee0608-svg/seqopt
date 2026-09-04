@@ -19,13 +19,18 @@
     --warn:#9a6700; --warn-soft:#fff8c5;
     --fail:#cf222e; --fail-soft:#ffebe9;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-    --maxw:920px;
+    --maxw:940px;
+    /* One measured decision: 33em holds ~33 Korean characters and ~66 Latin
+       ones on the same line, so both languages land inside the comfortable
+       45-75 band without a per-language override. */
+    --readw:33em;
+    --hdr:56px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{
     margin:0; background:var(--bg); color:var(--ink);
-    font:16px/1.75 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
+    font:16px/1.72 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Segoe UI",Roboto,sans-serif;
     word-break:keep-all; overflow-wrap:break-word;
     -webkit-text-size-adjust:100%;
   }
@@ -33,10 +38,10 @@
 
   /* ── top bar ── */
   header{
-    position:sticky; top:0; z-index:20; background:rgba(255,255,255,.92);
+    position:sticky; top:0; z-index:30; background:rgba(255,255,255,.92);
     backdrop-filter:saturate(180%) blur(8px); border-bottom:1px solid var(--line);
   }
-  .bar{display:flex; align-items:center; gap:12px; height:56px}
+  .bar{display:flex; align-items:center; gap:12px; height:var(--hdr)}
   .brand{font-weight:700; letter-spacing:-.01em; font-size:17px; margin-right:auto}
   .brand span{color:var(--muted); font-weight:400; font-size:14px}
   .lang{display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden}
@@ -51,39 +56,60 @@
   }
   .ghlink:hover{border-color:var(--accent); color:var(--accent)}
 
-  /* ── hero ── */
-  .hero{padding:64px 0 40px; border-bottom:1px solid var(--line)}
+  /* ── hero: the way in, not a permanent banner ──
+     It reappearing above parts 2 and 3 cost 230px of every later screen to
+     say something the reader had already read. It belongs to part 1. */
+  .hero{padding:26px 0 18px}
+  .hero[hidden]{display:none}
   .kick{
     font:12px/1 var(--mono); letter-spacing:.14em; text-transform:uppercase;
-    color:var(--accent); margin-bottom:16px;
+    color:var(--accent); margin-bottom:12px;
   }
-  h1{font-size:clamp(28px,5vw,42px); line-height:1.28; letter-spacing:-.02em; margin:0 0 18px}
-  .lead{font-size:clamp(17px,2.2vw,19px); color:var(--muted); margin:0 0 8px; max-width:44em}
+  h1{font-size:clamp(25px,3.8vw,32px); line-height:1.22; letter-spacing:-.02em; margin:0 0 12px}
+  .lead{font-size:clamp(15.5px,1.8vw,17px); color:var(--muted); margin:0; max-width:40em}
   .lead b{color:var(--ink)}
 
-  /* ── sections ── */
-  section{padding:56px 0; border-bottom:1px solid var(--line)}
-  h2{font-size:clamp(22px,3.4vw,28px); letter-spacing:-.015em; margin:0 0 8px}
-  h3{font-size:18px; margin:32px 0 8px; letter-spacing:-.01em}
-  .sub{color:var(--muted); margin:0 0 28px; max-width:46em}
-  p{margin:0 0 16px; max-width:46em}
-  .step{
-    font:12px/1 var(--mono); letter-spacing:.12em; text-transform:uppercase;
-    color:var(--faint); margin-bottom:10px;
+  /* ── act tabs ── */
+  .tabs{
+    position:sticky; top:var(--hdr); z-index:29; background:rgba(255,255,255,.95);
+    backdrop-filter:saturate(180%) blur(8px);
+    border-top:1px solid var(--line); border-bottom:1px solid var(--line);
   }
+  .tabs .row{display:flex; gap:2px; overflow-x:auto; scrollbar-width:none}
+  .tabs .row::-webkit-scrollbar{display:none}
+  .tabs button{
+    font:inherit; font-size:14.5px; font-weight:600; white-space:nowrap;
+    padding:0 15px; height:47px; min-height:44px; border:0; background:transparent;
+    color:var(--muted); cursor:pointer; border-bottom:2px solid transparent;
+  }
+  .tabs button .no{
+    font:11px/1 var(--mono); color:var(--faint); margin-right:7px;
+    border:1px solid var(--line); border-radius:4px; padding:2px 5px;
+  }
+  .tabs button:hover{color:var(--ink)}
+  .tabs button.on{color:var(--accent); border-bottom-color:var(--accent)}
+  .tabs button.on .no{color:var(--accent); border-color:#9dc9f7; background:var(--accent-soft)}
 
-  /* ── playground ── */
+  /* ── acts ── */
+  .pane{display:none; padding:20px 0 8px}
+  .pane.on{display:block}
+  h2{font-size:clamp(21px,3vw,26px); letter-spacing:-.015em; margin:0 0 10px; max-width:var(--readw)}
+  h3{font-size:17.5px; margin:34px 0 8px; letter-spacing:-.01em}
+  .sub{color:var(--muted); margin:0 0 22px; max-width:var(--readw)}
+  p{margin:0 0 15px; max-width:var(--readw)}
+
+  /* ── playground: one card, nothing loose outside it ── */
   .play{
-    border:1px solid var(--line); border-radius:14px; background:var(--bg);
-    overflow:hidden; margin:26px 0 18px;
+    border:1px solid var(--line2); border-radius:14px; background:var(--bg);
+    overflow:hidden; margin:22px 0 0; box-shadow:0 1px 2px rgba(31,35,40,.06);
   }
   .play-top{
     display:flex; flex-wrap:wrap; gap:8px; align-items:center;
-    padding:12px 14px; background:var(--surface); border-bottom:1px solid var(--line);
+    padding:11px 13px; background:var(--surface); border-bottom:1px solid var(--line);
   }
   .play-top .hint{font-size:13.5px; color:var(--muted); margin-right:auto}
   button.act{
-    font:inherit; font-size:14px; font-weight:500; padding:8px 14px; min-height:38px;
+    font:inherit; font-size:14px; font-weight:500; padding:8px 13px; min-height:38px;
     border:1px solid var(--line); border-radius:8px; background:var(--bg);
     color:var(--ink); cursor:pointer;
   }
@@ -93,36 +119,55 @@
   button.act.primary:hover:not(:disabled){background:#0860c4}
   canvas{display:block; width:100%; height:auto; touch-action:manipulation; cursor:crosshair}
   .play-bot{
-    display:flex; flex-wrap:wrap; gap:18px 26px; padding:12px 14px;
+    display:flex; flex-wrap:wrap; gap:6px 24px; padding:10px 13px;
     border-top:1px solid var(--line); background:var(--surface); font-size:14px;
   }
   .stat b{font:15px/1 var(--mono); color:var(--ink)}
   .stat span{color:var(--muted)}
   .say{
-    margin:0; padding:12px 14px; border-radius:10px; background:var(--accent-soft);
-    color:#0a3069; font-size:14.5px; border:1px solid #b6e3ff;
+    margin:0; padding:11px 13px; background:var(--accent-soft);
+    color:#0a3069; font-size:14.5px; border-top:1px solid #b6e3ff;
   }
-  .say.ok{background:var(--ok-soft); color:#0f5323; border-color:#aceebb}
-  .say.warn{background:var(--warn-soft); color:#7a4f01; border-color:#f5e5a0}
+  .say.ok{background:var(--ok-soft); color:#0f5323; border-top-color:#aceebb}
+  .say.warn{background:var(--warn-soft); color:#7a4f01; border-top-color:#f5e5a0}
 
-  /* ── figures & cards ── */
-  figure{margin:26px 0}
-  figure img{width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:10px}
-  figcaption{font-size:13.5px; color:var(--muted); margin-top:10px}
+  /* ── figures, tables, notes ── */
+  figure{margin:22px 0}
+  figure img{
+    width:100%; max-width:820px; height:auto; display:block;
+    border:1px solid var(--line); border-radius:10px;
+  }
+  figcaption{font-size:13.5px; color:var(--muted); margin-top:9px; max-width:var(--readw)}
   .shot img{box-shadow:0 1px 3px rgba(31,35,40,.08)}
 
-  table{border-collapse:collapse; width:100%; margin:22px 0; font-size:14.5px}
+  /* three screens shown one at a time: stacking them made part 3 a
+     three-screen scroll of pictures nobody had asked to see yet */
+  .gallery{margin:22px 0}
+  .gtabs{display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px}
+  .gtabs button{
+    font:inherit; font-size:13.5px; font-weight:600; padding:7px 13px; min-height:38px;
+    border:1px solid var(--line); border-radius:999px; background:var(--bg);
+    color:var(--muted); cursor:pointer;
+  }
+  .gtabs button:hover{border-color:var(--line2); color:var(--ink)}
+  .gtabs button.on{background:var(--accent); border-color:#0a58ca; color:#fff}
+  .gallery figure{margin:0}
+  .gallery figure[hidden]{display:none}
+
+  .scroller{overflow-x:auto; margin:20px 0}
+  table{border-collapse:collapse; width:100%; min-width:520px; font-size:14.5px}
   th,td{border:1px solid var(--line); padding:10px 12px; text-align:left; vertical-align:top}
   th{background:var(--surface); font-weight:600}
   td.n{width:2.4em; text-align:center; color:var(--muted); font-family:var(--mono)}
 
   .note{
     border-left:3px solid var(--accent); background:var(--surface);
-    padding:14px 16px; border-radius:0 8px 8px 0; margin:22px 0; font-size:15px;
+    padding:13px 15px; border-radius:0 8px 8px 0; margin:20px 0;
+    font-size:15px; max-width:var(--readw);
   }
   .note.fail{border-left-color:var(--fail); background:var(--fail-soft)}
 
-  .cta{display:flex; flex-wrap:wrap; gap:10px; margin:26px 0 8px}
+  .cta{display:flex; flex-wrap:wrap; gap:10px; margin:22px 0 6px}
   .cta a{
     font-size:15px; font-weight:600; text-decoration:none; padding:11px 18px;
     border-radius:9px; border:1px solid var(--line); color:var(--ink); background:var(--bg);
@@ -130,17 +175,36 @@
   .cta a.primary{background:var(--accent); border-color:#0a58ca; color:#fff}
   .cta a:hover{border-color:var(--accent)}
 
-  footer{padding:36px 0 56px; font-size:14px; color:var(--muted)}
+  /* ── next act: the flow, without scrolling back to the tabs ── */
+  .next{
+    display:flex; justify-content:flex-end; margin:30px 0 4px;
+    border-top:1px solid var(--line); padding-top:20px;
+  }
+  .next button{
+    font:inherit; font-size:15px; font-weight:600; padding:11px 18px; min-height:44px;
+    border:1px solid var(--line); border-radius:9px; background:var(--bg);
+    color:var(--accent); cursor:pointer;
+  }
+  .next button:hover{border-color:var(--accent); background:var(--accent-soft)}
+
+  footer{padding:30px 0 52px; font-size:14px; color:var(--muted); border-top:1px solid var(--line)}
+  footer div{max-width:var(--readw)}
   footer a{color:var(--muted)}
-  .backlink{margin-top:14px}
+  .backlink{margin-top:12px}
   .backlink a{color:var(--accent); text-decoration:none; font-weight:600}
 
   @media (max-width:640px){
-    .hero{padding:40px 0 30px}
-    section{padding:40px 0}
-    .bar{height:52px; gap:8px}
+    :root{--hdr:52px}
+    /* three tabs must all be reachable without scrolling the tab strip;
+       the numbers are the first thing that can go */
+    .tabs button .no{display:none}
+    .hero{padding:18px 0 14px}
+    .pane{padding:16px 0 8px}
+    .bar{gap:8px}
     .brand span{display:none}
-    .play-bot{gap:10px 18px}
+    .tabs button{font-size:14px; padding:0 12px; height:45px}
+    .play-bot{gap:4px 18px}
+    h3{margin:28px 0 8px}
   }
 </style>
 </head>
@@ -158,20 +222,25 @@
 </header>
 
 <div class="wrap">
-
   <div class="hero">
     <div class="kick" data-k="hero_kick">SEQUENTIAL OPTIMIZATION, EXPLAINED</div>
     <h1 data-k="hero_h1">측정 한 번이 비쌀 때,<br>다음에 무엇을 재야 하는가</h1>
-    <p class="lead" data-k="hero_lead">실험 한 번에 하루가 들고 시료가 소모된다면, 조건을 전부 훑어 볼 수는 없습니다. <b>순차 최적화</b>는 몇 점만 재고 그 결과로 지형을 짐작한 뒤, <b>다음에 잴 한 점</b>을 고르는 방식입니다. 아래에서 직접 해보시면 5분 안에 감이 옵니다.</p>
-    <p class="lead" data-k="hero_lead2">그리고 이 페이지의 후반부는 조금 다른 이야기입니다 — <b>데이터가 나쁠 때 조언을 거부하는 법</b>에 대한 것입니다.</p>
+    <p class="lead" data-k="hero_lead">실험 한 번에 하루가 들고 시료가 소모된다면 조건을 전부 훑어 볼 수는 없습니다. <b>순차 최적화</b>는 몇 점만 재고 그 결과로 지형을 짐작한 뒤 <b>다음에 잴 한 점</b>을 고릅니다. 아래 판이 그 실험실입니다 — 조건(가로축)을 고르면 결과값(세로축)이 나오지만, <b>그 관계는 재 보기 전에는 보이지 않습니다.</b></p>
   </div>
+</div>
+
+<nav class="tabs" aria-label="parts">
+  <div class="wrap row" role="tablist">
+    <button id="tab1" type="button" role="tab" class="on" aria-controls="act1" aria-selected="true"><span class="no">1</span><span data-k="tab_1">직접 해보기</span></button>
+    <button id="tab2" type="button" role="tab" aria-controls="act2" aria-selected="false"><span class="no">2</span><span data-k="tab_2">네 가지 요건</span></button>
+    <button id="tab3" type="button" role="tab" aria-controls="act3" aria-selected="false"><span class="no">3</span><span data-k="tab_3">프로그램</span></button>
+  </div>
+</nav>
+
+<div class="wrap">
 
   <!-- ════════ ACT 1 ════════ -->
-  <section>
-    <div class="step" data-k="s1_step">1부 · 직접 해보기</div>
-    <h2 data-k="s1_h">숨겨진 곡선에서 가장 높은 곳 찾기</h2>
-    <p class="sub" data-k="s1_sub">아래 회색 판이 실험실이라고 생각해 보세요. 어떤 조건(가로축)을 고르면 결과값(세로축)이 나오는데, <b>그 관계는 보이지 않습니다.</b> 재 봐야만 알 수 있고, 한 번 재는 데 비용이 듭니다. 판을 눌러 측정해 보세요.</p>
-
+  <section class="pane on" id="act1" role="tabpanel" aria-labelledby="tab1">
     <div class="play">
       <div class="play-top">
         <span class="hint" data-k="pl_hint">판을 눌러 그 조건을 측정합니다</span>
@@ -186,21 +255,22 @@
         <span class="stat"><span data-k="st_best">지금까지 최고값</span> <b id="stBest">—</b></span>
         <span class="stat"><span data-k="st_gap">진짜 최고값까지</span> <b id="stGap">—</b></span>
       </div>
+      <p class="say" id="say" data-k="say_0">아무 데나 세 번 눌러 보세요. 세 점이 모이면 모델이 지형을 그리기 시작합니다.</p>
     </div>
-    <p class="say" id="say" data-k="say_0">아무 데나 세 번 눌러 보세요. 세 점이 모이면 모델이 지형을 그리기 시작합니다.</p>
 
     <h3 data-k="s1_h2">모델이 그리는 두 가지</h3>
     <p data-k="s1_p1"><b>파란 선</b>은 모델이 짐작한 응답면입니다. 그 둘레의 <b>옅은 띠</b>는 “이 근처는 잘 모르겠다”는 불확실성입니다. 재 본 점 근처에서는 띠가 좁고, 안 가 본 곳에서는 넓어집니다.</p>
     <p data-k="s1_p2">아래쪽 <b>주황 곡선</b>이 핵심입니다. 각 지점을 “재면 얼마나 이득일까”를 점수로 매긴 것으로, <b>기대개선량(EI)</b>이라고 합니다. 좋아 보이는 정도와 모르는 정도를 함께 저울질하기 때문에, 이미 재 본 곳은 점수가 0에 가깝고 <b>좋을 것 같으면서도 안 가 본 곳</b>에서 가장 높습니다. 순차 최적화는 그 꼭대기를 다음 측정 지점으로 고릅니다.</p>
 
-    <div class="note" data-k="s1_note"><b>격자로 훑는 것과 무엇이 다른가</b> — 격자는 계획을 미리 다 짜 둡니다. 순차는 <b>앞의 결과가 뒤의 계획을 바꿉니다.</b> 그래서 “아직 재지 않은 값을 미리 보는 것”이 절대 허용되지 않습니다 — 그건 컨닝이니까요.</p>
+    <div class="note" data-k="s1_note"><b>격자로 훑는 것과 무엇이 다른가</b> — 격자는 계획을 미리 다 짜 둡니다. 순차는 <b>앞의 결과가 뒤의 계획을 바꿉니다.</b> 그래서 “아직 재지 않은 값을 미리 보는 것”이 절대 허용되지 않습니다 — 그건 컨닝이니까요.</div>
+
+    <div class="next"><button type="button" data-go="2" data-k="go_2">2부 · 이 도구가 다른 점 →</button></div>
   </section>
 
   <!-- ════════ ACT 2 ════════ -->
-  <section>
-    <div class="step" data-k="s2_step">2부 · 이 도구가 다른 점</div>
+  <section class="pane" id="act2" role="tabpanel" aria-labelledby="tab2">
     <h2 data-k="s2_h">조언을 하기 전에, 그 조언을 믿어도 되는지 먼저 본다</h2>
-    <p class="sub" data-k="s2_sub">위 놀이터에서는 곡선이 매끄러웠습니다. 실제 실험 데이터는 그렇지 않을 때가 많습니다. 그런데 <b>보통의 최적화 도구는 그런 데이터에도 매끄러운 응답면과 그럴듯한 다음 후보를 내놓습니다.</b> 그걸 믿고 실험하면 시간과 시료를 버립니다.</p>
+    <p class="sub" data-k="s2_sub">1부의 곡선은 매끄러웠습니다. 실제 실험 데이터는 그렇지 않을 때가 많습니다. 그런데 <b>보통의 최적화 도구는 그런 데이터에도 매끄러운 응답면과 그럴듯한 다음 후보를 내놓습니다.</b> 그걸 믿고 실험하면 시간과 시료를 버립니다.</p>
 
     <h3 data-k="s2_h1">① 모델이 정말 배우고 있는가</h3>
     <p data-k="s2_p1">조건을 하나씩 빼고 나머지로 학습해 그 조건을 맞혀 보게 합니다. 잘 맞히면 점들이 대각선에 붙습니다. 못 맞히면 <b>빨간 가로선(전체 평균)</b> 쪽으로 몰립니다 — “뭘 물어도 평균이라고 답하는” 상태이고, 이때 R²는 음수가 됩니다.</p>
@@ -218,45 +288,53 @@
 
     <h3 data-k="s2_h3">네 가지 요건</h3>
     <p data-k="s2_p3">seqopt는 추천을 내기 전에 아래 넷을 검사합니다. 하나라도 미달이면 <b>추천 기능이 잠깁니다.</b></p>
-    <table>
-      <tr><th></th><th data-k="t_h1">요건</th><th data-k="t_h2">무엇을 보는가</th><th data-k="t_h3">미달이면</th></tr>
-      <tr><td class="n">①</td><td data-k="t_r1a">조건 수</td><td data-k="t_r1b">고를 후보가 예산보다 많은가</td><td data-k="t_r1c">전수 측정이 낫습니다</td></tr>
-      <tr><td class="n">②</td><td data-k="t_r2a">응답면 학습</td><td data-k="t_r2b">모델이 지형을 배우고 있는가</td><td data-k="t_r2c">모델을 바꿔도 소용없습니다</td></tr>
-      <tr><td class="n">③</td><td data-k="t_r3a">판별력</td><td data-k="t_r3b">조건 차이가 흔들림보다 큰가</td><td data-k="t_r3c">반복 측정을 늘려야 합니다</td></tr>
-      <tr><td class="n">④</td><td data-k="t_r4a">반복 측정</td><td data-k="t_r4b">같은 조건을 다시 잰 적이 있는가</td><td data-k="t_r4c">흔들림 크기 자체를 알 수 없습니다</td></tr>
-    </table>
+    <div class="scroller">
+      <table>
+        <tr><th></th><th data-k="t_h1">요건</th><th data-k="t_h2">무엇을 보는가</th><th data-k="t_h3">미달이면</th></tr>
+        <tr><td class="n">①</td><td data-k="t_r1a">조건 수</td><td data-k="t_r1b">고를 후보가 예산보다 많은가</td><td data-k="t_r1c">전수 측정이 낫습니다</td></tr>
+        <tr><td class="n">②</td><td data-k="t_r2a">응답면 학습</td><td data-k="t_r2b">모델이 지형을 배우고 있는가</td><td data-k="t_r2c">모델을 바꿔도 소용없습니다</td></tr>
+        <tr><td class="n">③</td><td data-k="t_r3a">판별력</td><td data-k="t_r3b">조건 차이가 흔들림보다 큰가</td><td data-k="t_r3c">반복 측정을 늘려야 합니다</td></tr>
+        <tr><td class="n">④</td><td data-k="t_r4a">반복 측정</td><td data-k="t_r4b">같은 조건을 다시 잰 적이 있는가</td><td data-k="t_r4c">흔들림 크기 자체를 알 수 없습니다</td></tr>
+      </table>
+    </div>
 
-    <div class="note fail" data-k="s2_note"><b>거부하는 것이 기능입니다.</b> 이 프로그램이 만들어진 계기가 그것입니다 — 한 실험실에 순차 최적화를 도입할지 검토했는데, 공개 데이터에서는 측정 횟수가 실제로 줄었지만 그 실험실의 데이터는 네 요건을 통과하지 못했습니다. 그래서 결론은 “아직 도입하지 마시라”였고, 그때 쓴 판정 기준이 이 프로그램의 관문이 됐습니다.</p>
+    <div class="note fail" data-k="s2_note"><b>거부하는 것이 기능입니다.</b> 이 프로그램이 만들어진 계기가 그것입니다 — 한 실험실에 순차 최적화를 도입할지 검토했는데, 공개 데이터에서는 측정 횟수가 실제로 줄었지만 그 실험실의 데이터는 네 요건을 통과하지 못했습니다. 그래서 결론은 “아직 도입하지 마시라”였고, 그때 쓴 판정 기준이 이 프로그램의 관문이 됐습니다.</div>
+
+    <div class="next"><button type="button" data-go="3" data-k="go_3">3부 · 프로그램 →</button></div>
   </section>
 
   <!-- ════════ ACT 3 ════════ -->
-  <section>
-    <div class="step" data-k="s3_step">3부 · 프로그램</div>
+  <section class="pane" id="act3" role="tabpanel" aria-labelledby="tab3">
     <h2 data-k="s3_h">그래서 seqopt가 하는 일</h2>
     <p class="sub" data-k="s3_sub">엑셀을 열어 측정값을 넣으면, 이 데이터를 써도 되는지 판정하고, 통과했을 때만 다음에 잴 조건을 알려 주는 데스크톱 프로그램입니다. 파이썬이 없는 PC에서도 실행파일 하나로 돕니다.</p>
-
-    <figure class="shot">
-      <img src="./figures/app_diagnose.png" alt="The Diagnose screen, gate passing" loading="lazy">
-      <figcaption data-k="fig3_cap"><b>진단 화면</b> — 네 요건의 판정이 문장으로 나오고, 모든 숫자는 계산 과정을 펼쳐 볼 수 있습니다. 오른쪽 처방표는 “권장 수준에 닿으려면 조건당 몇 번씩 더 재야 하는지”를 역산해 줍니다.</figcaption>
-    </figure>
-
-    <figure class="shot">
-      <img src="./figures/app_locked.png" alt="The Recommend screen, locked" loading="lazy">
-      <figcaption data-k="fig4_cap"><b>요건 미달일 때</b> — 추천이 나오지 않고 이유가 나옵니다. 이때 제안은 화면에서 감춰진 것이 아니라 <b>애초에 만들어지지 않습니다.</b> 그래도 진행하려면 강제 실행을 켤 수 있지만, 그렇게 만든 리포트에는 모든 쪽에 도장이 찍힙니다.</figcaption>
-    </figure>
-
-    <figure class="shot">
-      <img src="./figures/app_model.png" alt="The Model screen, response surface" loading="lazy">
-      <figcaption data-k="fig5_cap"><b>모델 화면</b> — 1부에서 본 것과 같은 응답면·불확실성·EI를 실제 데이터로 그립니다. 변수가 3개 이상이면 절단면과 슬라이더로 바뀌고, 학습되지 않은 응답면에는 도장이 찍혀 캡처해 가도 경고가 따라갑니다.</figcaption>
-    </figure>
-
-    <h3 data-k="s3_h2">고를 것이 없습니다</h3>
-    <p data-k="s3_p1">다른 도구는 대리모델·획득함수·solver를 드롭다운으로 고르게 합니다. 이 프로그램은 전부 고정돼 있습니다. <b>고정할 수 있는 이유가 관문입니다</b> — 데이터가 나쁠 때 사용자가 모델을 바꿔가며 헤맬 필요가 없습니다. “모델을 바꿔도 소용없다”고 도구가 판정해 주기 때문입니다. 바꾸고 싶으면 각 화면의 「고급 설정」에 다 있습니다. 없앤 것이 아니라 미뤄 둔 것입니다.</p>
 
     <div class="cta">
       <a class="primary" href="https://github.com/euichanlee0608-svg/seqopt#windows--just-run-it-no-python-needed" data-k="cta_dl">윈도우용 내려받기</a>
       <a href="https://github.com/euichanlee0608-svg/seqopt" data-k="cta_repo">소스 코드 보기</a>
     </div>
+
+    <div class="gallery" id="shots">
+      <div class="gtabs" role="tablist">
+        <button type="button" class="on" data-shot="0" data-k="g_1">진단 화면</button>
+        <button type="button" data-shot="1" data-k="g_2">요건 미달일 때</button>
+        <button type="button" data-shot="2" data-k="g_3">모델 화면</button>
+      </div>
+      <figure class="shot" data-shot="0">
+        <img src="./figures/app_diagnose.png" alt="The Diagnose screen, gate passing" loading="lazy">
+        <figcaption data-k="fig3_cap"><b>진단 화면</b> — 네 요건의 판정이 문장으로 나오고, 모든 숫자는 계산 과정을 펼쳐 볼 수 있습니다. 오른쪽 처방표는 “권장 수준에 닿으려면 조건당 몇 번씩 더 재야 하는지”를 역산해 줍니다.</figcaption>
+      </figure>
+      <figure class="shot" data-shot="1" hidden>
+        <img src="./figures/app_locked.png" alt="The Recommend screen, locked" loading="lazy">
+        <figcaption data-k="fig4_cap"><b>요건 미달일 때</b> — 추천이 나오지 않고 이유가 나옵니다. 이때 제안은 화면에서 감춰진 것이 아니라 <b>애초에 만들어지지 않습니다.</b> 그래도 진행하려면 강제 실행을 켤 수 있지만, 그렇게 만든 리포트에는 모든 쪽에 도장이 찍힙니다.</figcaption>
+      </figure>
+      <figure class="shot" data-shot="2" hidden>
+        <img src="./figures/app_model.png" alt="The Model screen, response surface" loading="lazy">
+        <figcaption data-k="fig5_cap"><b>모델 화면</b> — 1부에서 본 것과 같은 응답면·불확실성·EI를 실제 데이터로 그립니다. 변수가 3개 이상이면 절단면과 슬라이더로 바뀌고, 학습되지 않은 응답면에는 도장이 찍혀 캡처해 가도 경고가 따라갑니다.</figcaption>
+      </figure>
+    </div>
+
+    <h3 data-k="s3_h2">고를 것이 없습니다</h3>
+    <p data-k="s3_p1">다른 도구는 대리모델·획득함수·solver를 드롭다운으로 고르게 합니다. 이 프로그램은 전부 고정돼 있습니다. <b>고정할 수 있는 이유가 관문입니다</b> — 데이터가 나쁠 때 사용자가 모델을 바꿔가며 헤맬 필요가 없습니다. “모델을 바꿔도 소용없다”고 도구가 판정해 주기 때문입니다. 바꾸고 싶으면 각 화면의 「고급 설정」에 다 있습니다. 없앤 것이 아니라 미뤄 둔 것입니다.</p>
     <p style="font-size:14px;color:var(--muted)" data-k="s3_foot">사용법은 프로그램 안 도움말에 있습니다 — 항목마다 그 설명의 근거가 되는 코드 위치가 적혀 있습니다. MIT 라이선스.</p>
   </section>
 
@@ -269,6 +347,7 @@
 
 <script src="./gp.js"></script>
 <script src="./app.js"></script>
+<script src="./acts.js"></script>
 <script src="./i18n.js"></script>
 
 <script>
