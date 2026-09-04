@@ -11,13 +11,17 @@
   if (!cv || !window.GP) return;
   var ctx = cv.getContext("2d");
 
+  /* Same roles as the page's CSS custom properties, restated here because a
+     canvas cannot read them. Keep the two in step. */
   var C = {
-    axis: "#8a9099", grid: "#eceff1", ink: "#1f2328", muted: "#59636e",
-    faint: "#98a1ab",
-    mean: "#0969da", band: "rgba(9,105,218,.16)",
-    point: "#1f2328", best: "#cf222e", ei: "#f57c00",
-    eiFill: "rgba(245,124,0,.20)", truth: "#1a7f37", ghost: "#c8d1da"
+    axis: "#c9ced9", grid: "#eef0f4", ink: "#14161c", muted: "#6a7180",
+    faint: "#949cab",
+    mean: "#2057c5", band: "rgba(32,87,197,.13)",
+    point: "#14161c", best: "#b3261e", ei: "#e08700",
+    eiFill: "rgba(224,135,0,.16)", truth: "#0f7a4a", ghost: "#c8d1da"
   };
+  var FACE = 'Pretendard Variable,Pretendard,-apple-system,system-ui,sans-serif';
+  var FACE_MONO = "ui-monospace,Menlo,monospace";
 
   /* The hidden response surface. Deliberately not a single clean bump: a
      smaller local peak on the left is what makes "measure where it looks good"
@@ -48,7 +52,10 @@
      A fixed 0.52 aspect turned the panel into a 348x181 letterbox on a
      phone, where the two stacked plots had ~120px and ~55px to live in.
      Narrow screens get a portrait panel instead: height grows past the
-     width, and the paddings and type shrink to match. */
+     width, and the paddings and type shrink to match.
+     The 380px floor is for the band between the two — a 700px tablet is
+     wide enough to miss the portrait rule but not wide enough for 0.48 to
+     give the EI panel more than ~80px. */
   var DPR = Math.min(window.devicePixelRatio || 1, 2);
   var NARROW = 520;
   var W = 0, H = 0, PAD = null, SPLIT = 0.68, GAPY = 26, SMALL = false;
@@ -58,8 +65,8 @@
     if (!cssW) return;                 // hidden pane: nothing to measure yet
     SMALL = cssW < NARROW;
     var cssH = SMALL
-      ? Math.round(Math.min(cssW * 1.16, 440))
-      : Math.round(Math.min(Math.max(cssW * 0.48, 320), 430));
+      ? Math.round(Math.min(cssW * 1.24, 470))
+      : Math.round(Math.min(Math.max(cssW * 0.48, 380), 430));
     PAD = SMALL ? { l: 32, r: 12, t: 14, b: 26 } : { l: 52, r: 18, t: 18, b: 32 };
     SPLIT = SMALL ? 0.60 : 0.68;
     GAPY = SMALL ? 34 : 30;
@@ -106,8 +113,8 @@
   function axes(b, label, yTicks, xTicks) {
     ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
     ctx.fillStyle = C.muted;
-    ctx.font = fnt(11) + "ui-monospace,Menlo,monospace";
-    var i, gx, nx = SMALL ? 5 : 10;
+    ctx.font = fnt(11) + FACE_MONO;
+    var i, gx, nx = SMALL ? 4 : 8;
     for (i = 0; i <= nx; i++) {
       gx = sx(b, i / nx);
       ctx.beginPath(); ctx.moveTo(gx, b.y); ctx.lineTo(gx, b.y + b.h); ctx.stroke();
@@ -133,8 +140,8 @@
         ctx.fillText(v.toFixed(1), sx(b, v), b.y + b.h + 6);
       });
     }
-    ctx.fillStyle = C.muted; ctx.textAlign = "left"; ctx.textBaseline = "top";
-    ctx.font = fnt(12) + "-apple-system,system-ui,sans-serif";
+    ctx.fillStyle = C.faint; ctx.textAlign = "left"; ctx.textBaseline = "top";
+    ctx.font = fnt(11.5) + FACE;
     ctx.fillText(label, b.x + 4, b.y + 4);
   }
 
@@ -190,7 +197,7 @@
 
     if (!xs.length) {                     // an empty panel should say what to do
       ctx.fillStyle = C.faint;
-      ctx.font = fnt(14) + "-apple-system,system-ui,sans-serif";
+      ctx.font = fnt(13.5) + FACE;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(T("pl_empty"), top.x + top.w / 2, top.y + top.h / 2);
       ctx.textAlign = "left";
@@ -204,7 +211,7 @@
         ctx.arc(sx(top, x), sy(top, ys[k]), isBest ? 7 : 5, 0, 6.2832);
         ctx.fillStyle = isBest ? C.best : C.point;
         ctx.fill();
-        ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.6; ctx.stroke();
+        ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
       });
     });
 
@@ -243,7 +250,7 @@
         ctx.closePath(); ctx.fillStyle = C.ei; ctx.fill();
 
         var lx = sx(bot, suggestion), tw, lab = suggestion.toFixed(2);
-        ctx.font = fnt(11) + "ui-monospace,Menlo,monospace";
+        ctx.font = fnt(11) + FACE_MONO;
         tw = ctx.measureText(lab).width + 10;
         lx = Math.max(bot.x, Math.min(bot.x + bot.w - tw, lx - tw / 2));
         ctx.fillStyle = C.ei;
@@ -254,7 +261,7 @@
       }
     } else {
       ctx.fillStyle = C.muted;
-      ctx.font = "13px -apple-system,system-ui,sans-serif";
+      ctx.font = fnt(13) + FACE;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.fillText(T("need3"), bot.x + bot.w / 2, bot.y + bot.h / 2);
       ctx.textAlign = "left";
