@@ -3,6 +3,10 @@
 **Enter your measurements and it tells you which condition to measure next —
 and whether that advice can be trusted at all.**
 
+▶ **[What is sequential optimization? — an interactive explainer](https://euichanlee0608-svg.github.io/seqopt/)**
+ · five minutes, no install, English and Korean. The Gaussian process runs in
+ your browser; the figures come out of this repo's own diagnostic code.
+
 The second half is the point. Plenty of tools already suggest the next
 experiment. What none of them told the researcher was whether the suggestion
 meant anything — so this one **checks the reliability of its own advice first,
