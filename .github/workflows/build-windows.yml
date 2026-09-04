@@ -1,0 +1,113 @@
+name: windows-build
+
+# When this runs: on every push to main + manual trigger
+# Output: download seqopt-windows.zip from the Actions tab; seqopt.exe is inside it.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest          # a Windows exe can only be built on Windows
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"     # the version the §9-1 regression expected values were generated with
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt PySide6 matplotlib reportlab pyinstaller
+
+      - name: Regression tests
+        # If this fails, we don't build.
+        # This gate exists so we don't ship a program with wrong judgments to the lab.
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m pytest tests -q
+
+      - name: Build executable
+        run: pyinstaller packaging/seqopt.spec --noconfirm --clean
+
+      - name: Self-check the build output
+        # The exe verifies for itself things that can silently get dropped during bundling, like examples and fonts.
+        # Examples have in fact gone missing before, in both .gitignore and PyInstaller datas.
+        run: |
+          # A GUI build (console=False) called with `& exe` doesn't get waited on by PowerShell.
+          # $LASTEXITCODE then no longer belongs to that process, so we use Start-Process -Wait.
+          $p = Start-Process -FilePath dist\seqopt\seqopt.exe -ArgumentList "--selftest" `
+                             -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) {
+            $why = if (Test-Path dist\seqopt\selftest.txt) {
+                     Get-Content dist\seqopt\selftest.txt -Raw } else { "(no reason file)" }
+            Write-Error "Self-test failed: $why"
+            exit 1
+          }
+          Write-Host "Self-test passed"
+        shell: pwsh
+
+      - name: Is the OpenMP runtime included in the bundle?
+        # scikit-learn opens vcomp140.dll via ctypes at import time.
+        # This runner has Visual Studio installed, so it's found on the system PATH,
+        # and things run fine here even if it's missing from the bundle. It only breaks on a clean PC.
+        # So we check "does the file exist" rather than "does it run".
+        run: |
+          # It's not enough for the file to be "somewhere in the bundle". PyInstaller's ctypes hook does
+          #   os.path.join(sys._MEIPASS, os.path.basename(name))
+          # i.e. it looks it up by filename **directly under _internal**. It doesn't look in subfolders.
+          # We failed to catch this distinction once and let it through.
+          $root = "dist\seqopt\_internal\vcomp140.dll"
+          if (-not (Test-Path $root)) {
+            $anywhere = Get-ChildItem -Path dist\seqopt -Recurse -Filter vcomp140.dll `
+                        -ErrorAction SilentlyContinue
+            $where = if ($anywhere) { $anywhere[0].FullName } else { "(not found anywhere)" }
+            Write-Error "vcomp140.dll is not directly under _internal. Current location: $where"
+            exit 1
+          }
+          Write-Host "Found: $root"
+        shell: pwsh
+
+      - name: Is the Qt display plugin included in the bundle?
+        # Testing with offscreen alone wouldn't catch it even if the real display plugin were missing.
+        run: |
+          $dll = "dist\seqopt\_internal\PySide6\plugins\platforms\qwindows.dll"
+          if (-not (Test-Path $dll)) {
+            $found = Get-ChildItem -Path dist\seqopt -Recurse -Filter qwindows.dll `
+                     -ErrorAction SilentlyContinue
+            if (-not $found) {
+              Write-Error "qwindows.dll is not in the bundle — the window won't open on the user's PC"
+              exit 1
+            }
+            Write-Host "Found: $($found[0].FullName)"
+          } else { Write-Host "Found: $dll" }
+        shell: pwsh
+
+      - name: Time until the window appears (real display)
+        # A process being alive and a window actually appearing are not the same thing.
+        # **We don't use offscreen here** — the user runs it on a real display.
+        # There was a time when the window took over 100 seconds to appear because of the matplotlib font cache.
+        env:
+          SEQOPT_EXIT_AFTER_SHOW: "1"
+        run: |
+          # Without waiting, this would measure as 0.1 seconds and be meaningless, so we use -Wait.
+          # Measure-Command can't get a variable out of its script block, so we time it directly ourselves.
+          $start = Get-Date
+          $p = Start-Process -FilePath dist\seqopt\seqopt.exe -Wait -PassThru -NoNewWindow
+          $sec = [math]::Round(((Get-Date) - $start).TotalSeconds, 1)
+          Write-Host "Time until window appeared: $sec sec"
+          if ($p.ExitCode -ne 0) { Write-Error "Run failed (exit code $($p.ExitCode))"; exit 1 }
+          if ($sec -gt 25) {
+            Write-Error "$sec sec is too slow — something heavy is being imported before the window shows"
+            exit 1
+          }
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seqopt-windows
+          path: |
+            dist/seqopt/
+          retention-days: 90

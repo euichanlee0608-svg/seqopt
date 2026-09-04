@@ -1,0 +1,35 @@
+{
+ "P3HT-CNT": {
+  "n": 178,
+  "dim": 5,
+  "sigma_y": 0.6975,
+  "sigma_w": 0.1032,
+  "nugget": 0.12,
+  "sill": 1.464,
+  "nugget_ratio": 0.082,
+  "r2": "+0.58",
+  "noise_share": 0.022
+ },
+ "AgNP": {
+  "n": 164,
+  "dim": 5,
+  "sigma_y": 0.196,
+  "sigma_w": 0.0458,
+  "nugget": 0.042,
+  "sill": 1.327,
+  "nugget_ratio": 0.032,
+  "r2": "+0.30",
+  "noise_share": 0.055
+ },
+ "Perovskite": {
+  "n": 94,
+  "dim": 3,
+  "sigma_y": 0.333,
+  "sigma_w": 0.1834,
+  "nugget": 0.594,
+  "sill": 1.472,
+  "nugget_ratio": 0.404,
+  "r2": "-0.20",
+  "noise_share": 0.303
+ }
+}

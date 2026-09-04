@@ -1,0 +1,6 @@
+# The environment the regression expectations were made under.
+# Raising these can break the regression tests (see docs/ARCHITECTURE.md).
+numpy==2.4.6
+scipy==1.17.1
+scikit-learn==1.8.0
+pytest==9.1.1

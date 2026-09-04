@@ -1,0 +1,382 @@
+# -*- coding: utf-8 -*-
+"""Data-structure setup — any table format gets its meaning assigned here.
+
+Lab spreadsheets differ by instrument and by person. So instead of the code
+guessing the format, **the user assigns column roles while looking at the
+original.** The assignment is saved as a profile, and the next file of the
+same shape reads in one step.
+
+Screen rules
+  · The left side is **the original, untouched.** Interpreted values are never shown — differ from the source and trust is gone
+  · Changing a role recolors the left column instantly (input=blue · response=green · ignore=gray)
+  · The summary below tells the outcome **before importing** — how many conditions, how many missing — and then you click
+"""
+from __future__ import annotations
+
+import os
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QBrush, QColor
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog,
+                               QGroupBox, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+                               QMessageBox, QPushButton, QSpinBox, QSplitter, QTableWidget,
+                               QTableWidgetItem, QVBoxLayout, QWidget)
+
+from core.dataset import group_measurements
+from core.importer import apply_profile, preview, sheet_count
+from core.profile import ColumnMap, ImportProfile, guess_profile
+from . import theme
+
+ROLE_LABEL = {"input": "input", "response": "response", "ignore": "ignore"}
+ROLE_COLOR = {"input": QColor(theme.ACCENT_SOFT), "response": QColor(theme.OK_SOFT),
+              "ignore": QColor(theme.SURFACE)}
+TYPE_LABEL = {"continuous": "continuous", "integer": "integer", "categorical": "categorical"}
+
+PREVIEW_ROWS = 60
+
+
+class ImportWizard(QDialog):
+    """Yields (measurements, profile). Cancel makes exec() Rejected."""
+
+    def __init__(self, parent=None, path: str | None = None,
+                 profile: ImportProfile | None = None):
+        super().__init__(parent)
+        self.setWindowTitle("Import data — structure setup")
+        self.resize(1120, 720)
+
+        self.path: str | None = None
+        self.keys: list[str] = []
+        self.rows: list[dict] = []
+        self.profile = profile or ImportProfile()
+        self.result_measurements: list[dict] = []
+        self._loading = False
+
+        self._build()
+        if path:
+            self._load_file(path)
+
+    # ── screen ─────────────────────────────────────────────────────
+    def _build(self) -> None:
+        root = QVBoxLayout(self)
+
+        # row 1: the file
+        bar = QHBoxLayout()
+        self.path_edit = QLineEdit(readOnly=True, placeholderText="Choose an Excel (.xlsx) or CSV file")
+        browse = QPushButton("Browse…")
+        browse.clicked.connect(self._browse)
+        bar.addWidget(QLabel("File"))
+        bar.addWidget(self.path_edit, 1)
+        bar.addWidget(browse)
+
+        bar.addSpacing(16)
+        bar.addWidget(QLabel("Sheet"))
+        self.sheet = QSpinBox(minimum=1, maximum=1)
+        self.sheet.valueChanged.connect(self._reload)
+        bar.addWidget(self.sheet)
+
+        bar.addSpacing(16)
+        bar.addWidget(QLabel("Header row"))
+        self.header_row = QSpinBox(minimum=0, maximum=50, value=1,
+                                   toolTip="0 means there is no header. Rows up to this one are not read as data.")
+        self.header_row.valueChanged.connect(self._refresh)
+        bar.addWidget(self.header_row)
+        root.addLayout(bar)
+
+        # row 2: original | roles
+        split = QSplitter(Qt.Horizontal)
+
+        left = QWidget()
+        lv = QVBoxLayout(left)
+        lv.setContentsMargins(0, 0, 0, 0)
+        lv.addWidget(QLabel(f"<b>Original preview</b>  <span style='color:{theme.TEXT_MUTED}'>"
+                            "— exactly as it is in the file</span>"))
+        self.raw = QTableWidget(alternatingRowColors=True)
+        self.raw.setEditTriggers(QTableWidget.NoEditTriggers)
+        lv.addWidget(self.raw)
+        split.addWidget(left)
+
+        right = QWidget()
+        rv = QVBoxLayout(right)
+        rv.setContentsMargins(0, 0, 0, 0)
+        rv.addWidget(QLabel(f"<b>Assign column meanings</b>  <span style='color:{theme.TEXT_MUTED}'>"
+                            "— the roles are a <b>guess</b>. Check that the condition count below matches what you expect</span>"))
+        self.mapper = QTableWidget(0, 6)
+        self.mapper.setHorizontalHeaderLabels(["column", "sample values", "role", "name", "unit", "type"])
+        self.mapper.verticalHeader().setVisible(False)
+        self.mapper.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        rv.addWidget(self.mapper)
+
+        opt = QGroupBox("Reading rules")
+        ov = QVBoxLayout(opt)
+        self.inherit = QCheckBox("Blank cells inherit the condition above")
+        self.inherit.setToolTip("For tables where the condition is written only on the first row of its\n"
+                                "block (merged-cell style). A non-numeric value breaks the inheritance.")
+        self.inherit.stateChanged.connect(self._refresh)
+        self.exclude_zero = QCheckBox("Mark all-zero-response conditions as exclusion candidates")
+        self.exclude_zero.setToolTip("For cases where nothing was really measured — a destroyed sample, say.\n"
+                                     "They are marked, not deleted, and reviewable one by one on the Data tab.")
+        self.exclude_zero.stateChanged.connect(self._refresh)
+        ov.addWidget(self.inherit)
+        ov.addWidget(self.exclude_zero)
+        rv.addWidget(opt)
+        split.addWidget(right)
+        split.setSizes([620, 500])
+        root.addWidget(split, 1)
+
+        # row 3: outcome summary
+        self.summary = QLabel("Choose a file and the outcome is previewed here.")
+        self.summary.setWordWrap(True)
+        self.summary.setStyleSheet(theme.card())
+        root.addWidget(self.summary)
+
+        # row 4: buttons
+        btm = QHBoxLayout()
+        load_p = QPushButton("Load preset…")
+        load_p.setToolTip("Loads a saved column mapping — reuse it on other files from the same instrument.")
+        load_p.clicked.connect(self._load_preset)
+        save_p = QPushButton("Save preset…")
+        save_p.clicked.connect(self._save_preset)
+        btm.addWidget(load_p)
+        btm.addWidget(save_p)
+        btm.addStretch(1)
+        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        self.buttons.button(QDialogButtonBox.Ok).setText("Import")
+        self.buttons.button(QDialogButtonBox.Ok).setProperty("primary", True)
+        self.buttons.button(QDialogButtonBox.Cancel).setText("Cancel")
+        self.buttons.accepted.connect(self._accept)
+        self.buttons.rejected.connect(self.reject)
+        btm.addWidget(self.buttons)
+        root.addLayout(btm)
+
+    # ── file ───────────────────────────────────────────────────────
+    def _browse(self) -> None:
+        fn, _ = QFileDialog.getOpenFileName(self, "Choose a data file", "",
+                                            "Tables (*.xlsx *.csv);;Excel (*.xlsx);;CSV (*.csv)")
+        if fn:
+            self._load_file(fn)
+
+    def _load_file(self, path: str) -> None:
+        kind = "xlsx" if path.lower().endswith(".xlsx") else "csv"
+        try:
+            n_sheets = sheet_count(path) if kind == "xlsx" else 1
+            self.sheet.setMaximum(max(1, n_sheets))
+            self.keys, self.rows = preview(path, kind, self.sheet.value(), PREVIEW_ROWS)
+        except Exception as e:                       # noqa: BLE001
+            QMessageBox.warning(self, "Could not read the file", str(e))
+            return
+        self.path = path
+        self.path_edit.setText(path)
+        self.profile.kind = kind
+        self.profile.sheet = self.sheet.value()
+        if not self.profile.columns or {c.key for c in self.profile.columns} != set(self.keys):
+            header = self._header_values()
+            self.profile = guess_profile(kind, header, self.rows[1:], self.keys)
+            self.profile.sheet = self.sheet.value()
+        self._fill_mapper()
+        self._refresh()
+
+    def _reload(self) -> None:
+        if self.path:
+            self._load_file(self.path)
+
+    def _header_values(self) -> list[str]:
+        hr = self.header_row.value()
+        if hr <= 0 or hr > len(self.rows):
+            return list(self.keys)
+        row = self.rows[hr - 1]
+        return [str(row.get(k, "") or k) for k in self.keys]
+
+    # ── mapping table ──────────────────────────────────────────────
+    def _fill_mapper(self) -> None:
+        self._loading = True
+        by_key = {c.key: c for c in self.profile.columns}
+        self.mapper.setRowCount(len(self.keys))
+        header = self._header_values()
+
+        for i, k in enumerate(self.keys):
+            col = by_key.get(k) or ColumnMap(key=k)
+            sample = [str(r.get(k, "")) for r in self.rows[self.header_row.value():]
+                      if r.get(k) not in (None, "")][:3]
+
+            self.mapper.setItem(i, 0, _ro(k))
+            self.mapper.setItem(i, 1, _ro(" · ".join(sample) or "—"))
+
+            role = QComboBox()
+            for r in ("input", "response", "ignore"):
+                role.addItem(ROLE_LABEL[r], r)
+            role.setCurrentIndex(["input", "response", "ignore"].index(col.role))
+            role.currentIndexChanged.connect(self._on_role_changed)
+            self.mapper.setCellWidget(i, 2, role)
+
+            self.mapper.setItem(i, 3, QTableWidgetItem(col.name or header[i]))
+            self.mapper.setItem(i, 4, QTableWidgetItem(col.unit))
+
+            vtype = QComboBox()
+            for t in ("continuous", "integer", "categorical"):
+                vtype.addItem(TYPE_LABEL[t], t)
+            vtype.setCurrentIndex(["continuous", "integer", "categorical"].index(col.type))
+            vtype.currentIndexChanged.connect(self._refresh)
+            self.mapper.setCellWidget(i, 5, vtype)
+
+        self.mapper.resizeColumnsToContents()
+        self.mapper.itemChanged.connect(self._refresh)
+        self._loading = False
+
+    def _on_role_changed(self) -> None:
+        """There is exactly one response — picking a new one flips the old one to ignore."""
+        if self._loading:
+            return
+        sender = self.sender()
+        if sender.currentData() == "response":
+            self._loading = True
+            for i in range(self.mapper.rowCount()):
+                w = self.mapper.cellWidget(i, 2)
+                if w is not sender and w.currentData() == "response":
+                    w.setCurrentIndex(2)             # ignore
+            self._loading = False
+        self._refresh()
+
+    def _collect(self) -> ImportProfile:
+        cols = []
+        for i, k in enumerate(self.keys):
+            cols.append(ColumnMap(
+                key=k,
+                role=self.mapper.cellWidget(i, 2).currentData(),
+                name=(self.mapper.item(i, 3).text() if self.mapper.item(i, 3) else "").strip(),
+                unit=(self.mapper.item(i, 4).text() if self.mapper.item(i, 4) else "").strip(),
+                type=self.mapper.cellWidget(i, 5).currentData(),
+            ))
+        p = ImportProfile(kind=self.profile.kind, sheet=self.sheet.value(),
+                          header_row=self.header_row.value(), columns=cols,
+                          inherit_blank=self.inherit.isChecked(),
+                          exclude_zero=self.exclude_zero.isChecked(),
+                          name=self.profile.name, note=self.profile.note)
+        return p
+
+    # ── preview refresh ────────────────────────────────────────────
+    def _refresh(self) -> None:
+        if self._loading or not self.keys:
+            return
+        p = self._collect()
+        self.profile = p
+        self._paint_raw(p)
+
+        errs = p.validate()
+        if errs:
+            self._say("· " + "\n· ".join(errs), ok=False)
+            self.buttons.button(QDialogButtonBox.Ok).setEnabled(False)
+            return
+
+        try:
+            ms, rep = apply_profile(self.rows, p)
+        except Exception as e:                       # noqa: BLE001
+            self._say(str(e), ok=False)
+            self.buttons.button(QDialogButtonBox.Ok).setEnabled(False)
+            return
+
+        groups = group_measurements(ms, p.round_digits)
+        dead = sum(1 for v in groups.values() if max(v) <= 0) if p.exclude_zero else 0
+        reps = sum(1 for v in groups.values() if len(v) > 1)
+
+        note = []
+        if len(self.rows) >= PREVIEW_ROWS:
+            note.append(f"note: the preview counts only the first {PREVIEW_ROWS} rows. Importing reads everything.")
+        if rep["missing"]:
+            note.append(f"{rep['missing']} non-numeric responses are skipped (#DIV/0!, blanks and the like).")
+        if rep["skipped"]:
+            note.append(f"{rep['skipped']} rows with no identifiable condition are skipped"
+                        f"{' — try turning on blank-cell inheritance.' if not p.inherit_blank else '.'}")
+        if dead:
+            note.append(f"{dead} all-zero-response conditions will be marked as exclusion candidates.")
+
+        self._say(
+            f"<b>{len(groups) - dead} conditions</b> · {len(ms)} measurements · "
+            f"{reps} conditions with replicates"
+            + (f"<br><span style='color:{theme.TEXT_MUTED}'>" + "<br>".join(note) + "</span>"
+               if note else ""),
+            ok=True)
+        self.buttons.button(QDialogButtonBox.Ok).setEnabled(bool(groups))
+
+    def _paint_raw(self, p: ImportProfile) -> None:
+        role_of = {c.key: c.role for c in p.columns}
+        hr = p.header_row
+        self.raw.setRowCount(len(self.rows))
+        self.raw.setColumnCount(len(self.keys))
+        self.raw.setHorizontalHeaderLabels(
+            [f"{k}\n{next((c.label for c in p.columns if c.key == k), k)}" for k in self.keys])
+        for i, r in enumerate(self.rows):
+            for j, k in enumerate(self.keys):
+                it = QTableWidgetItem(str(r.get(k, "")))
+                it.setBackground(QBrush(ROLE_COLOR[role_of.get(k, "ignore")]))
+                it.setForeground(QBrush(QColor(theme.TEXT_FAINT if (hr and i < hr)
+                                                else theme.TEXT)))
+                self.raw.setItem(i, j, it)
+        self.raw.resizeColumnsToContents()
+
+    def _say(self, html: str, ok: bool) -> None:
+        self.summary.setText(html)
+        self.summary.setStyleSheet(theme.card("ok" if ok else "fail"))
+
+    # ── presets ────────────────────────────────────────────────────
+    def _load_preset(self) -> None:
+        fn, _ = QFileDialog.getOpenFileName(self, "Load preset", "", "Mapping presets (*.seqmap)")
+        if not fn:
+            return
+        try:
+            p = ImportProfile.load(fn)
+        except Exception as e:                       # noqa: BLE001
+            QMessageBox.warning(self, "Could not read the preset", str(e))
+            return
+        missing = [c.key for c in p.columns if c.role != "ignore" and c.key not in self.keys]
+        if missing:
+            QMessageBox.warning(self, "Columns do not match",
+                                f"Columns this preset expects are missing from the file: {', '.join(missing)}\n"
+                                "Check whether column names or positions changed.")
+            return
+        self.profile = p
+        self.header_row.setValue(p.header_row)
+        self.inherit.setChecked(p.inherit_blank)
+        self.exclude_zero.setChecked(p.exclude_zero)
+        self._fill_mapper()
+        self._refresh()
+
+    def _save_preset(self) -> None:
+        p = self._collect()
+        errs = p.validate()
+        if errs:
+            QMessageBox.warning(self, "Not ready to save yet", "\n".join(errs))
+            return
+        fn, _ = QFileDialog.getSaveFileName(self, "Save preset", "mapping.seqmap", "Mapping presets (*.seqmap)")
+        if not fn:
+            return
+        p.name = os.path.splitext(os.path.basename(fn))[0]
+        p.save(fn)
+
+    # ── confirm ────────────────────────────────────────────────────
+    def _accept(self) -> None:
+        p = self._collect()
+        errs = p.validate()
+        if errs:
+            QMessageBox.warning(self, "Finish the setup first", "\n".join(errs))
+            return
+        kind = p.kind
+        try:
+            _, all_rows = preview(self.path, kind, p.sheet, limit=10 ** 9)
+            ms, _ = apply_profile(all_rows, p)
+        except Exception as e:                       # noqa: BLE001
+            QMessageBox.critical(self, "Import failed", str(e))
+            return
+        if not ms:
+            QMessageBox.warning(self, "Nothing to import", "Check the column roles and reading rules.")
+            return
+        for i, m in enumerate(ms, 1):
+            m["id"] = i
+        self.result_measurements = ms
+        self.profile = p
+        self.accept()
+
+
+def _ro(text: str) -> QTableWidgetItem:
+    it = QTableWidgetItem(text)
+    it.setFlags(Qt.ItemIsEnabled)
+    return it

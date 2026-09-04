@@ -1,0 +1,22 @@
+# Build outputs — never committed. GitHub Actions rebuilds them on demand.
+.venv/
+dist/
+build/
+*.spec.bak
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Project files (user data) — never committed by accident
+*.seqopt
+*.seqopt.bak
+*.seqopt.autosave
+*.seqmap
+# except the bundled example
+!examples/*.seqopt
+
+# OS
+.DS_Store
+Thumbs.db

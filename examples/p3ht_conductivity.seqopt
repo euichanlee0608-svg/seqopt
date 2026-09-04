@@ -1,0 +1,1021 @@
+{
+ "schema": 1,
+ "name": "Example — P3HT:CNT conductivity",
+ "created": "2026-09-04T17:03:34+09:00",
+ "objective": {
+  "name": "Conductivity",
+  "unit": "S/cm",
+  "goal": "max",
+  "log": true
+ },
+ "inputs": [
+  {
+   "name": "P3HT content (%)",
+   "unit": "%",
+   "type": "continuous",
+   "min": 15.0,
+   "max": 95.0,
+   "levels": []
+  },
+  {
+   "name": "D1 content (%)",
+   "unit": "%",
+   "type": "continuous",
+   "min": 0.0,
+   "max": 60.0,
+   "levels": []
+  },
+  {
+   "name": "D2 content (%)",
+   "unit": "%",
+   "type": "continuous",
+   "min": 0.0,
+   "max": 70.0,
+   "levels": []
+  },
+  {
+   "name": "D6 content (%)",
+   "unit": "%",
+   "type": "continuous",
+   "min": 0.0,
+   "max": 85.0,
+   "levels": []
+  },
+  {
+   "name": "D8 content (%)",
+   "unit": "%",
+   "type": "continuous",
+   "min": 0.0,
+   "max": 75.0,
+   "levels": []
+  }
+ ],
+ "budget": {
+  "total": 40,
+  "used": 69,
+  "initial_design": 11
+ },
+ "acquisition": {
+  "kind": "EI",
+  "beta": 2.0,
+  "batch": 1
+ },
+ "measurements": [
+  {
+   "id": 1,
+   "inputs": [
+    45.0,
+    0.0,
+    55.0,
+    0.0,
+    0.0
+   ],
+   "value": 12.77,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 2,
+   "inputs": [
+    45.0,
+    0.0,
+    55.0,
+    0.0,
+    0.0
+   ],
+   "value": 16.94,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 3,
+   "inputs": [
+    75.0,
+    0.0,
+    25.0,
+    0.0,
+    0.0
+   ],
+   "value": 13.19,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 4,
+   "inputs": [
+    30.0,
+    0.0,
+    70.0,
+    0.0,
+    0.0
+   ],
+   "value": 14.78,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 5,
+   "inputs": [
+    30.0,
+    0.0,
+    70.0,
+    0.0,
+    0.0
+   ],
+   "value": 16.34,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 6,
+   "inputs": [
+    90.0,
+    0.0,
+    0.0,
+    10.0,
+    0.0
+   ],
+   "value": 24.01,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 7,
+   "inputs": [
+    95.0,
+    0.0,
+    0.0,
+    0.0,
+    5.0
+   ],
+   "value": 26.19,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 8,
+   "inputs": [
+    60.0,
+    0.0,
+    0.0,
+    40.0,
+    0.0
+   ],
+   "value": 33.44,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 9,
+   "inputs": [
+    30.0,
+    0.0,
+    0.0,
+    70.0,
+    0.0
+   ],
+   "value": 37.09,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 10,
+   "inputs": [
+    45.0,
+    0.0,
+    0.0,
+    55.0,
+    0.0
+   ],
+   "value": 45.53,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 11,
+   "inputs": [
+    15.0,
+    0.0,
+    0.0,
+    85.0,
+    0.0
+   ],
+   "value": 45.97,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 12,
+   "inputs": [
+    55.0,
+    0.0,
+    0.0,
+    0.0,
+    45.0
+   ],
+   "value": 140.7,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 13,
+   "inputs": [
+    90.0,
+    10.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 179.53,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 14,
+   "inputs": [
+    90.0,
+    10.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 218.67,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 15,
+   "inputs": [
+    25.0,
+    0.0,
+    0.0,
+    0.0,
+    75.0
+   ],
+   "value": 215.37,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 16,
+   "inputs": [
+    70.0,
+    30.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 411.82,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 17,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 490.06,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 18,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 634.35,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 19,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 688.74,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 20,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 725.7933279,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 21,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 788.8326479,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 22,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 804.11,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 23,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 839.28,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 24,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 852.33,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 25,
+   "inputs": [
+    40.0,
+    60.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 824.47,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 26,
+   "inputs": [
+    60.0,
+    40.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 559.01,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 27,
+   "inputs": [
+    60.0,
+    40.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 617.92,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 28,
+   "inputs": [
+    50.0,
+    50.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 766.85,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 29,
+   "inputs": [
+    50.0,
+    50.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 800.58,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 30,
+   "inputs": [
+    50.0,
+    50.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 602.48,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 31,
+   "inputs": [
+    50.0,
+    50.0,
+    0.0,
+    0.0,
+    0.0
+   ],
+   "value": 695.67,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 32,
+   "inputs": [
+    88.25,
+    0.83,
+    8.23,
+    1.57,
+    1.21
+   ],
+   "value": 5.09,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 33,
+   "inputs": [
+    85.48,
+    0.32,
+    0.15,
+    4.03,
+    9.96
+   ],
+   "value": 6.19,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 34,
+   "inputs": [
+    94.81,
+    0.3,
+    0.28,
+    0.08,
+    4.53
+   ],
+   "value": 6.44,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 35,
+   "inputs": [
+    73.99,
+    0.5,
+    25.18,
+    0.28,
+    0.04
+   ],
+   "value": 7.2,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 36,
+   "inputs": [
+    74.19,
+    0.07,
+    24.76,
+    0.17,
+    0.8
+   ],
+   "value": 7.58,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 37,
+   "inputs": [
+    93.87,
+    0.24,
+    0.56,
+    0.24,
+    5.11
+   ],
+   "value": 7.72,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 38,
+   "inputs": [
+    93.87,
+    0.24,
+    0.56,
+    0.24,
+    5.11
+   ],
+   "value": 10.32,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 39,
+   "inputs": [
+    44.35,
+    0.18,
+    54.47,
+    0.18,
+    0.81
+   ],
+   "value": 8.39,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 40,
+   "inputs": [
+    84.86,
+    3.42,
+    0.96,
+    0.28,
+    10.41
+   ],
+   "value": 11.15,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 41,
+   "inputs": [
+    59.82,
+    0.23,
+    0.5,
+    38.89,
+    0.55
+   ],
+   "value": 11.44,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 42,
+   "inputs": [
+    54.48,
+    0.65,
+    0.53,
+    0.46,
+    43.89
+   ],
+   "value": 12.19,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 43,
+   "inputs": [
+    85.08,
+    7.75,
+    3.5,
+    2.24,
+    1.36
+   ],
+   "value": 18.25,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 44,
+   "inputs": [
+    44.01,
+    0.09,
+    0.9,
+    54.71,
+    0.3
+   ],
+   "value": 19.06,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 45,
+   "inputs": [
+    44.01,
+    0.09,
+    0.9,
+    54.71,
+    0.3
+   ],
+   "value": 19.3,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 46,
+   "inputs": [
+    74.31,
+    0.39,
+    0.1,
+    25.18,
+    0.04
+   ],
+   "value": 49.98,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 47,
+   "inputs": [
+    91.13,
+    1.99,
+    1.95,
+    2.24,
+    2.69
+   ],
+   "value": 6.25,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 48,
+   "inputs": [
+    90.31,
+    0.18,
+    0.62,
+    8.25,
+    0.65
+   ],
+   "value": 7.09,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 49,
+   "inputs": [
+    89.8,
+    3.01,
+    1.59,
+    4.36,
+    1.23
+   ],
+   "value": 7.84,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 50,
+   "inputs": [
+    90.3,
+    0.2,
+    7.89,
+    0.79,
+    0.89
+   ],
+   "value": 7.85,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 51,
+   "inputs": [
+    84.55,
+    1.93,
+    1.4,
+    3.23,
+    8.85
+   ],
+   "value": 9.21,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 52,
+   "inputs": [
+    84.55,
+    1.93,
+    1.4,
+    3.23,
+    8.85
+   ],
+   "value": 10.58,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 53,
+   "inputs": [
+    92.28,
+    2.19,
+    2.61,
+    1.66,
+    1.24
+   ],
+   "value": 10.37,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 54,
+   "inputs": [
+    18.67,
+    0.27,
+    47.09,
+    24.03,
+    9.99
+   ],
+   "value": 14.08,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 55,
+   "inputs": [
+    16.15,
+    0.46,
+    25.38,
+    51.42,
+    6.55
+   ],
+   "value": 15.85,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 56,
+   "inputs": [
+    16.15,
+    0.46,
+    25.38,
+    51.42,
+    6.55
+   ],
+   "value": 17.96,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 57,
+   "inputs": [
+    88.45,
+    3.5,
+    1.89,
+    1.96,
+    4.21
+   ],
+   "value": 16.66,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 58,
+   "inputs": [
+    89.55,
+    5.72,
+    0.83,
+    1.8,
+    2.1
+   ],
+   "value": 16.69,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 59,
+   "inputs": [
+    18.74,
+    0.17,
+    18.41,
+    36.13,
+    26.58
+   ],
+   "value": 17.89,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 60,
+   "inputs": [
+    20.57,
+    0.18,
+    35.6,
+    39.41,
+    4.16
+   ],
+   "value": 18.43,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 61,
+   "inputs": [
+    90.48,
+    4.82,
+    2.61,
+    0.55,
+    1.57
+   ],
+   "value": 28.51,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 62,
+   "inputs": [
+    88.5,
+    7.91,
+    0.96,
+    1.95,
+    0.64
+   ],
+   "value": 31.24,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 63,
+   "inputs": [
+    19.84,
+    1.06,
+    28.7,
+    33.62,
+    16.75
+   ],
+   "value": 34.35,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 64,
+   "inputs": [
+    87.89,
+    2.0,
+    6.26,
+    2.42,
+    1.33
+   ],
+   "value": 63.53,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 65,
+   "inputs": [
+    19.13,
+    0.4,
+    46.86,
+    25.41,
+    8.25
+   ],
+   "value": 6.92,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 66,
+   "inputs": [
+    19.13,
+    0.4,
+    46.86,
+    25.41,
+    8.25
+   ],
+   "value": 10.53,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 67,
+   "inputs": [
+    74.88,
+    0.08,
+    2.02,
+    22.01,
+    1.03
+   ],
+   "value": 7.25,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 68,
+   "inputs": [
+    88.62,
+    0.3,
+    0.34,
+    9.64,
+    1.11
+   ],
+   "value": 11.38,
+   "excluded": false,
+   "note": ""
+  },
+  {
+   "id": 69,
+   "inputs": [
+    88.62,
+    0.3,
+    0.34,
+    9.64,
+    1.11
+   ],
+   "value": 17.57,
+   "excluded": false,
+   "note": ""
+  }
+ ],
+ "exclusions": {
+  "zero": false,
+  "conditions": []
+ },
+ "import_profile": {
+  "kind": "csv",
+  "sheet": 1,
+  "header_row": 1,
+  "columns": [
+   {
+    "key": "P3HT content (%)",
+    "role": "input",
+    "name": "P3HT content (%)",
+    "unit": "%",
+    "type": "continuous"
+   },
+   {
+    "key": "D1 content (%)",
+    "role": "input",
+    "name": "D1 content (%)",
+    "unit": "%",
+    "type": "continuous"
+   },
+   {
+    "key": "D2 content (%)",
+    "role": "input",
+    "name": "D2 content (%)",
+    "unit": "%",
+    "type": "continuous"
+   },
+   {
+    "key": "D6 content (%)",
+    "role": "input",
+    "name": "D6 content (%)",
+    "unit": "%",
+    "type": "continuous"
+   },
+   {
+    "key": "D8 content (%)",
+    "role": "input",
+    "name": "D8 content (%)",
+    "unit": "%",
+    "type": "continuous"
+   },
+   {
+    "key": "Conductivity (measured) (S/cm)",
+    "role": "response",
+    "name": "Conductivity",
+    "unit": "S/cm",
+    "type": "continuous"
+   }
+  ],
+  "inherit_blank": false,
+  "exclude_zero": false,
+  "round_digits": 6,
+  "name": "",
+  "note": ""
+ },
+ "diagnostics_cache": {}
+}
