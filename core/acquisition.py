@@ -33,15 +33,52 @@ STOP_PATIENCE = 3            #        stays below 1% of the response range 3 tim
 
 _SD_FLOOR = 1e-9             # avoid dividing by zero where σ=0
 
+# Global-search validation (packaging/bench_global.py → docs/bench_global.json, 2026-09-05).
+# The help tab's «How it chooses» reads these values, and tests/test_global.py checks that they
+# match the JSON — do not edit them by hand.
+# hit rate = fraction of seeds (10 seeds) with regret < 5% within a 40-run budget
+# (11 initial + 29 sequential, 3% noise).
+# 6 multimodal = Branin · six-hump camel · Hartmann-3 · two-peak · Hartmann-6 · Levy-4,
+# 2 unimodal/rugged = Rosenbrock · Ackley.
+# None of the 4 alternatives (MES · EI + exploration mixing · GP-UCB schedule · the Thompson
+# variant of the mixing) beat EI on the multimodal set, so none went on screen
+# (the candidate code lives only in packaging/bench_global.py — docs/GLOBAL_SEARCH.md).
+BENCH_CLAIMS = {
+    "multimodal_hit": 0.717,                    # EI, mean over the 6 multimodal functions
+    "unimodal_hit": 0.700,                      # EI, mean over the 2 unimodal/rugged functions
+    "ucb_multimodal_hit": 0.617,                # UCB(b=2), multimodal mean — "pushing exploration harder does not help"
+    "best_alternative_multimodal_hit": 0.700,   # best multimodal mean among the 4 alternatives (MES)
+    "ei_hit": {"branin": 1.0, "camel6": 1.0, "hartmann3": 1.0, "rosen2": 1.0,
+               "levy4": 0.8, "twopeak": 0.4, "ackley2": 0.4, "hartmann6": 0.1},
+}
+
+
+def prepare(acquisition: Acquisition, model: Surrogate, pool: np.ndarray, best: float,
+            rng: np.random.Generator | None) -> None:
+    """Called once per recommendation, before any scoring.
+
+    Acquisitions that carry state (e.g. MES's max-value samples, whether this
+    turn explores) settle it here. `score()` is called thousands of times during
+    maximization, so drawing random numbers inside it would change the objective
+    on every call and send L-BFGS-B in circles. The three on screen (EI · UCB ·
+    Thompson) are stateless and pass straight through — the hook is kept so the
+    candidates in `packaging/bench_global.py` can be validated **on the real
+    recommendation path, unchanged**.
+    """
+    hook = getattr(acquisition, "prepare", None)
+    if hook is not None:
+        hook(model, pool, best, rng)
+
 
 @ACQUISITIONS.register("EI")
 @dataclass
 class ExpectedImprovement:
     """Expected improvement. EI = (μ − best)·Φ(z) + σ·φ(z), z = (μ − best)/σ.
 
-    In the validation study it actually measured the global optimum within a
-    40-run budget 69–93% of the time (`verify_global.py`). That is why it is
-    the default.
+    In the 8-test-function benchmark its global-optimum hit rate within a
+    40-run budget averaged 72% on the multimodal set — the highest of the 7
+    strategies, the 4 alternatives included (`BENCH_CLAIMS` ·
+    docs/GLOBAL_SEARCH.md). That is why it is the default.
     """
 
     label = "Default — expected improvement (EI)"
@@ -65,9 +102,10 @@ class ExpectedImprovement:
 class UpperConfidenceBound:
     """μ + b·σ. A larger b pushes further into uncertainty.
 
-    ⚠ Pushing harder does not help — in the validation study, raising b from
-      1 to 4 dropped the global-optimum hit rate from 90% to 61%
-      (`verify_global.py`). Do not casually raise the default 2.0.
+    ⚠ Pushing harder does not help — in the original validation study (2026-08),
+      raising b from 1 to 4 dropped the global-optimum hit rate from 90% to 61%,
+      and in the 8-test-function benchmark b=2 averaged 62% on the multimodal
+      set, below EI's 72% (`BENCH_CLAIMS`). Do not casually raise the default 2.0.
     """
 
     beta: float = 2.0
