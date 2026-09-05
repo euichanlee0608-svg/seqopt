@@ -20,13 +20,36 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-                               QSizePolicy, QVBoxLayout, QWidget)
+                               QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
 
 from . import theme
 from .resources import example_dir, icon_path
 
 EXAMPLE_DIR = example_dir()
 APP_VERSION = "1.0"
+COLUMN_WIDTH = 560
+
+# Shipped examples — one card each, in this order. The passing one goes first: someone
+# opening the program for the first time should see "what it gives" before "what it
+# blocks", or the lock looks like a bug.
+EXAMPLES = (
+    ("synthetic_annealing.seqopt", "Open an example  —  Synthetic annealing (crystallinity)",
+     "Simulated data, 42 runs (temperature × time). This one <b>passes all four requirements "
+     "and yields a recommendation</b>, so you can see what the next condition looks like and why."),
+    ("p3ht_conductivity.seqopt", "Open the example  —  P3HT:CNT conductivity",
+     "Real published measurements of a thin-film composite "
+     "(<i>Adv. Funct. Mater.</i> 2021, public dataset). Watch the gate "
+     "pass and a recommendation come out — or lock, once you thin the data."),
+)
+
+
+def example_files() -> list[Path]:
+    """Example paths in card order (only those that exist). .seqopt files not in the list follow, sorted by name."""
+    if not EXAMPLE_DIR.is_dir():
+        return []
+    known = [EXAMPLE_DIR / name for name, _, _ in EXAMPLES if (EXAMPLE_DIR / name).exists()]
+    extra = sorted(p for p in EXAMPLE_DIR.glob("*.seqopt") if p not in known)
+    return known + extra
 
 
 class _Card(QFrame):
@@ -43,7 +66,7 @@ class _Card(QFrame):
             f"border-radius:10px; padding:2px;}}"
             f"QFrame:hover{{background:{theme.SURFACE}; border-color:{theme.ACCENT};}}")
         v = QVBoxLayout(self)
-        v.setContentsMargins(20, 16, 20, 16)
+        v.setContentsMargins(20, 13, 20, 13)
         v.setSpacing(4)
         t = QLabel(title)
         t.setStyleSheet(f"font-size:{theme.H2 + 1}px; font-weight:600; border:0;"
@@ -51,6 +74,10 @@ class _Card(QFrame):
         d = QLabel(desc)
         d.setWordWrap(True)
         d.setStyleSheet(f"border:0; color:{theme.TEXT_MUTED};")
+        # A wrapping label gets squeezed to one line and clipped when there is no vertical
+        # room — the card width is fixed, so pin its height at that width as the minimum
+        # (4 cards + recent files on a 728 px laptop screen)
+        d.setMinimumHeight(d.heightForWidth(COLUMN_WIDTH - 2 * 20 - 6))
         v.addWidget(t)
         v.addWidget(d)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -85,11 +112,16 @@ class StartScreen(QWidget):
         self._build(recents or [])
 
     def _build(self, recents: list[str]) -> None:
-        outer = QHBoxLayout(self)
+        # when the screen is short (a laptop), scroll instead of squeezing the cards
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        page = QWidget()
+        outer = QHBoxLayout(page)
         outer.addStretch(1)
 
         col = QVBoxLayout()
-        col.setSpacing(14)
+        col.setSpacing(12)
         col.addStretch(1)
 
         brand = QHBoxLayout()
@@ -119,13 +151,11 @@ class StartScreen(QWidget):
         new.clicked.connect(self.new_project)
         col.addWidget(new)
 
-        examples = sorted(EXAMPLE_DIR.glob("*.seqopt")) if EXAMPLE_DIR.is_dir() else []
-        if examples:
-            ex = _Card("Open the example  —  P3HT:CNT conductivity",
-                       "Real published measurements of a thin-film composite "
-                       "(<i>Adv. Funct. Mater.</i> 2021, public dataset). Watch the gate "
-                       "pass and a recommendation come out — or lock, once you thin the data.")
-            ex.clicked.connect(lambda: self.open_path.emit(str(examples[0])))
+        texts = {name: (title, desc) for name, title, desc in EXAMPLES}
+        for path in example_files():
+            title, desc = texts.get(path.name, (f"Open an example  —  {path.stem}", ""))
+            ex = _Card(title, desc)
+            ex.clicked.connect(lambda _=None, p=str(path): self.open_path.emit(p))
             col.addWidget(ex)
 
         op = _Card("Open a saved project", "Open a .seqopt file you made earlier.")
@@ -156,16 +186,14 @@ class StartScreen(QWidget):
             lst.itemClicked.connect(lambda i: self.open_path.emit(i.data(Qt.UserRole)))
             col.addWidget(lst)
 
-        col.addSpacing(8)
-        hint = QLabel("First time here? Open the <b>example</b> — it is the fastest way "
-                      "to see what each screen is telling you.")
-        hint.setWordWrap(True)
-        hint.setStyleSheet(theme.card("info"))
-        col.addWidget(hint)
         col.addStretch(2)
 
         wrap = QWidget()
         wrap.setLayout(col)
-        wrap.setFixedWidth(560)
+        wrap.setFixedWidth(COLUMN_WIDTH)
         outer.addWidget(wrap)
         outer.addStretch(1)
+        scroll.setWidget(page)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.addWidget(scroll)

@@ -206,6 +206,7 @@ class RecommendTab(QWidget):
             batch=self.batch.value(),
             acq_history=self.acq_history,
             override=self.override.isChecked(),
+            constraint=self.project.constraint,
         )
         self.result = result
         if isinstance(result, Recommendation):

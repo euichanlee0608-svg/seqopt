@@ -130,7 +130,7 @@ def test_project_roundtrip_keeps_diagnostics_identical(imported, tmp_path):
 
     prof, ms, _ = imported
     p = Project(name="Synthetic G/D",
-                inputs=[VarSpec("power", "W", "continuous", 150, 190),
+                inputs=[VarSpec("power", "W", "continuous", 150, 190, step=10.0),
                         VarSpec("dwell", "s", "integer", 3, 7)],
                 objective=ObjSpec("G/D ratio", "a.u.", "max"),
                 measurements=[dict(m) for m in ms],
@@ -168,7 +168,7 @@ def window(qapp, imported):
 
     prof, ms, _ = imported
     p = Project(name="Synthetic G/D",
-                inputs=[VarSpec("power", "W", "continuous", 150, 190),
+                inputs=[VarSpec("power", "W", "continuous", 150, 190, step=10.0),
                         VarSpec("dwell", "s", "integer", 3, 7)],
                 objective=ObjSpec("G/D ratio", "a.u.", "max"),
                 budget_total=40, measurements=[dict(m) for m in ms],
@@ -200,11 +200,11 @@ def test_status_bar_says_locked(window):
 
 
 def test_diag_tab_explains_why_in_sentences(window):
-    """Verdicts are sentences, not condition expressions (SPEC_AMENDMENTS A4)."""
+    """Verdicts are sentences, not condition expressions (SPEC_AMENDMENTS A4 · A6)."""
     d = window.tab_diag
     assert "measuring everything is better" in d.r1.text.text()
-    assert "15 usable conditions" in d.r1.text.text()
-    assert "total 25" in d.r1.text.text()          # exclusions are not hidden
+    assert "25" in d.r1.text.text()               # power 5 × dwell 5 — conditions there are to choose from
+    assert "power 5 × dwell 5" in d.r1.text.text()
     assert "worse than always answering" in d.r2.text.text()
     assert "undecided" in d.r3.text.text()
     assert "14/15" in d.r4.text.text()
@@ -336,7 +336,7 @@ def test_paste_parses_excel_tab_separated(qapp, monkeypatch):
     from PySide6.QtWidgets import QApplication, QMessageBox
     from ui.tab_data import DataTab
 
-    p = Project(inputs=[VarSpec("power", "W", "continuous", 150, 200),
+    p = Project(inputs=[VarSpec("power", "W", "continuous", 150, 200, step=10.0),
                         VarSpec("dwell", "s", "integer", 3, 7)],
                 objective=ObjSpec("G/D"))
     tab = DataTab(p)

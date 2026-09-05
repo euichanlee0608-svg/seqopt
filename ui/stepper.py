@@ -50,6 +50,8 @@ def assess(project, dataset, gate) -> Readiness:
     n_rows = sum(1 for m in project.measurements
                  if not m.get("excluded") and not m.get("pending"))
     n_cond = dataset.n_conditions if dataset is not None else 0
+    n_pending = sum(1 for m in project.measurements
+                    if m.get("pending") and not m.get("excluded"))
     unlocked = gate is not None and not gate.locked
 
     ready = {
@@ -82,6 +84,10 @@ def assess(project, dataset, gate) -> Readiness:
         current, action = DIAG, "Requirements unmet — see the prescription on the Diagnose tab"
     elif not unlocked:
         current, action = DIAG, "Check the requirements"
+    elif n_pending:
+        s = "s" if n_pending != 1 else ""
+        current, action = DATA, (f"{n_pending} recommended condition{s} waiting on the Data tab (gray rows) — "
+                                 "measure them and fill in the values, and they enter the next diagnosis")
     else:
         current, action = RECOMMEND, "Requirements met — get your next candidates"
 
