@@ -310,20 +310,26 @@ class Gate:
     reasons: list[str] = field(default_factory=list)
 
 
-def gate(n_conditions: int, budget: int, r2: float | None, disc: DiscResult,
+def gate(n_candidates: int | None, budget: int, r2: float | None, disc: DiscResult,
          frac_with_reps: float) -> Gate:
     """The gate verdict. Any FAIL locks the recommendation (F-20) — principle P1.
+
+    n_candidates is **the number of conditions that can be chosen in the design
+    space** (`core.spec.count_candidates`). None means infinite (a continuous
+    variable without a step) and passes ①. Never pass the number of conditions
+    already measured — every new project would lock, with the wrong advice that
+    "measuring everything is better" (SPEC_AMENDMENTS A6).
 
     r2=None means "still computing", and the lock **stays on** — it never opens
     optimistically.
     """
     g = Gate()
 
-    # ① Condition count. Uses the count of usable conditions (SPEC_AMENDMENTS A4)
-    g.cond_count = "OK" if n_conditions > budget else "FAIL"
+    # ① Candidate count. Choosing only makes sense when there are more selectable conditions than budget
+    g.cond_count = "OK" if n_candidates is None or n_candidates > budget else "FAIL"
     if g.cond_count == "FAIL":
-        g.reasons.append(
-            f"Usable conditions {n_conditions} ≤ budget {budget} → measuring everything is better")
+        g.reasons.append(f"Selectable conditions {n_candidates} ≤ budget {budget} runs → "
+                         f"measuring everything is better")
 
     # ② Learnability
     if r2 is None:

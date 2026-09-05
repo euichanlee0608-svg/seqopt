@@ -33,7 +33,7 @@ def syn_project():
     for i, m in enumerate(ms, 1):
         m["id"] = i
     return Project(name="Synthetic G/D optimization",
-                   inputs=[VarSpec("power", "W", "continuous", 150, 190),
+                   inputs=[VarSpec("power", "W", "continuous", 150, 190, step=10.0),
                            VarSpec("dwell", "s", "integer", 3, 7)],
                    objective=ObjSpec("G/D ratio", "a.u.", "max"),
                    budget_total=40, measurements=ms,

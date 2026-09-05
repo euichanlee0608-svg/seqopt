@@ -25,7 +25,7 @@ from .diagnostics import (D_THRESHOLD, NUGGET_THRESHOLD, DiscResult, Gate, Loocv
 from .fonts import register_pdf_font
 from .plotstyle import (C_AXIS, C_BAND, C_BEST, C_MEAN, C_POINT, C_RAW, CMAP_EI,
                         CMAP_MU, CMAP_SD, apply_style)
-from .spec import Dataset
+from .spec import Dataset, candidate_summary
 from .surface import curve_1d, grid_2d, replicate_scatter, trajectory
 from .surrogate import fit
 
@@ -56,7 +56,7 @@ class ReportData:
         loo = loocv_r2(ds.XN, ds.y_mean) if ds.n_conditions >= 3 else None
         nug = nugget_ratio(ds.XN, ds.y_mean, sigma_w=disc.sigma_w) if ds.n_conditions >= 3 else None
         model = fit(ds.XN, ds.y_mean) if ds.n_conditions >= 3 else None
-        g = make_gate(ds.n_conditions, project.budget_total,
+        g = make_gate(project.n_candidates(), project.budget_total,
                       loo.r2 if loo else None, disc, ds.frac_with_reps)
         return cls(project, ds, g, disc, loo, nug, model, gate_bypassed)
 
@@ -142,7 +142,10 @@ def calculation_log(data: ReportData) -> str:
     add("")
     add("[gate verdict]")
     g = data.gate
-    for label, state in (("① condition count", g.cond_count), ("② learnability", g.learnable),
+    add(f"         ① evidence : {candidate_summary(p.inputs, p.constraint)} vs budget {p.budget_total} runs")
+    if p.constraint is not None:
+        add(f"         constraint : {p.constraint.describe()}")
+    for label, state in (("① candidate count", g.cond_count), ("② learnability", g.learnable),
                          ("③ discriminability", g.discrim), ("④ replicates", g.replicates)):
         add(f"         {label}  {MARK.get(state, '—')}  ({state})")
     add(f"         → recommendation {'LOCKED' if g.locked else 'available'}")
@@ -168,7 +171,11 @@ def reproduce_script(data: ReportData) -> str:
         f"excluded={bool(m.get('excluded'))}, pending={bool(m.get('pending'))})"
         for m in p.measurements)
     inputs = ",\n    ".join(
-        f"VarSpec({v.name!r}, {v.unit!r}, {v.type!r}, {v.lo!r}, {v.hi!r})" for v in p.inputs)
+        f"VarSpec({v.name!r}, {v.unit!r}, {v.type!r}, {v.lo!r}, {v.hi!r}"
+        + (f", levels={v.levels!r}" if v.levels else "")
+        + (f", step={v.step!r}" if v.step is not None else "") + ")" for v in p.inputs)
+    con = (f"SumConstraint({p.constraint.names!r}, {p.constraint.total!r}, {p.constraint.kind!r})"
+           if p.constraint else "None")
     o = p.objective
     home = Path(__file__).resolve().parent.parent
     return f'''# -*- coding: utf-8 -*-
@@ -195,11 +202,12 @@ if SEQOPT_HOME.is_dir() and str(SEQOPT_HOME) not in sys.path:
 
 from core.dataset import from_measurements
 from core.diagnostics import discriminability, gate, loocv_r2, nugget_ratio
-from core.spec import ObjSpec, VarSpec
+from core.spec import ObjSpec, SumConstraint, VarSpec, count_candidates
 
 INPUTS = [
     {inputs},
 ]
+CONSTRAINT = {con}
 OBJECTIVE = ObjSpec({o.name!r}, {o.unit!r}, {o.goal!r}, log={o.log!r})
 BUDGET = {p.budget_total}
 EXCLUDE_ZERO = {p.exclude_zero!r}
@@ -212,9 +220,10 @@ ds = from_measurements(MEASUREMENTS, INPUTS, OBJECTIVE, exclude_zero=EXCLUDE_ZER
 disc = discriminability(ds.reps)
 loo = loocv_r2(ds.XN, ds.y_mean)
 nug = nugget_ratio(ds.XN, ds.y_mean, sigma_w=disc.sigma_w)
-g = gate(ds.n_conditions, BUDGET, loo.r2, disc, ds.frac_with_reps)
+g = gate(count_candidates(INPUTS, CONSTRAINT), BUDGET, loo.r2, disc, ds.frac_with_reps)
 
-print(f"usable conditions {{ds.n_conditions}} · {{ds.n_measurements}} measurements")
+print(f"usable conditions {{ds.n_conditions}} · {{ds.n_measurements}} measurements · "
+      f"selectable conditions {{count_candidates(INPUTS, CONSTRAINT) or 'infinite'}}")
 print(f"sigma_w = {{disc.sigma_w:.4f}}   (report value {data.disc.sigma_w if data.disc.sigma_w else float('nan'):.4f})")
 print(f"sigma_b = {{disc.sigma_b:.4f}}   (report value {data.disc.sigma_b:.4f})")
 print(f"D(n=1)  = {{disc.D[1]:.3f}}")
@@ -385,9 +394,8 @@ def write_pdf(data: ReportData, path: str | Path) -> Path:
     ci = f"[{d.ci_lo:.2f}, {d.ci_hi:.2f}]" if d.ci_lo is not None else ""
     n_rep = sum(1 for v in ds.reps if len(v) > 1)
     verdict_rows += [
-        ["①", "condition count", MARK.get(g.cond_count, "—"),
-         f"usable {ds.n_conditions} (total {ds.n_conditions_all} · excluded "
-         f"{ds.n_excluded_conditions}) vs budget {p.budget_total}"],
+        ["①", "candidate count", MARK.get(g.cond_count, "—"),
+         f"{candidate_summary(p.inputs, p.constraint)} vs budget {p.budget_total}"],
         ["②", "surface learnability", MARK.get(g.learnable, "—"), r2_txt],
         ["③", "discriminability", MARK.get(g.discrim, "—"),
          (f"D = {d.D[1]:.2f} {ci}" if d.sigma_w else "no replicates — not computable")],
@@ -419,9 +427,12 @@ def write_pdf(data: ReportData, path: str | Path) -> Path:
         ["objective", f"{p.objective.name} "
                       f"{'maximize' if p.objective.goal == 'max' else 'minimize'}"
                       f"{' · log10 transform' if p.objective.log else ''}"],
-        ["inputs", " · ".join(f"{v.name}[{v.lo:g}~{v.hi:g}{' ' + v.unit if v.unit else ''}]"
-                              for v in p.inputs)],
-    ]
+        ["inputs", " · ".join(
+            f"{v.name}[{v.lo:g}~{v.hi:g}{' ' + v.unit if v.unit else ''}"
+            f"{' · step ' + format(v.step, 'g') if v.step is not None else ''}]"
+            if v.type != "categorical" else f"{v.name}[{', '.join(v.levels)}]"
+            for v in p.inputs)],
+    ] + ([["constraint", p.constraint.describe()]] if p.constraint else [])
     t = Table(summary, colWidths=[45 * mm, 120 * mm])
     t.setStyle(TableStyle([
         ("FONTNAME", (0, 0), (-1, -1), font), ("FONTSIZE", (0, 0), (-1, -1), 8.5),

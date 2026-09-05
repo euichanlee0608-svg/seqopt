@@ -22,9 +22,13 @@ import pytest
 from core.diagnostics import (D_COMFORTABLE, D_LEVELS, D_RECOMMENDED, D_THRESHOLD,
                               NUGGET_CLASSES, NUGGET_THRESHOLD, discriminability, gate,
                               loocv_r2, nugget_ratio, replicate_plan, required_reps)
+from core.spec import VarSpec, count_candidates
 from tests.loaders import DATA, external, synthetic
 
 TOL = 1e-3
+# The synthetic fixture's design space — power has an instrument step of 10 W (SPEC_AMENDMENTS A6)
+SYN_INPUTS = [VarSpec("power", "W", "continuous", 150, 190, step=10.0),
+              VarSpec("dwell", "s", "integer", 3, 7)]
 
 
 @pytest.fixture(scope="module")
@@ -247,22 +251,32 @@ def test_synthetic_gate_is_locked(syn):
     the same failure profile as the original study's lab data."""
     d = discriminability(syn.reps)
     r = loocv_r2(syn.XN, syn.y_mean)
-    g = gate(syn.n_conditions, budget=40, r2=r.r2, disc=d,
+    g = gate(count_candidates(SYN_INPUTS), budget=40, r2=r.r2, disc=d,
              frac_with_reps=syn.frac_with_reps)
     assert g.learnable == "FAIL"        # R² < 0
     assert g.discrim == "UNDECIDED"     # the interval straddles 1.0
-    assert g.cond_count == "FAIL"       # 15 usable ≤ budget 40
+    assert g.cond_count == "FAIL"       # 25 candidates (power step 10 W × dwell 5) ≤ budget 40
     assert g.replicates == "OK"         # 14/15 = 93%
     assert g.locked
 
 
-def test_gate_uses_live_conditions_not_all(syn):
-    """Gate ① uses usable conditions (15), never the total (25) — SPEC_AMENDMENTS A4."""
+def test_gate_counts_candidates_not_measured_conditions(syn):
+    """Gate ① compares **the number of selectable candidates** with the budget (SPEC_AMENDMENTS A6).
+
+    Not the number of conditions already measured (15) — before anything is
+    measured there are 0 conditions, and if ① failed then nothing could ever
+    start; conversely, on a continuous design with infinitely many candidates,
+    "measuring everything is better" is meaningless.
+    """
     d = discriminability(syn.reps)
-    assert gate(syn.n_conditions, 20, r2=0.5, disc=d,
-                frac_with_reps=1.0).cond_count == "FAIL"     # 15 ≤ 20
-    assert gate(syn.n_conditions_all, 20, r2=0.5, disc=d,
-                frac_with_reps=1.0).cond_count == "OK"       # 25 > 20 — and that verdict is wrong
+    assert count_candidates(SYN_INPUTS) == 25
+    assert gate(25, 40, r2=0.5, disc=d, frac_with_reps=1.0).cond_count == "FAIL"   # 25 ≤ 40
+    assert gate(25, 24, r2=0.5, disc=d, frac_with_reps=1.0).cond_count == "OK"     # 25 > 24
+    no_step = [VarSpec("power", "W", "continuous", 150, 190), SYN_INPUTS[1]]
+    assert count_candidates(no_step) is None                                       # infinite
+    assert gate(None, 40, r2=0.5, disc=d, frac_with_reps=1.0).cond_count == "OK"
+    g = gate(25, 40, r2=0.5, disc=d, frac_with_reps=1.0)
+    assert any("measuring everything is better" in r for r in g.reasons)
 
 
 def test_gate_stays_locked_while_r2_pending(syn):

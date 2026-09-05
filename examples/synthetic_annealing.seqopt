@@ -1,0 +1,470 @@
+{
+ "schema": 1,
+ "name": "Synthetic annealing — crystallinity (simulated data)",
+ "created": "2026-09-05T00:00:00+09:00",
+ "objective": {
+  "name": "crystallinity index",
+  "unit": "a.u.",
+  "goal": "max",
+  "log": false
+ },
+ "inputs": [
+  {
+   "name": "temperature",
+   "unit": "°C",
+   "type": "continuous",
+   "min": 150.0,
+   "max": 350.0,
+   "levels": [],
+   "step": 10.0
+  },
+  {
+   "name": "time",
+   "unit": "min",
+   "type": "continuous",
+   "min": 5.0,
+   "max": 60.0,
+   "levels": [],
+   "step": 5.0
+  }
+ ],
+ "constraint": null,
+ "budget": {
+  "total": 60,
+  "used": 42,
+  "initial_design": 11
+ },
+ "acquisition": {
+  "kind": "EI",
+  "beta": 2.0,
+  "batch": 1
+ },
+ "measurements": [
+  {
+   "id": 1,
+   "inputs": [
+    170.0,
+    20.0
+   ],
+   "value": 0.1651,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 2,
+   "inputs": [
+    170.0,
+    20.0
+   ],
+   "value": 0.092,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 3,
+   "inputs": [
+    170.0,
+    20.0
+   ],
+   "value": 0.1288,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 4,
+   "inputs": [
+    160.0,
+    35.0
+   ],
+   "value": 0.1311,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 5,
+   "inputs": [
+    160.0,
+    35.0
+   ],
+   "value": 0.134,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 6,
+   "inputs": [
+    160.0,
+    35.0
+   ],
+   "value": 0.1582,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 7,
+   "inputs": [
+    220.0,
+    20.0
+   ],
+   "value": 0.1977,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 8,
+   "inputs": [
+    220.0,
+    20.0
+   ],
+   "value": 0.1927,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 9,
+   "inputs": [
+    220.0,
+    20.0
+   ],
+   "value": 0.228,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 10,
+   "inputs": [
+    300.0,
+    30.0
+   ],
+   "value": 0.873,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 11,
+   "inputs": [
+    300.0,
+    30.0
+   ],
+   "value": 0.8436,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 12,
+   "inputs": [
+    300.0,
+    30.0
+   ],
+   "value": 0.8095,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 13,
+   "inputs": [
+    190.0,
+    55.0
+   ],
+   "value": 0.1683,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 14,
+   "inputs": [
+    190.0,
+    55.0
+   ],
+   "value": 0.1422,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 15,
+   "inputs": [
+    190.0,
+    55.0
+   ],
+   "value": 0.1253,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 16,
+   "inputs": [
+    320.0,
+    15.0
+   ],
+   "value": 0.3611,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 17,
+   "inputs": [
+    320.0,
+    15.0
+   ],
+   "value": 0.3824,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 18,
+   "inputs": [
+    320.0,
+    15.0
+   ],
+   "value": 0.3143,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 19,
+   "inputs": [
+    340.0,
+    45.0
+   ],
+   "value": 0.3943,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 20,
+   "inputs": [
+    340.0,
+    45.0
+   ],
+   "value": 0.4173,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 21,
+   "inputs": [
+    340.0,
+    45.0
+   ],
+   "value": 0.4698,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 22,
+   "inputs": [
+    300.0,
+    60.0
+   ],
+   "value": 0.6313,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 23,
+   "inputs": [
+    300.0,
+    60.0
+   ],
+   "value": 0.5785,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 24,
+   "inputs": [
+    300.0,
+    60.0
+   ],
+   "value": 0.6405,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 25,
+   "inputs": [
+    210.0,
+    35.0
+   ],
+   "value": 0.2123,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 26,
+   "inputs": [
+    210.0,
+    35.0
+   ],
+   "value": 0.2377,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 27,
+   "inputs": [
+    210.0,
+    35.0
+   ],
+   "value": 0.2088,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 28,
+   "inputs": [
+    260.0,
+    40.0
+   ],
+   "value": 0.7042,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 29,
+   "inputs": [
+    260.0,
+    40.0
+   ],
+   "value": 0.7042,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 30,
+   "inputs": [
+    260.0,
+    40.0
+   ],
+   "value": 0.7331,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 31,
+   "inputs": [
+    260.0,
+    10.0
+   ],
+   "value": 0.3214,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 32,
+   "inputs": [
+    260.0,
+    10.0
+   ],
+   "value": 0.3397,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 33,
+   "inputs": [
+    260.0,
+    10.0
+   ],
+   "value": 0.3188,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 34,
+   "inputs": [
+    280.0,
+    35.0
+   ],
+   "value": 0.9049,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 35,
+   "inputs": [
+    280.0,
+    35.0
+   ],
+   "value": 0.9387,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 36,
+   "inputs": [
+    280.0,
+    35.0
+   ],
+   "value": 0.9364,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 37,
+   "inputs": [
+    300.0,
+    45.0
+   ],
+   "value": 0.8414,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 38,
+   "inputs": [
+    300.0,
+    45.0
+   ],
+   "value": 0.8803,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 39,
+   "inputs": [
+    300.0,
+    45.0
+   ],
+   "value": 0.9154,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 40,
+   "inputs": [
+    270.0,
+    50.0
+   ],
+   "value": 0.7636,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 41,
+   "inputs": [
+    270.0,
+    50.0
+   ],
+   "value": 0.7575,
+   "excluded": false,
+   "note": "simulated"
+  },
+  {
+   "id": 42,
+   "inputs": [
+    270.0,
+    50.0
+   ],
+   "value": 0.7485,
+   "excluded": false,
+   "note": "simulated"
+  }
+ ],
+ "exclusions": {
+  "zero": false,
+  "conditions": []
+ },
+ "import_profile": null,
+ "diagnostics_cache": {}
+}

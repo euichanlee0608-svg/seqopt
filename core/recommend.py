@@ -19,11 +19,11 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .acquisition import (Pick, batch_picks, best_of, make_acquisition, maximise_continuous,
-                          should_stop, unmeasured)
-from .design import maximin_lhs
+                          prepare, should_stop, unmeasured)
+from .design import feasible_unit, maximin_lhs, snap_to_constraint
 from .diagnostics import Gate
 from .protocols import Acquisition, Surrogate
-from .spec import Dataset, VarSpec
+from .spec import Dataset, SumConstraint, VarSpec
 from .surface import format_condition, to_real
 from .surrogate import DEFAULT_SURROGATE, SURROGATES, fit
 
@@ -109,30 +109,51 @@ def _axis_bounds(ds: Dataset, inputs: list[VarSpec]) -> np.ndarray:
     return out
 
 
-def _snap(x_real: np.ndarray, inputs: list[VarSpec]) -> np.ndarray:
-    """Snap integer/categorical variables to values that can actually be measured.
-    A fractional 3.7 seconds cannot go on an instruction sheet."""
+def _snap(x_real: np.ndarray, inputs: list[VarSpec],
+          constraint: SumConstraint | None = None) -> np.ndarray:
+    """Snap integer/categorical/stepped variables to values that can actually be measured.
+    A fractional 3.7 seconds cannot go on an instruction sheet.
+
+    With a sum constraint, the sum is restored after snapping to the grid.
+    """
     out = x_real.copy()
     for k, v in enumerate(inputs):
-        if v.type in ("integer", "categorical"):
+        if v.type == "categorical":
             out[k] = np.round(out[k])
+        else:
+            out[k] = v.snap(out[k])
+    if constraint is not None:
+        out = snap_to_constraint(out, inputs, constraint)
     return out
 
 
-def candidate_pool(ds: Dataset, inputs: list[VarSpec], size: int = CANDIDATE_POOL,
-                   seed: int = 0) -> np.ndarray:
-    """Candidate grid (normalized coordinates). Integer/categorical axes sit only on measurable values.
+def _gridded(inputs: list[VarSpec], constraint: SumConstraint | None) -> bool:
+    """Must we enumerate candidates instead of optimizing continuously — yes if any integer, categorical, step or constraint is present."""
+    return constraint is not None or any(v.type != "continuous" or v.step is not None
+                                         for v in inputs)
 
+
+def candidate_pool(ds: Dataset, inputs: list[VarSpec], size: int = CANDIDATE_POOL,
+                   seed: int = 0, constraint: SumConstraint | None = None) -> np.ndarray:
+    """Candidate grid (normalized coordinates). Integer/categorical/stepped axes sit only on measurable values.
+
+    With a sum constraint, only points on the constraint surface are drawn.
     Conditions already measured are removed (principle P2 — before any
     lookahead concern, recommending a re-measurement is pointless).
     """
-    bounds = _axis_bounds(ds, inputs)
-    unit = maximin_lhs(size, len(inputs), seed=seed, tries=1)
-    pool = bounds[:, 0] + unit * (bounds[:, 1] - bounds[:, 0])
-
     lo, span = ds.X.min(0), np.ptp(ds.X, axis=0)
     span = np.where(span > 0, span, 1.0)
-    real = _snap(lo + pool * span, inputs)
+
+    if constraint is None:
+        bounds = _axis_bounds(ds, inputs)
+        unit = maximin_lhs(size, len(inputs), seed=seed, tries=1)
+        pool = bounds[:, 0] + unit * (bounds[:, 1] - bounds[:, 0])
+        real = np.array([_snap(row, inputs) for row in lo + pool * span])
+    else:
+        unit = feasible_unit(size, inputs, constraint, seed=seed)
+        v_lo = np.array([v.lo if v.lo is not None else 0.0 for v in inputs])
+        v_hi = np.array([v.hi if v.hi is not None else len(v.levels) - 1 for v in inputs])
+        real = np.array([_snap(row, inputs, constraint) for row in v_lo + unit * (v_hi - v_lo)])
     pool = (real - lo) / span
 
     pool = np.unique(np.round(pool, 9), axis=0)
@@ -149,12 +170,14 @@ def recommend(ds: Dataset, inputs: list[VarSpec], gate: Gate, *,
               batch: int = 1,
               acq_history: list[float] | None = None,
               rng: np.random.Generator | None = None,
-              override: bool = False) -> RecommendResult:
+              override: bool = False,
+              constraint: SumConstraint | None = None) -> RecommendResult:
     """Pick the next candidates. **Returns `Locked` when the gate has not passed.**
 
     override=True means the user read the warnings and forced the run. The
     result carries the mark, and the report cover gets a "generated with
     requirements unmet" watermark (§10 risk table).
+    With a constraint, every suggestion satisfies it.
     """
     if gate.locked and not override:
         return Locked(gate=gate, reasons=list(gate.reasons))
@@ -165,11 +188,12 @@ def recommend(ds: Dataset, inputs: list[VarSpec], gate: Gate, *,
     response_range = float(np.ptp(ds.y_mean))
 
     bounds = _axis_bounds(ds, inputs)
-    pool = candidate_pool(ds, inputs)
+    pool = candidate_pool(ds, inputs, constraint=constraint)
+    prepare(acq, surrogate, pool if len(pool) else ds.XN, best_measured, rng)
     picks = _pick(surrogate, acq, inputs, pool, bounds, best_measured, batch,
-                  surrogate_name, rng)
+                  surrogate_name, rng, gridded=_gridded(inputs, constraint))
 
-    suggestions = [_to_suggestion(p, ds, inputs) for p in picks]
+    suggestions = [_to_suggestion(p, ds, inputs, constraint) for p in picks]
     warnings: list[str] = []
     if any(s.extrapolated for s in suggestions):
         warnings.append("A suggestion lies outside the measured range — the model has never learned what is out there.")
@@ -197,24 +221,28 @@ def recommend(ds: Dataset, inputs: list[VarSpec], gate: Gate, *,
 
 def _pick(model: Surrogate, acq: Acquisition, inputs: list[VarSpec],
           pool: np.ndarray, bounds: np.ndarray, best: float, batch: int,
-          surrogate_name: str, rng: np.random.Generator | None) -> list[Pick]:
+          surrogate_name: str, rng: np.random.Generator | None,
+          gridded: bool | None = None) -> list[Pick]:
     """Maximize over continuous space when possible, by enumeration otherwise.
 
-    Any integer/categorical variable forces enumeration — a continuous optimum
-    like 3.7 seconds cannot go on an instruction sheet.
+    Any integer/categorical/step/sum constraint forces enumeration — a
+    continuous optimum like 3.7 seconds cannot go on an instruction sheet, and
+    box optimization cannot stay on a constraint surface.
     """
-    all_continuous = all(v.type == "continuous" for v in inputs)
+    if gridded is None:
+        gridded = _gridded(inputs, None)
     if batch > 1:
         return batch_picks(model, acq, pool, best, batch, surrogate_name, rng)
-    if all_continuous and acq.supports_continuous:
+    if not gridded and acq.supports_continuous:
         return [maximise_continuous(model, acq, best, bounds, rng)]
     return [best_of(model, acq, pool, best, rng)] if len(pool) else []
 
 
-def _to_suggestion(pick: Pick, ds: Dataset, inputs: list[VarSpec]) -> Suggestion:
+def _to_suggestion(pick: Pick, ds: Dataset, inputs: list[VarSpec],
+                   constraint: SumConstraint | None = None) -> Suggestion:
     lo, span = ds.X.min(0), np.ptp(ds.X, axis=0)
     span = np.where(span > 0, span, 1.0)
-    x_real = _snap(lo + pick.x_norm * span, inputs)
+    x_real = _snap(lo + pick.x_norm * span, inputs, constraint)
     outside = bool(((pick.x_norm < -EXTRAPOLATION_TOL) |
                     (pick.x_norm > 1 + EXTRAPOLATION_TOL)).any())
     return Suggestion(

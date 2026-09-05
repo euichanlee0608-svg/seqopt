@@ -16,7 +16,7 @@ from datetime import datetime
 
 from .dataset import from_measurements
 from .profile import ImportProfile
-from .spec import Dataset, ObjSpec, VarSpec
+from .spec import Dataset, ObjSpec, SumConstraint, VarSpec, count_candidates
 
 SCHEMA = 1
 EXT = ".seqopt"
@@ -32,6 +32,7 @@ class Project:
     acquisition: str = "EI"
     beta: float = 2.0
     batch: int = 1
+    constraint: SumConstraint | None = None      # sum constraint (composition sum = 100 % etc.)
 
     measurements: list[dict] = field(default_factory=list)
     exclude_zero: bool = False
@@ -52,6 +53,10 @@ class Project:
     @property
     def dim(self) -> int:
         return len(self.inputs)
+
+    def n_candidates(self) -> int | None:
+        """Number of conditions that can be chosen in the design space (None = infinite). The input of gate ①."""
+        return count_candidates(self.inputs, self.constraint)
 
     def dataset(self) -> Dataset:
         return from_measurements(self.measurements, self.inputs, self.objective,
@@ -76,8 +81,10 @@ class Project:
             "objective": {"name": self.objective.name, "unit": self.objective.unit,
                           "goal": self.objective.goal, "log": self.objective.log},
             "inputs": [{"name": v.name, "unit": v.unit, "type": v.type,
-                        "min": v.lo, "max": v.hi, "levels": list(v.levels)}
+                        "min": v.lo, "max": v.hi, "levels": list(v.levels), "step": v.step}
                        for v in self.inputs],
+            "constraint": ({"names": list(self.constraint.names), "total": self.constraint.total,
+                            "kind": self.constraint.kind} if self.constraint else None),
             "budget": {"total": self.budget_total, "used": self.used,
                        "initial_design": self.initial_design},
             "acquisition": {"kind": self.acquisition, "beta": self.beta, "batch": self.batch},
@@ -94,10 +101,16 @@ class Project:
             raise ValueError(f"Unknown schema version: {d.get('schema')} (this program is {SCHEMA})")
         o = d["objective"]
         inputs = [VarSpec(name=v["name"], unit=v.get("unit", ""), type=v.get("type", "continuous"),
-                          lo=v.get("min"), hi=v.get("max"), levels=tuple(v.get("levels") or ()))
+                          lo=v.get("min"), hi=v.get("max"), levels=tuple(v.get("levels") or ()),
+                          step=v.get("step"))
                   for v in d["inputs"]]
         ex = d.get("exclusions", {})
         prof = d.get("import_profile")
+        c = d.get("constraint")
+        constraint = (SumConstraint(tuple(c["names"]), float(c["total"]), c.get("kind", "eq"))
+                      if c else None)
+        if constraint is not None:
+            constraint.validate(inputs)          # a hand-edited file gets caught here
         return cls(
             name=d.get("name", "New project"),
             inputs=inputs,
@@ -107,6 +120,7 @@ class Project:
             acquisition=d.get("acquisition", {}).get("kind", "EI"),
             beta=d.get("acquisition", {}).get("beta", 2.0),
             batch=d.get("acquisition", {}).get("batch", 1),
+            constraint=constraint,
             measurements=d.get("measurements", []),
             exclude_zero=ex.get("zero", False),
             excluded_conditions=[tuple(c) for c in ex.get("conditions", [])],

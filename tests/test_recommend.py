@@ -17,7 +17,7 @@ from core.diagnostics import Gate, discriminability, gate, loocv_r2
 from core.project import Project
 from core.recommend import (Locked, Recommendation, candidate_pool, recommend,
                             recommended_reps)
-from core.spec import ObjSpec, VarSpec
+from core.spec import ObjSpec, VarSpec, count_candidates
 from core.surrogate import fit
 from tests.loaders import external, synthetic
 
@@ -31,16 +31,19 @@ def syn():
 def syn_inputs():
     # The live measured range: the all-zero conditions (power 190, dwell 7) are
     # excluded, so declaring beyond 180/6 would make extrapolation legitimate.
-    return [VarSpec("power", "W", "continuous", 150, 180),
+    # Power gets an instrument step (SPEC_AMENDMENTS A6). It is 5 W, not the
+    # fixture's 10 W: with 10 W every grid point but (180, 3) is already
+    # measured, and the batch tests need unmeasured candidates to pick from.
+    return [VarSpec("power", "W", "continuous", 150, 180, step=5.0),
             VarSpec("dwell", "s", "integer", 3, 6)]
 
 
 @pytest.fixture(scope="module")
-def locked_gate(syn):
+def locked_gate(syn, syn_inputs):
     """The fixture's real gate — locked (learnability fails by design)."""
     d = discriminability(syn.reps)
     r = loocv_r2(syn.XN, syn.y_mean)
-    return gate(syn.n_conditions, 40, r.r2, d, syn.frac_with_reps)
+    return gate(count_candidates(syn_inputs), 40, r.r2, d, syn.frac_with_reps)
 
 
 @pytest.fixture(scope="module")
