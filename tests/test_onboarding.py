@@ -16,7 +16,7 @@ from core.spec import ObjSpec, VarSpec
 from ui import theme
 from ui.stepper import DATA, DIAG, MODEL, RECOMMEND, REPORT, SETUP, assess
 
-from ui.start_screen import EXAMPLE_DIR as EXAMPLES
+from ui.start_screen import EXAMPLES, example_files
 
 
 @pytest.fixture
@@ -34,17 +34,31 @@ def test_program_opens_on_the_start_screen(win):
     assert win.shell.currentIndex() == 0
 
 
-def test_an_example_project_ships_with_the_program():
-    """A first-time user has never seen the tool working (the JMP Sample Data pattern)."""
-    files = list(EXAMPLES.glob("*.seqopt"))
-    assert files, "examples/ has no example project"
-    p = Project.load(str(files[0]))
-    assert p.dataset().n_conditions > p.budget_total     # the example passes gate ①
-    assert len(p.measurements) > 50
+def test_both_example_projects_ship_with_the_program():
+    """A first-time user has never seen the tool working (the JMP Sample Data pattern).
+
+    The passing example (synthetic annealing) comes first, the real-data one (P3HT) second.
+    """
+    files = example_files()
+    assert [f.name for f in files][:2] == [name for name, _, _ in EXAMPLES]
+    success, p3ht = (Project.load(str(f)) for f in files[:2])
+    assert success.dataset().n_conditions == 14 and len(success.measurements) == 42
+    assert "simulated" in success.name.lower()
+    assert p3ht.dataset().n_conditions == 48 and len(p3ht.measurements) == 69
+
+
+def test_start_screen_shows_one_card_per_example(qapp):
+    from ui.start_screen import StartScreen, _Card
+    s = StartScreen()
+    titles = [c.layout().itemAt(0).widget().text() for c in s.findChildren(_Card)]
+    assert any("Synthetic annealing" in t for t in titles)
+    assert any("P3HT" in t for t in titles)
+    assert titles.index(next(t for t in titles if "Synthetic annealing" in t)) \
+        < titles.index(next(t for t in titles if "P3HT" in t))
 
 
 def test_opening_the_example_lands_on_the_work_screen(win, qapp):
-    win._open_path(str(sorted(EXAMPLES.glob("*.seqopt"))[0]))
+    win._open_path(str(example_files()[1]))          # P3HT
     for _ in range(4):
         win.runner.wait()
         qapp.processEvents()
@@ -95,6 +109,18 @@ def test_open_gate_points_at_the_recommendation():
     r = assess(p, p.dataset(), Gate(locked=False))
     assert r.current == RECOMMEND
     assert "met" in r.next_action
+
+
+def test_inserted_recommendation_points_back_at_the_data_tab():
+    """Once a recommendation is in the data table, say 'measure the gray rows', not 'get candidates'."""
+    from core.diagnostics import Gate
+    p = Project(inputs=[VarSpec("x", "", "continuous", 0, 10)], objective=ObjSpec("y"))
+    for x, y in [(1.0, 0.5), (2.0, 0.9), (3.0, 1.2)]:
+        p.add([x], y)
+    p.add([4.0], 0.0, note="recommended")["pending"] = True      # the same mark tab_data.insert_pending sets
+    r = assess(p, p.dataset(), Gate(locked=False))
+    assert r.current == DATA
+    assert "1 recommended" in r.next_action and "gray row" in r.next_action
 
 
 # ══════════════════════════════════════════════════════════════════════

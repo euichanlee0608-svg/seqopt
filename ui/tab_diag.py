@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (QDoubleSpinBox, QFrame, QGridLayout, QHBoxLayout,
 
 from core.diagnostics import (D_LEVELS, D_RECOMMENDED, D_THRESHOLD, NUGGET_CLASSES,
                               NUGGET_THRESHOLD, replicate_plan, required_reps)
+from core.spec import candidate_summary
 from . import theme
 from .widgets.advanced import Advanced
 from .widgets.gauge import DGauge
@@ -127,7 +128,7 @@ class DiagTab(QWidget):
         # ── gate verdict ───────────────────────────────────────────
         gate = Section("Gate verdict", "All four lines must be ○ for recommendations to open. "
                                        "The right side is each requirement's criterion.")
-        self.r1 = _Row("① condition count", "criterion: conditions > budget")
+        self.r1 = _Row("① candidate count", "criterion: conditions to choose from > budget")
         self.r2 = _Row("② surface learnability", "criterion: R² > 0")
         self.r3 = _Row("③ discriminability", f"criterion: D > {D_THRESHOLD:g} · recommended ≥ {D_RECOMMENDED:g}")
         self.r4 = _Row("④ replicates", "criterion: conditions with replicates ≥ 50%")
@@ -300,15 +301,14 @@ class DiagTab(QWidget):
         p = self.project
         d = self.disc
 
-        # ① condition count — usable conditions (SPEC_AMENDMENTS A4)
-        extra = (f" (total {dataset.n_conditions_all} · excluded {dataset.n_excluded_conditions})"
-                 if dataset.n_excluded_conditions else "")
+        # ① candidate count — the conditions there are to choose from in the design space (SPEC_AMENDMENTS A6)
+        where = candidate_summary(p.inputs, p.constraint)
         if gate.cond_count == "OK":
-            t = (f"{dataset.n_conditions} usable conditions{extra} > budget {p.budget_total} — "
-                 "there is room to choose")
+            t = f"{where} > budget {p.budget_total} — there is room to choose"
         else:
-            t = (f"{dataset.n_conditions} usable conditions{extra} ≤ budget {p.budget_total} — "
-                 "<b>measuring everything is better</b> (the gain from optimizing is zero in principle)")
+            t = (f"{where} ≤ budget {p.budget_total} — "
+                 "<b>measuring everything is better</b> (the gain from optimizing is zero in principle). "
+                 "A finer step or a wider range gives more candidates.")
         self.r1.set(gate.cond_count, t)
 
         # ② learnability

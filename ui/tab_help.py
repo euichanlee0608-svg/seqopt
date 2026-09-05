@@ -19,8 +19,12 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
                                QPushButton, QSplitter, QTextBrowser, QVBoxLayout, QWidget)
 
+from core.acquisition import BENCH_CLAIMS
+
 from . import theme
 from .widgets.section import PageHeader
+
+TEST_COUNT = 174      # number of tests under tests/ — tests/test_help.py checks it against the real collected count
 
 
 @dataclass
@@ -43,6 +47,10 @@ def _p(*parts: str) -> str:
 
 def _ul(*items: str) -> str:
     return "<ul>" + "".join(f"<li>{x}</li>" for x in items) + "</ul>"
+
+
+def _pct(x: float) -> str:
+    return f"{round(x * 100):d}%"
 
 
 def _table(head: list[str], rows: list[list[str]]) -> str:
@@ -115,8 +123,9 @@ TOPICS: list[Topic] = [
           body=_p("All four must pass before recommendations open. "
                   "A single <b>×</b> locks them.") +
           _table(["", "requirement", "what it checks", "when it fails"], [
-              ["①", "condition count", "are there more candidates than budget",
-               "measuring everything is better (the gain from optimizing is zero in principle)"],
+              ["①", "candidate count", "are there more <b>conditions to choose from</b> in the design space than budget",
+               "measuring everything is better (the gain from optimizing is zero in principle). "
+               "A finer step or a wider range gives more candidates"],
               ["②", "surface learnability", "is the model learning the terrain (LOOCV R² > 0)",
                "changing the model will not help. The data is the problem"],
               ["③", "discriminability", "do condition differences exceed the measurement wobble",
@@ -124,9 +133,14 @@ TOPICS: list[Topic] = [
               ["④", "replicates", "has the same condition ever been re-measured",
                "the wobble's size is unknowable (a warning — it does not lock)"]]) +
           _p("<b>Any of ①②③ failing locks the gate.</b> ④ is a warning.",
+             "① counts <b>not the conditions already measured</b> but the Setup tab's ranges · "
+             "steps · sum constraint — integer, categorical and stepped variables multiply their "
+             "level counts, and a single continuous variable without a step makes the count "
+             "infinite, which passes. The count is always shown under the variable table on the Setup tab.",
              "Learnability R² is slow, so it runs in the background. "
              "<b>The lock holds while it computes</b> — the unknown is never counted as a pass."),
-          code=["core/diagnostics.py: gate()", "core/recommend.py: recommend()"]),
+          code=["core/diagnostics.py: gate()", "core/spec.py: count_candidates()",
+                "core/recommend.py: recommend()"]),
 
     Topic("d", "What is discriminability (D)", tags="discriminability D sigma noise wobble replicates bootstrap",
           body=_p("<b>The difference that changing the condition makes</b>, divided by "
@@ -268,26 +282,64 @@ TOPICS: list[Topic] = [
               "Diagnose tab — it back-computes how many more replicates you need",
               "If the <b>warning</b> box says one condition carries N% of the "
               "variance, re-measuring that condition is the cheapest check",
-              "If requirement ① is the problem, widening the design range or "
-              "shrinking the budget is the honest fix"),
+              "If requirement ① is the problem, make the step finer or the range wider on the "
+              "Setup tab. If the candidates are still fewer than the budget, <b>measuring everything "
+              "is right</b> — this program is not needed in that case"),
           code=["core/recommend.py: recommend(override=...)", "core/report.py: write_pdf()"]),
 
-    Topic("acq", "Which of the three methods should I use", tags="acquisition EI UCB Thompson beta explore method",
+    Topic("acq", "Which of the three methods should I use", tags="acquisition EI UCB Thompson beta explore method global local benchmark",
           body=_p("Chosen at the <b>top of the Recommend tab</b>. Without a specific "
                   "reason, keep the default.") +
           _table(["", "what", "when"], [
               ["<b>Default (EI)</b>", "Expected improvement — how much a candidate should beat the best so far",
-               "Almost always. In the validation study it actually measured the "
-               "global optimum within a 40-run budget 69–93% of the time"],
+               "Almost always. On 8 standard test functions it reached the neighbourhood of the "
+               "global optimum within a 40-run budget — "
+               f"multimodal average {_pct(BENCH_CLAIMS['multimodal_hit'])} · "
+               f"unimodal average {_pct(BENCH_CLAIMS['unimodal_hit'])} (table below)"],
               ["<b>Explore wider (UCB)</b>", "μ + b·σ. A larger b pushes into uncertainty",
                "When the terrain is still unknown. Mind the caution below"],
               ["<b>Diversify (Thompson)</b>", "draw one function from the posterior, take its maximum",
                "When receiving several at once — candidates do not pile up in one spot"]]) +
+          "<h3>Does it get stuck in a local optimum</h3>" +
+          _p("Two layers guard against it. ① The initial design is space-filling (maximin LHS), so "
+             "the whole range is swept from the start, and ② the acquisition maximisation is "
+             "<b>multi-start</b> (L-BFGS-B from the best 20 of 2000 space-filling points), so it does "
+             "not settle on the nearest peak — at all 72 check points it found a value at least as "
+             "good as differential evolution (a global optimiser).",
+             "Still, <b>some terrain it cannot find</b>. The 2026-09-05 benchmark "
+             "(budget 40 = 11 initial + 29 sequential, 3% noise, 10 seeds, hit = regret below 5%):") +
+          _table(["test function", "EI hit rate", "what it measures"], [
+              ["Branin · six-hump camel · Hartmann-3 · Rosenbrock",
+               " · ".join(_pct(BENCH_CLAIMS["ei_hit"][k]) for k in ("branin", "camel6", "hartmann3", "rosen2")),
+               "several peaks (2–3 dimensions) — standard multimodal · a curved valley"],
+              ["Levy-4", _pct(BENCH_CLAIMS["ei_hit"]["levy4"]), "many local peaks (4 dimensions)"],
+              ["Two peaks (needle)", _pct(BENCH_CLAIMS["ei_hit"]["twopeak"]),
+               "a narrow valley covering barely 1% of the space — only the seeds whose initial "
+               "design landed in it found it"],
+              ["Ackley", _pct(BENCH_CLAIMS["ei_hit"]["ackley2"]), "a rough surface (terrain dense with small bumps)"],
+              ["Hartmann-6", _pct(BENCH_CLAIMS["ei_hit"]["hartmann6"]),
+               "6 dimensions — no method finds it within a 40-run budget"]]) +
+          _p("So with <b>6 or more variables, or a very narrow optimum</b>, a 40-run budget is not "
+             "enough. The answer then is not a different acquisition function but the "
+             "<b>initial design size (25–30% of the budget) · the budget · the range</b>.") +
+          "<h3>Why there is no separate global-search acquisition</h3>" +
+          _p("Four alternatives (MES · EI mixed with exploration · a GP-UCB schedule · Thompson) were "
+             "measured under the same conditions. The best multimodal average was "
+             f"{_pct(BENCH_CLAIMS['best_alternative_multimodal_hit'])}, which did not beat "
+             f"EI ({_pct(BENCH_CLAIMS['multimodal_hit'])}), and the narrow valley and the 6-dimensional "
+             "function defeated the alternatives just the same. The rule — 'it goes on screen only if it "
+             "beats EI on multimodal functions and loses nothing on unimodal ones' — was fixed "
+             "<b>before measuring</b>, and nothing passed it, so nothing went on screen. The candidate "
+             "code and the result file stay in the repo — re-measure, and if one passes, a test says so.") +
           "<h3>Caution — pushing exploration harder does not help</h3>" +
-          _p("Raising UCB's b from 1 to 4 dropped the global-optimum hit rate from "
-             "<b>90% to 61%</b> in the validation study. Pure space-filling was the "
-             "worst at 1–7%. Do not casually raise the default b = 2.0."),
-          code=["core/acquisition.py"]),
+          _p("In the original validation (2026-08), raising UCB's b from 1 to 4 dropped the "
+             "global-optimum hit rate from <b>90% to 61%</b>, and pure space-filling was the "
+             "worst at 1–7%. In this benchmark too, UCB (b=2) averaged "
+             f"{_pct(BENCH_CLAIMS['ucb_multimodal_hit'])} on the multimodal functions, below "
+             f"EI's {_pct(BENCH_CLAIMS['multimodal_hit'])}. "
+             "Do not casually raise the default b = 2.0."),
+          code=["core/acquisition.py: maximise_continuous() · BENCH_CLAIMS", "packaging/bench_global.py",
+                "docs/bench_global.json"]),
 
     Topic("batch", "Can I get several at once", tags="batch several at once",
           body=_p("Up to 10, via <b>\"At a time\"</b> under Advanced on the Recommend tab.",
@@ -303,6 +355,55 @@ TOPICS: list[Topic] = [
                   "instruction sheet.",
                   "The value follows the <b>median</b> replicate count of the current data."),
           code=["core/recommend.py: recommended_reps()"]),
+
+    Topic("step", "What is the \"step\", and must I fill it in", tags="step grid resolution instrument setting candidates",
+          body=_p("The <b>step</b> in the Setup tab's variable table is <b>the spacing the instrument "
+                  "can actually be set to</b>. If the power dial moves in 10 W units, enter 10; if the "
+                  "temperature setting moves in 5 °C units, enter 5. Only continuous variables have "
+                  "one — integer variables have a built-in step of 1.") +
+          "<h3>What changes once it is filled in</h3>" +
+          _ul("<b>Recommendations land on the grid</b>. A value like 173.6 W cannot go on an instruction sheet",
+              "<b>The candidate count of requirement ①</b> becomes countable — with even one continuous "
+              "variable without a step, the candidates are infinite and ① always passes",
+              "The initial design points are snapped to the grid too. If snapping makes two coincide, "
+              "they stay — a coincidence is simply a replicate") +
+          _p("Leave it empty and the variable is treated as continuous. That is not wrong, but the "
+             "recommendations will be finer than the instrument can set."),
+          code=["core/spec.py: VarSpec.step · n_levels()", "core/design.py: to_real()"]),
+
+    Topic("constraint", "Can I add a constraint like composition sum = 100 %", tags="constraint sum composition 100 mixture blend",
+          body=_p("Yes. Under <b>\"Sum constraint\"</b> on the Setup tab, pick 2 or more variables and "
+                  "enter <b>= exactly</b> or <b>≤ at most</b> with the total. From then on the initial "
+                  "design points and the recommendations come out <b>only as values that satisfy "
+                  "the constraint</b>.") +
+          "<h3>How it is kept</h3>" +
+          _ul("Points are drawn evenly on the constraint plane (Dirichlet) and the ones far apart "
+              "from each other become the initial design",
+              "If snapping to the grid breaks the sum, the values are moved <b>in whole steps</b> to "
+              "restore it — which is why <b>\"= exactly\" needs the constrained variables to share "
+              "one step</b> (the Setup tab tells you)",
+              "The candidate count of requirement ① is also counted inside the constraint "
+              "(A·B·C with step 10, sum 100 → 66 candidates)") +
+          "<h3>If measured values already violate the constraint</h3>" +
+          _p("The Setup tab shows how many rows violate it. Those rows are still used for learning "
+             "(they were actually measured); only the new recommendations stay inside the constraint."),
+          code=["core/spec.py: SumConstraint", "core/design.py: feasible_unit() · snap_to_constraint()"]),
+
+    Topic("startlog", "What happens at startup (the boot log)", tags="startup slow loading splash black window terminal log",
+          body=_p("On launch a small card appears and says in one line what it is doing — <b>loading "
+                  "the computation engine</b> is the longest part (numpy · scipy · scikit-learn, "
+                  "usually 2–6 seconds). Then the window opens.") +
+          "<h3>The black console windows that used to flash</h3>" +
+          _p("Earlier builds flashed black windows on launch. They were not our code but the "
+             "<code>cmd</code> · <code>powershell</code> processes that the computation packages "
+             "spawn while being imported (the Python standard library's <code>platform</code> module "
+             "and joblib's CPU count). Every child process is now forced to start <b>without a "
+             "window</b>, and whatever was spawned is written to the log.") +
+          "<h3>The log file</h3>" +
+          _p("<code>home folder\\.seqopt\\seqopt.log</code> records how long each stage took. "
+             "When someone says 'it is slow to start' or 'a strange window appeared', this file is "
+             "the place to look. Errors go to <code>error.log</code> in the same folder."),
+          code=["core/boot.py", "app.py: _splash()"]),
 
     Topic("extrap", "It says \"outside measured range\"", tags="extrapolation outside range warning",
           body=_p("The model learned <b>the range you actually measured.</b> Where the "
@@ -353,9 +454,18 @@ TOPICS: list[Topic] = [
               ["<b>the gate verdict</b>", "<b>validated</b>",
                "the same yardstick applied to four datasets (one lab, three public) "
                "reproduced the original analysis' split"],
-              ["single recommendations (EI · GP)", "within the original study's scope",
-               "the global optimum was actually measured within a 40-run budget "
-               "69–93% of the time"],
+              ["<b>single recommendations (EI · GP)</b>", "<b>validated</b>",
+               "the global-optimum hit rate within a 40-run budget was actually measured on "
+               "8 standard test functions × 10 seeds "
+               f"(multimodal average {_pct(BENCH_CLAIMS['multimodal_hit'])}). The result file "
+               "ships in the repo, and a test checks the numbers on screen against it"],
+              ["<b>four global-search alternatives</b>", "<b>no gain, confirmed</b>",
+               "MES · exploration mixing · GP-UCB · Thompson compared under the same conditions. "
+               "None beat EI on the multimodal functions, so none went on screen "
+               "(see «Which of the three methods»)"],
+              ["<b>sum constraint · grid candidates</b>", "<b>validated</b>",
+               "tests check that initial designs and recommendations land only on the "
+               "constraint plane and on the grid"],
               ["batch recommendations", "<b>not validated</b>",
                "only checked that distinct points come out. Whether batches beat "
                "sequential picking was never measured"],
@@ -372,8 +482,8 @@ TOPICS: list[Topic] = [
              "D = 1.03 [0.49, 1.80], noise share 95%) are that study's published "
              "aggregates.") +
           "<h3>Held in place by machines</h3>" +
-          _p("The test suite re-verifies these values on every run. Change the "
-             "calculation and the tests break — that is the tripwire.",
+          _p(f"The test suite — <b>{TEST_COUNT} tests</b> — re-verifies these values on every "
+             "run. Change the calculation and the tests break — that is the tripwire.",
              "The Windows executable is only built <b>after the tests pass</b>. "
              "A program that misjudges must never get packaged.") +
           "<h3>What honestly was not done</h3>" +
@@ -382,8 +492,10 @@ TOPICS: list[Topic] = [
               "Of the four gate thresholds, only <b>R² > 0</b> has a hard basis. "
               "The discriminability 1.0 is borrowed from other fields, so it is "
               "safest in \"A vs B\" comparisons",
+              "The global-search benchmark uses <b>synthetic test functions</b>, not real device terrain",
               "The stopping-rule history resets when the program restarts"),
-          code=["docs/ARCHITECTURE.md", "tests/test_diagnostics.py", "tests/data/verify_terrain.json"]),
+          code=["docs/ARCHITECTURE.md", "tests/test_diagnostics.py", "tests/data/verify_terrain.json",
+                "docs/bench_global.json"]),
 
     Topic("trust", "Can I trust these numbers", tags="validation trust evidence tests reproduce",
           body="<h3>Three ways to check</h3>" +
@@ -398,7 +510,7 @@ TOPICS: list[Topic] = [
           "<h3>Machine-checked</h3>" +
           _p("The computation core is pinned by tests that reproduce the original "
              "validation scripts' values to within 1e-3 (the external datasets' "
-             "D values and terrain statistics among them).",
+             f"D values and terrain statistics among them). {TEST_COUNT} tests in all.",
              "So <b>changing the calculation breaks the tests.</b> That is the tripwire."),
           code=["tests/test_diagnostics.py", "tests/data/verify_terrain.json"]),
 
@@ -421,7 +533,14 @@ TOPICS: list[Topic] = [
           body=_p("<b>Explicitly out of scope.</b> Not for lack of ability — half-built "
                   "features with no explanation are more dangerous than absent ones.") +
           _ul("<b>Multi-objective optimization (Pareto)</b> — more than one response",
-              "<b>Constraints</b> — e.g. compositions summing to 100%. <b>First on the roadmap</b>",
+              "<b>Constraints other than one sum</b> — only <b>a single linear sum constraint</b> "
+              "(e.g. composition = 100%) is supported. Inequalities between variables such as "
+              "'A &gt; B', nonlinear constraints and two or more constraints are not",
+              "<b>Population methods — genetic algorithms · PSO · CMA-ES</b> — each generation needs "
+              "dozens of runs, so a budget of a few dozen runs affords one or two generations "
+              "(effectively random search). Global search is done by the space-filling initial "
+              "design and the multi-start acquisition maximisation — see «Which of the three "
+              "methods» for the results on 8 test functions",
               "<b>Multi-fidelity</b> — mixing coarse and precise computations",
               "<b>Instrument control / automated measurement</b> — a person measures and types the value",
               "<b>Cloud sync · multiple users</b>") +

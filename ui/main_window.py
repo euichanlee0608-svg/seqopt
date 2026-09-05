@@ -408,7 +408,7 @@ class MainWindow(QMainWindow):
         if d is None or self.dataset is None:
             return
         r2 = self.tab_diag.loocv.r2 if self.tab_diag.loocv else None
-        self.gate = gate(self.dataset.n_conditions, self.project.budget_total,
+        self.gate = gate(self.project.n_candidates(), self.project.budget_total,
                          r2, d, self.dataset.frac_with_reps)
         self.tab_diag.refresh(self.dataset, self.gate)
         self._set_badges(self.gate)
@@ -459,7 +459,7 @@ class MainWindow(QMainWindow):
             self.badges.setText("requirements —")
             return
         parts = []
-        for label, state in (("①conditions", g.cond_count), ("②learnability", g.learnable),
+        for label, state in (("①candidates", g.cond_count), ("②learnability", g.learnable),
                              ("③discriminability", g.discrim), ("④replicates", g.replicates)):
             colour = theme.STATE_COLOR.get(state, theme.TEXT_FAINT)
             parts.append(f"<span style='color:{colour}; font-weight:600'>"

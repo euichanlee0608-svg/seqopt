@@ -12,11 +12,13 @@ import csv
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox,
                                QFileDialog, QFormLayout, QFrame, QHBoxLayout, QHeaderView,
-                               QLabel, QLineEdit, QMessageBox, QPushButton, QScrollArea,
-                               QSpinBox, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
+                               QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
+                               QPushButton, QScrollArea, QSpinBox, QTableWidget,
+                               QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.design import initial_design, suggest_initial_size
-from core.spec import ObjSpec, VarSpec, suggest_log_transform
+from core.spec import (ObjSpec, SumConstraint, VarSpec, candidate_summary, count_candidates,
+                       suggest_log_transform)
 from . import theme
 from .widgets.advanced import Advanced
 from .widgets.section import PageHeader, Section
@@ -78,20 +80,24 @@ class SetupTab(QWidget):
         self.empty_hint.setStyleSheet(theme.card("info"))
         gin.add(self.empty_hint)
 
-        self.vars = QTableWidget(0, 5)
-        self.vars.setHorizontalHeaderLabels(["name", "unit", "type", "min", "max"])
+        self.vars = QTableWidget(0, 6)
+        self.vars.setHorizontalHeaderLabels(["name", "unit", "type", "min", "max", "step"])
         for col, tip in enumerate([
                 "Variable name. Tables, figures and reports use this name.",
                 "Unit. May be left empty.",
                 "continuous = any value · integer = 3, 4, 5… · categorical = a fixed set",
                 "The smallest value this knob can be set to",
-                "The largest value this knob can be set to"]):
+                "The largest value this knob can be set to",
+                "The spacing the instrument can actually be set to (continuous only). "
+                "e.g. 10 if the power supply only moves in 10 W steps.\n"
+                "Leave it empty and any value can be chosen (infinitely many candidates).\n"
+                "Requirement ① compares the candidate count on this grid with the budget."]):
             it = self.vars.horizontalHeaderItem(col)
             if it is not None:
                 it.setToolTip(tip)
         head = self.vars.horizontalHeader()
         head.setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in range(1, 5):
+        for c in range(1, 6):
             head.setSectionResizeMode(c, QHeaderView.ResizeToContents)
         head.setMinimumSectionSize(84)
         # a cramped row clips the text inside cell editors
@@ -120,7 +126,52 @@ class SetupTab(QWidget):
         row.addWidget(self.autofill)
         row.addWidget(self.var_msg, 1)
         gin.add_layout(row)
+        # candidate count — shown right where requirement ①'s input is defined
+        self.cand_hint = QLabel()
+        self.cand_hint.setWordWrap(True)
+        self.cand_hint.setStyleSheet(theme.muted())
+        gin.add(self.cand_hint)
         left.addWidget(gin)
+
+        # ── sum constraint ─────────────────────────────────────────
+        gcon = Section("Sum constraint — variables with a fixed total (optional)",
+                       "Turn on when a few variables must add up to a fixed total, as a "
+                       "composition does. The initial design, the candidates and the "
+                       "recommendations all stay inside it.")
+        self.con_on = QCheckBox("Use a sum constraint")
+        self.con_on.setToolTip("e.g. A + B + C = 100 (%)  ·  additive1 + additive2 ≤ 5 (wt%)")
+        self.con_on.toggled.connect(self._on_constraint_toggled)
+        gcon.add(self.con_on)
+        self.con_body = QWidget()
+        cb = QVBoxLayout(self.con_body)
+        cb.setContentsMargins(0, 0, 0, 0)
+        cb.setSpacing(8)
+        cb.addWidget(QLabel("Variables in the sum (2 or more)"))
+        self.con_vars = QListWidget()
+        self.con_vars.setToolTip("The constraint applies to the sum of the checked variables. "
+                                 "Categorical variables cannot take part.")
+        self.con_vars.setMaximumHeight(theme.ROW_HEIGHT * 4)
+        self.con_vars.itemChanged.connect(self._push)
+        cb.addWidget(self.con_vars)
+        row_c = QHBoxLayout()
+        row_c.addWidget(QLabel("The sum is"))
+        self.con_kind = QComboBox()
+        self.con_kind.addItem("= exactly", "eq")
+        self.con_kind.addItem("≤ at most", "le")
+        self.con_kind.currentIndexChanged.connect(self._push)
+        row_c.addWidget(self.con_kind)
+        self.con_total = QDoubleSpinBox(minimum=-1e9, maximum=1e9, decimals=4, value=100.0)
+        self.con_total.setToolTip("The total. For a composition, 100 (%) or 1.")
+        self.con_total.valueChanged.connect(self._push)
+        row_c.addWidget(self.con_total)
+        row_c.addStretch(1)
+        cb.addLayout(row_c)
+        self.con_msg = QLabel()
+        self.con_msg.setWordWrap(True)
+        cb.addWidget(self.con_msg)
+        self.con_body.setVisible(False)
+        gcon.add(self.con_body)
+        left.addWidget(gcon)
         left.addStretch(1)
 
         # ── objective ──────────────────────────────────────────────
@@ -216,6 +267,13 @@ class SetupTab(QWidget):
         self.empty_hint.setVisible(not p.inputs)
         self.vars.setVisible(bool(p.inputs))
         self._fit_vars()
+        c = p.constraint
+        self.con_on.setChecked(c is not None)
+        self.con_body.setVisible(c is not None)
+        if c is not None:
+            self.con_kind.setCurrentIndex(0 if c.kind == "eq" else 1)
+            self.con_total.setValue(c.total)
+        self._sync_constraint_vars(p.inputs, set(c.names) if c else set())
         self._loading = False
         self._update_hint()
         self._update_log_hint()
@@ -232,6 +290,43 @@ class SetupTab(QWidget):
         self.vars.setCellWidget(i, 2, cb)
         self.vars.setItem(i, 3, QTableWidgetItem("" if v.lo is None else f"{v.lo:g}"))
         self.vars.setItem(i, 4, QTableWidgetItem("" if v.hi is None else f"{v.hi:g}"))
+        self.vars.setItem(i, 5, QTableWidgetItem("" if v.step is None else f"{v.step:g}"))
+
+    def _sync_constraint_vars(self, inputs: list[VarSpec], checked: set[str]) -> None:
+        """Rebuild the constraint's variable list from the current names (checks carry over by name)."""
+        was = self._loading
+        self._loading = True
+        self.con_vars.clear()
+        for v in inputs:
+            it = QListWidgetItem(f"{v.name} ({v.unit})" if v.unit else v.name)
+            it.setData(Qt.UserRole, v.name)
+            it.setFlags(it.flags() | Qt.ItemIsUserCheckable)
+            it.setCheckState(Qt.Checked if v.name in checked else Qt.Unchecked)
+            self.con_vars.addItem(it)
+        self._loading = was
+
+    def _checked_constraint_names(self) -> tuple[str, ...]:
+        return tuple(self.con_vars.item(i).data(Qt.UserRole)
+                     for i in range(self.con_vars.count())
+                     if self.con_vars.item(i).checkState() == Qt.Checked)
+
+    def _on_constraint_toggled(self, on: bool) -> None:
+        self.con_body.setVisible(on)
+        self._push()
+
+    def collect_constraint(self, inputs: list[VarSpec]) -> tuple[SumConstraint | None, str]:
+        """Screen → sum constraint. The second return value is the error message (empty = fine)."""
+        if not self.con_on.isChecked():
+            return None, ""
+        names = self._checked_constraint_names()
+        if len(names) < 2:
+            return None, "check at least 2 variables to put in the sum"
+        try:
+            c = SumConstraint(names, self.con_total.value(), self.con_kind.currentData())
+            c.validate(inputs)
+        except ValueError as e:
+            return None, str(e)
+        return c, ""
 
     def _autofill_ranges(self) -> None:
         """Fill ranges from the measurements' min/max. No margin is added —
@@ -285,6 +380,10 @@ class SetupTab(QWidget):
                 errs.append(f"row {i + 1}: the name is empty")
                 continue
             names.append(name)
+            if vtype == "categorical":          # there is no level editor yet
+                errs.append(f"{name}: categorical variables cannot be built on this screen yet "
+                            "— use continuous or integer")
+                continue
             try:
                 lo, hi = float(lo_s), float(hi_s)
             except ValueError:
@@ -293,7 +392,18 @@ class SetupTab(QWidget):
             if not lo < hi:
                 errs.append(f"{name}: min ({lo:g}) must be < max ({hi:g})")
                 continue
-            out.append(VarSpec(name, unit, vtype, lo, hi))
+            step_s = (self.vars.item(i, 5).text() if self.vars.item(i, 5) else "").strip()
+            step = None
+            if step_s and vtype == "continuous":
+                try:
+                    step = float(step_s)
+                except ValueError:
+                    errs.append(f"{name}: the step is not a number")
+                    continue
+            try:
+                out.append(VarSpec(name, unit, vtype, lo, hi, step=step))
+            except ValueError as e:
+                errs.append(str(e))
         dup = {n for n in names if names.count(n) > 1}
         if dup:
             errs.append(f"duplicate names: {', '.join(sorted(dup))}")
@@ -315,12 +425,56 @@ class SetupTab(QWidget):
         inputs, _ = self.collect()
         if inputs:
             p.inputs = inputs
+        if [v.name for v in p.inputs] != [self.con_vars.item(i).data(Qt.UserRole)
+                                          for i in range(self.con_vars.count())]:
+            self._sync_constraint_vars(p.inputs, set(self._checked_constraint_names()))
+        p.constraint, _ = self.collect_constraint(p.inputs)
         self._validate()
         self.changed.emit()
 
     def _validate(self) -> None:
-        _, errs = self.collect()
+        inputs, errs = self.collect()
         self.var_msg.setText("  ·  ".join(errs))
+        constraint, cerr = self.collect_constraint(inputs)
+        self.con_msg.setStyleSheet(f"color:{theme.FAIL};" if cerr else theme.muted())
+        self.con_msg.setText(cerr or (self._constraint_status(constraint, inputs) if constraint else ""))
+        self._update_candidates(inputs, constraint if not cerr else None)
+
+    def _constraint_status(self, c: SumConstraint, inputs: list[VarSpec]) -> str:
+        """The constraint as a sentence — plus a warning if measured rows already violate it."""
+        txt = f"constraint: <b>{c.describe()}</b>"
+        rows = [m for m in self.project.measurements
+                if not m.get("excluded") and not m.get("pending")]
+        try:
+            bad = sum(1 for m in rows if not c.satisfied(m["inputs"], inputs))
+        except (ValueError, IndexError, TypeError):
+            bad = 0
+        if bad:
+            txt += (f"<br><span style='color:{theme.WARN};'>{bad} measured rows already violate "
+                    "this constraint — check that the constraint, and the values, are right.</span>")
+        return txt
+
+    def _update_candidates(self, inputs: list[VarSpec], constraint: SumConstraint | None) -> None:
+        """The input to requirement ① — how many conditions there are to choose from, next to the budget."""
+        if not inputs:
+            self.cand_hint.setText("")
+            return
+        budget = self.budget.value()
+        try:
+            n = count_candidates(inputs, constraint)
+            where = candidate_summary(inputs, constraint)
+        except ValueError:
+            self.cand_hint.setText("")
+            return
+        if n is not None and n <= budget:
+            self.cand_hint.setStyleSheet(f"color:{theme.FAIL};")
+            self.cand_hint.setText(
+                f"{where} ≤ budget {budget} — <b>requirement ① unmet</b>: measuring everything "
+                "is better. A finer step or a wider range gives more candidates.")
+        else:
+            self.cand_hint.setStyleSheet(theme.muted())
+            self.cand_hint.setText(f"{where} — more than the budget of {budget}, "
+                                   "so requirement ① passes.")
 
     def _on_budget(self) -> None:
         # Changing the budget moves the initial size to its recommended value —
@@ -364,8 +518,12 @@ class SetupTab(QWidget):
         if errs:
             QMessageBox.warning(self, "Finish the variable definitions first", "\n".join(errs))
             return
+        constraint, cerr = self.collect_constraint(inputs)
+        if cerr:
+            QMessageBox.warning(self, "Finish the sum constraint first", cerr)
+            return
         k = self.init_n.value()
-        X = initial_design(k, inputs, seed=0)
+        X = initial_design(k, inputs, seed=0, constraint=constraint)
         fn, _ = QFileDialog.getSaveFileName(self, "Export initial design",
                                             "initial_design.csv", "CSV (*.csv)")
         if not fn:
