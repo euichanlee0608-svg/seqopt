@@ -37,8 +37,24 @@ def _pin_matplotlib_cache() -> None:
 
 _pin_matplotlib_cache()
 
+# Startup log + child-process window hiding. Must be switched on **before numpy and
+# scikit-learn** — they spawn cmd/powershell while being imported, and in a program
+# without a window those flash as console windows (see the core/boot.py header).
+# The log is ~/.seqopt/seqopt.log.
+from core import boot  # noqa: E402  (a standard-library-only module)
+
+boot.start()
+boot.mark("font cache location pinned")
+boot.hide_child_windows()
+
 
 LOG_DIR = Path.home() / ".seqopt"
+SHOTS_TIMEOUT = 300            # a capture (SEQOPT_SHOTS) that cannot finish within this kills itself (seconds)
+
+
+def _headless() -> bool:
+    """Launched by a CI hook? Then nobody is there — no dialogs (nobody can click, so it would wait forever)."""
+    return bool(os.environ.get("SEQOPT_SHOTS") or os.environ.get("SEQOPT_EXIT_AFTER_SHOW"))
 
 
 def _install_crash_log() -> Path:
@@ -60,9 +76,10 @@ def _install_crash_log() -> Path:
                         f"python {sys.version.split()[0]}\n{text}")
         except OSError:
             pass
+        boot.mark(f"error {exc_type.__name__}: {exc} → {log}")
         try:
             from PySide6.QtWidgets import QApplication, QMessageBox
-            if QApplication.instance() is not None:
+            if QApplication.instance() is not None and not _headless():
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Critical)
                 box.setWindowTitle("Something went wrong")
@@ -91,19 +108,19 @@ def selftest() -> int:
     check is a check nobody runs in the build pipeline.
     """
     from core.project import Project
-    from ui.start_screen import EXAMPLE_DIR
+    from ui.start_screen import EXAMPLE_DIR, EXAMPLES, example_files
 
     problems: list[str] = []
 
-    examples = sorted(EXAMPLE_DIR.glob("*.seqopt")) if EXAMPLE_DIR.is_dir() else []
-    if not examples:
-        problems.append(f"no example project found ({EXAMPLE_DIR})")
-    else:
+    examples = example_files()
+    if len(examples) < len(EXAMPLES):
+        problems.append(f"an example project is missing ({EXAMPLE_DIR}: {[p.name for p in examples]})")
+    for path in examples:
         try:
-            if Project.load(str(examples[0])).dataset().n_conditions < 2:
-                problems.append("the example opened but has too few conditions")
+            if Project.load(str(path)).dataset().n_conditions < 2:
+                problems.append(f"the example opened but has too few conditions: {path.name}")
         except Exception as e:                   # noqa: BLE001
-            problems.append(f"could not open the example: {e}")
+            problems.append(f"could not open the example: {path.name}: {e}")
 
     # The math bundle (numpy · scipy · scikit-learn) must actually run —
     # importing is not enough. sklearn opens its OpenMP DLL via ctypes at
@@ -133,7 +150,71 @@ def selftest() -> int:
     return 1 if problems else 0
 
 
+def _splash(app):
+    """A small card shown while opening — one line saying what is happening right now.
+
+    This is what we show instead of a black terminal window. Opening takes 3–8 seconds,
+    and if nothing is visible for that long, people double-click again and get two copies.
+    """
+    from PySide6.QtCore import QRect, Qt
+    from PySide6.QtGui import QColor, QFont, QPainter, QPixmap
+    from PySide6.QtWidgets import QSplashScreen
+
+    from ui import theme
+    from ui.resources import icon_path
+
+    w, h = 440, 190
+    pm = QPixmap(w, h)
+    pm.fill(QColor(theme.BG))
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.Antialiasing)
+    p.setPen(QColor(theme.BORDER))
+    p.drawRect(0, 0, w - 1, h - 1)
+    icon = QPixmap(str(icon_path()))
+    if not icon.isNull():
+        p.drawPixmap(28, 34, icon.scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+    family = theme.pick_font_family() or app.font().family()
+    p.setPen(QColor(theme.TEXT))
+    title = QFont(family, -1, QFont.DemiBold)
+    title.setPixelSize(theme.H1 + 6)
+    p.setFont(title)
+    p.drawText(QRect(112, 36, w - 130, 36), Qt.AlignLeft | Qt.AlignVCenter, "seqopt")
+    body = QFont(family)
+    body.setPixelSize(theme.FONT_SIZE)
+    p.setFont(body)
+    p.setPen(QColor(theme.TEXT_MUTED))
+    p.drawText(QRect(112, 72, w - 130, 24), Qt.AlignLeft | Qt.AlignVCenter,
+               "Sequential optimization — requirements first")
+    p.end()
+
+    splash = QSplashScreen(pm, Qt.WindowStaysOnTopHint)
+    splash.setFont(body)
+
+    def say(msg: str) -> None:
+        boot.mark(msg)
+        splash.showMessage(f"   {msg}", Qt.AlignBottom | Qt.AlignLeft, QColor(theme.TEXT_MUTED))
+        app.processEvents()
+
+    splash.show()
+    say("Opening…")
+    return splash, say
+
+
+def _tolerant_stdout() -> None:
+    """Windows consoles and pipes are cp1252/cp949 — printing '→' or non-Latin text dies with UnicodeEncodeError.
+
+    On 2026-09-05 the CI capture finished completely, then died on its very last print and
+    stood for 16 minutes with an error dialog open. Characters that cannot be written become
+    ? and we move on. A GUI build may have no stdout at all (None).
+    """
+    try:
+        sys.stdout.reconfigure(errors="replace")
+    except (AttributeError, ValueError):
+        pass
+
+
 def main() -> int:
+    _tolerant_stdout()
     if "--selftest" in sys.argv:
         return selftest()
 
@@ -143,10 +224,7 @@ def main() -> int:
     from PySide6.QtGui import QGuiApplication, QIcon
     from PySide6.QtWidgets import QApplication
 
-    from core.project import Project
-    from ui import theme
-    from ui.main_window import MainWindow
-    from ui.resources import icon_path
+    boot.mark("GUI engine (PySide6) loaded")
 
     # Keep text sharp at Windows 125%/150% scaling — pass the factor through
     # instead of rounding it
@@ -162,23 +240,63 @@ def main() -> int:
 
     app = QApplication(sys.argv)
     app.setApplicationName("seqopt")
+    from ui import theme
+    from ui.resources import icon_path
     app.setWindowIcon(QIcon(str(icon_path())))
     theme.apply(app)
+    splash, say = _splash(app)
+
+    # From here on it gets heavy. Every stage goes on the card and into the log.
+    say("Loading the math engine… (numpy · scipy · scikit-learn)")
+    from core.project import Project
+    import core.diagnostics  # noqa: F401  — this is where scikit-learn comes up (2–3 seconds)
+    say("Building the screens…")
+    from ui.main_window import MainWindow
 
     project = None
     if len(sys.argv) > 1 and sys.argv[1].endswith(".seqopt"):
+        say("Opening the project…")
         project = Project.load(sys.argv[1])
 
     win = MainWindow(project)
     if project is not None:
         win.shell.setCurrentIndex(1)      # opened with a file → jump straight to the workspace
     win.show()
+    splash.finish(win)
+    boot.mark(f"window shown ({len(boot.hidden_spawns())} child processes hidden)")
 
     if os.environ.get("SEQOPT_EXIT_AFTER_SHOW"):
         # Hook for the build pipeline to time "seconds until the window shows".
         # A live process and a visible window are different things — this
         # exists to measure that difference.
         app.processEvents()
+        return 0
+
+    shots = os.environ.get("SEQOPT_SHOTS")
+    if shots:
+        # CI's Windows runner drives the shipped exe to capture every tab of every example
+        # (ui/shots.py). Only after a person has looked at those images can anyone say
+        # "it looks right on Windows". If this stalls somewhere, CI waits forever — so once
+        # the watchdog runs out, we write a log line and kill ourselves.
+        import threading
+        from ui.shots import capture_examples
+
+        def give_up() -> None:
+            boot.mark(f"capture did not finish within {SHOTS_TIMEOUT} s — forcing exit "
+                      "(the last line above is where it stalled)")
+            os._exit(3)
+
+        watchdog = threading.Timer(SHOTS_TIMEOUT, give_up)
+        watchdog.daemon = True
+        watchdog.start()
+        try:
+            files = capture_examples(app, win, Path(shots))
+        except Exception:                                 # noqa: BLE001
+            import traceback
+            boot.mark("capture failed\n" + traceback.format_exc())
+            return 2
+        boot.mark(f"captured {len(files)} screens → {shots} — exiting")
+        print(f"seqopt shots: {len(files)} -> {shots}", flush=True)
         return 0
 
     return app.exec()
