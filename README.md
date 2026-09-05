@@ -31,7 +31,7 @@ deferred, not deleted.
 
 | | gate | what it checks | when it fails |
 |---|---|---|---|
-| ① | condition count | more candidates than budget? | measuring everything is better |
+| ① | candidate count | does the declared design space (ranges × grid steps) hold more candidates than the budget? | measuring everything is better |
 | ② | surface learnability | is the model learning (LOOCV R² > 0)? | changing the model will not help |
 | ③ | discriminability | do condition differences exceed the measurement wobble? | raise the replicates |
 | ④ | replicates | has any condition been re-measured? | the wobble itself is unknowable |
@@ -60,8 +60,14 @@ suggestion fields at all** — there is nothing for a screen to misuse.
 > anyway** — it appears because the binary is unsigned.
 
 Something still wrong? Run `seqopt.exe --selftest` from a command prompt: it
-says what is missing and writes `selftest.txt` next to the exe. Crashes are
-logged with full detail to `%USERPROFILE%\.seqopt\error.log`.
+says what is missing and writes `selftest.txt` next to the exe. Startup is
+logged stage by stage to `%USERPROFILE%\.seqopt\seqopt.log` (a splash card
+shows the same stages while the heavy libraries load), and crashes are logged
+with full detail to `%USERPROFILE%\.seqopt\error.log`.
+
+Want to see the program before downloading it? The same CI run also uploads
+**`seqopt-windows-shots`** — a screenshot of every tab of every bundled
+example, taken on the runner's real Windows display after the build.
 
 ### Build it yourself on Windows
 
@@ -90,18 +96,23 @@ For a bundled app: `packaging/build_macos.sh` → `dist/seqopt.app`
 
 ## First launch
 
-Open the bundled example — **P3HT:CNT conductivity**, 48 conditions of real
-published thin-film measurements (*Adv. Funct. Mater.* 2021, public dataset).
-It passes all four gates, so you can watch a recommendation actually come out;
-delete rows or replicates on the Data tab and watch the gate lock.
+Two examples ship with the program:
+
+- **Synthetic annealing (crystallinity)** — simulated data, 42 runs on a
+  temperature × time grid (252 candidate conditions, budget 60). It passes all
+  four gates, so you can see what a recommendation looks like and why; the true
+  optimum is 290 °C / 40 min, and that is what comes out.
+- **P3HT:CNT conductivity** — 48 conditions of real published thin-film
+  measurements (*Adv. Funct. Mater.* 2021, public dataset). Delete rows or
+  replicates on the Data tab and watch the gate lock.
 
 | tab | what it does |
 |---|---|
-| 1 Setup | define the knobs (inputs), the objective, and the budget |
+| 1 Setup | define the knobs (inputs) with the grid step the instrument can actually be set to, an optional sum constraint (e.g. fractions adding up to 100 %), the objective, and the budget |
 | 2 Data | import from Excel/CSV, paste, or type; Ctrl+Z undo |
 | 3 **Diagnose** | **the heart of the tool** — the four-gate verdict, with every calculation unfolded |
 | 4 Model | response surface · uncertainty · EI · sensitivity |
-| 5 Recommend | the next condition(s), locked until the gates pass |
+| 5 Recommend | the next condition(s) on the declared grid and inside the constraint, locked until the gates pass |
 | 6 Report | PDF · calculation log · a script that reproduces every number |
 | ? Help | searchable answers, each backed by a code reference |
 
@@ -129,6 +140,16 @@ class ProbabilityOfImprovement:
 
 **The gate is not a plugin.** Refusing to optimize on data that cannot support
 it is this tool's reason to exist (see `docs/ARCHITECTURE.md`).
+
+**Why only EI · UCB · Thompson on screen.** Four global-search alternatives
+(max-value entropy search, EI with exploration mixing, a GP-UCB schedule, a
+Thompson variant) were benchmarked against them on 8 test functions × 10
+seeds under a rule fixed before measuring — ship a candidate only if it beats
+EI on multimodal functions without losing on unimodal ones. None did. The
+numbers are in `docs/bench_global.json`, the write-up in
+`docs/GLOBAL_SEARCH.md`, the candidates in `packaging/bench_global.py`, and
+`tests/test_global.py` fails the day a candidate does beat EI — that is the
+signal to promote it.
 
 ```bash
 .venv/bin/python -m pytest tests -q

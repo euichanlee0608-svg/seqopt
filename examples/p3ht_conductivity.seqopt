@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "name": "Example — P3HT:CNT conductivity",
- "created": "2026-09-04T20:12:26+09:00",
+ "created": "2026-09-05T11:14:33+09:00",
  "objective": {
   "name": "Conductivity",
   "unit": "S/cm",
@@ -15,7 +15,8 @@
    "type": "continuous",
    "min": 15.0,
    "max": 95.0,
-   "levels": []
+   "levels": [],
+   "step": null
   },
   {
    "name": "D1 content",
@@ -23,7 +24,8 @@
    "type": "continuous",
    "min": 0.0,
    "max": 60.0,
-   "levels": []
+   "levels": [],
+   "step": null
   },
   {
    "name": "D2 content",
@@ -31,7 +33,8 @@
    "type": "continuous",
    "min": 0.0,
    "max": 70.0,
-   "levels": []
+   "levels": [],
+   "step": null
   },
   {
    "name": "D6 content",
@@ -39,7 +42,8 @@
    "type": "continuous",
    "min": 0.0,
    "max": 85.0,
-   "levels": []
+   "levels": [],
+   "step": null
   },
   {
    "name": "D8 content",
@@ -47,9 +51,11 @@
    "type": "continuous",
    "min": 0.0,
    "max": 75.0,
-   "levels": []
+   "levels": [],
+   "step": null
   }
  ],
+ "constraint": null,
  "budget": {
   "total": 40,
   "used": 69,

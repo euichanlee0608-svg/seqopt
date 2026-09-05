@@ -10,8 +10,9 @@ Why a subset and not all 178 conditions: the learnability check (LOOCV) refits
 one GP per condition, so the full dataset takes ~40 s in the background. The
 example must show the gate passing within seconds of being opened. The subset
 keeps the first N_CONDITIONS conditions in file order, replicates included —
-enough to clear gate ① (candidates > budget) and to stay learnable (R² > 0,
-verified when this script runs).
+enough to stay learnable (R² > 0, verified when this script runs). Gate ① looks
+at the declared design space, not at the subset: the inputs carry no grid step,
+so the candidate count is unbounded and ① passes whatever the budget.
 
 Data: Langner et al., Adv. Funct. Mater. 31, 2102606 (2021), via the public
 repository github.com/PV-Lab/Benchmarking (tests/data/p3ht.csv).
@@ -79,10 +80,11 @@ def main() -> None:
     ds = project.dataset()
     d = discriminability(ds.reps)
     r = loocv_r2(ds.XN, ds.y_mean)
-    g = gate(ds.n_conditions, BUDGET, r.r2, d, ds.frac_with_reps)
+    n_cand = project.n_candidates()
+    g = gate(n_cand, BUDGET, r.r2, d, ds.frac_with_reps)
     print(f"conditions={ds.n_conditions}  measurements={ds.n_measurements}  "
           f"D={d.D[1]:.2f} [{d.ci_lo:.2f},{d.ci_hi:.2f}]  R²={r.r2:+.3f}  locked={g.locked}")
-    assert ds.n_conditions > BUDGET, "gate ① must pass"
+    assert n_cand is None or n_cand > BUDGET, "gate ① must pass"
     assert r.r2 > 0, "the example must be learnable"
     assert not g.locked, "the example must open the gate"
 

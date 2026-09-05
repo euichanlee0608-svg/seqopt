@@ -36,7 +36,7 @@ EXAMPLES = (
     ("synthetic_annealing.seqopt", "Open an example  —  Synthetic annealing (crystallinity)",
      "Simulated data, 42 runs (temperature × time). This one <b>passes all four requirements "
      "and yields a recommendation</b>, so you can see what the next condition looks like and why."),
-    ("p3ht_conductivity.seqopt", "Open the example  —  P3HT:CNT conductivity",
+    ("p3ht_conductivity.seqopt", "Open an example  —  P3HT:CNT conductivity",
      "Real published measurements of a thin-film composite "
      "(<i>Adv. Funct. Mater.</i> 2021, public dataset). Watch the gate "
      "pass and a recommendation come out — or lock, once you thin the data."),

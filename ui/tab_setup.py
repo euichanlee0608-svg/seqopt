@@ -100,6 +100,9 @@ class SetupTab(QWidget):
         for c in range(1, 6):
             head.setSectionResizeMode(c, QHeaderView.ResizeToContents)
         head.setMinimumSectionSize(84)
+        # ResizeToContents measures the header, not the combo inside the cell — "categorical" needs more
+        head.setSectionResizeMode(2, QHeaderView.Fixed)
+        self.vars.setColumnWidth(2, 118)
         # a cramped row clips the text inside cell editors
         self.vars.verticalHeader().setDefaultSectionSize(theme.ROW_HEIGHT)
         self.vars.verticalHeader().setVisible(False)

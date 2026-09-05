@@ -24,7 +24,7 @@ from core.acquisition import BENCH_CLAIMS
 from . import theme
 from .widgets.section import PageHeader
 
-TEST_COUNT = 174      # number of tests under tests/ — tests/test_help.py checks it against the real collected count
+TEST_COUNT = 227      # number of tests under tests/ — tests/test_help.py checks it against the real collected count
 
 
 @dataclass
