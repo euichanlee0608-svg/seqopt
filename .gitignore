@@ -20,3 +20,6 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Review captures — re-shot every time (only the explainer figures in docs/figures are committed)
+docs/review_shots/

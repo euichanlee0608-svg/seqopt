@@ -105,6 +105,62 @@ jobs:
           }
         shell: pwsh
 
+      - name: Were child-process windows hidden? (boot log)
+        # Several black console windows used to flash at startup (core/boot.py). The cause is the
+        # cmd/powershell that numpy and scikit-learn spawn while being imported. The startup log
+        # left by the run above shows whether those children were caught on the 'hidden' side.
+        # Nobody can look at the screen here, so the log is the evidence.
+        run: |
+          $log = "$env:USERPROFILE\.seqopt\seqopt.log"
+          if (-not (Test-Path $log)) { Write-Error "No startup log: $log"; exit 1 }
+          $text = Get-Content $log -Raw -Encoding UTF8
+          Write-Host $text
+          if ($text -notmatch "window shown") { Write-Error "The startup log has no 'window shown'"; exit 1 }
+          if ($text -match "could not hide child process") {
+            Write-Error "A child process could not be hidden — a console window flashes"; exit 1
+          }
+          if ($text -notmatch "child-process window hiding on") {
+            Write-Error "Window hiding was not switched on"; exit 1
+          }
+          $n = ([regex]::Matches($text, "hidden child process:")).Count
+          Write-Host "$n child processes hidden (0 means this Python/joblib version spawns none)"
+        shell: pwsh
+
+      - name: Capture every tab of every example (real display)
+        # How the shipped exe actually looks on a real Windows display — fonts, scaling and
+        # plugins cannot be seen offscreen. The result is uploaded as the artifact
+        # seqopt-windows-shots, and a person looks at it.
+        # The exe kills itself if it cannot finish within 5 minutes (app.py SHOTS_TIMEOUT).
+        # The limit here is the safety net behind that.
+        timeout-minutes: 10
+        env:
+          SEQOPT_SHOTS: ${{ github.workspace }}\shots
+        run: |
+          $p = Start-Process -FilePath dist\seqopt\seqopt.exe -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { Write-Error "Capture run failed (exit code $($p.ExitCode))"; exit 1 }
+          $pngs = Get-ChildItem -Path shots -Recurse -Filter *.png
+          Write-Host "$($pngs.Count) screens captured"
+          Get-Content shots\index.txt -Encoding UTF8
+          if ($pngs.Count -lt 19) { Write-Error "Too few screens captured (19 expected)"; exit 1 }
+          foreach ($f in $pngs) { if ($f.Length -lt 10000) { Write-Error "Empty image: $($f.FullName)"; exit 1 } }
+        shell: pwsh
+
+      - name: Capture log (even on failure — where did it stop)
+        if: always()
+        run: |
+          $log = "$env:USERPROFILE\.seqopt\seqopt.log"
+          if (Test-Path $log) { Get-Content $log -Encoding UTF8 | Select-Object -Last 60 }
+          $err = "$env:USERPROFILE\.seqopt\error.log"
+          if (Test-Path $err) { Write-Host "--- error.log ---"; Get-Content $err -Encoding UTF8 | Select-Object -Last 80 }
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: seqopt-windows-shots
+          path: shots/
+          retention-days: 90
+
       - uses: actions/upload-artifact@v4
         with:
           name: seqopt-windows
