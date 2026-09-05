@@ -63,6 +63,27 @@ class GaussianProcessSurrogate:
         return mean, std
 
     def sample(self, X: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+        """Draw one function from the posterior — by Cholesky.
+
+        sklearn's `sample_y` goes through numpy `multivariate_normal` (SVD),
+        which took 8 s per draw on a 4000-point candidate pool and made a
+        Thompson recommendation look hung (docs/GLOBAL_SEARCH.md, "Thompson
+        speed-up"). Same distribution, drawn by Cholesky, 40× faster. If the
+        covariance is numerically singular, add a little to the diagonal and
+        retry; if that still fails, fall back to the original path.
+        """
+        mean, cov = self._raw.predict(X, return_cov=True)
+        scale = max(float(np.mean(np.diag(cov))), 1e-12)
+        diag = np.diag_indices_from(cov)
+        added = 0.0
+        for jitter in (0.0, 1e-10, 1e-8, 1e-6):
+            cov[diag] += jitter * scale - added          # a 4000×4000 copy is 128 MB — work in place
+            added = jitter * scale
+            try:
+                L = np.linalg.cholesky(cov)
+            except np.linalg.LinAlgError:
+                continue
+            return mean + L @ rng.standard_normal(len(mean))
         seed = int(rng.integers(2 ** 31))
         return self._raw.sample_y(X, n_samples=1, random_state=seed)[:, 0]
 

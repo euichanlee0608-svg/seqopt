@@ -220,6 +220,33 @@ def test_thompson_is_random_but_finite(toy):
     assert not np.allclose(a, b)               # sampling — different every draw
 
 
+def test_gp_sample_draws_from_the_posterior(toy):
+    """Is the Cholesky draw the same distribution — pointwise mean and std must match predict() (Thompson speed-up)."""
+    XN, y, model = toy
+    grid = np.linspace(0, 1, 25).reshape(-1, 1)
+    draws = np.stack([model.sample(grid, np.random.default_rng(i)) for i in range(600)])
+    mean, std = model.predict(grid)
+    assert np.abs(draws.mean(0) - mean).max() < 0.15 * std.max()
+    ratio = draws.std(0)[std > 1e-6] / std[std > 1e-6]
+    assert 0.8 < ratio.min() and ratio.max() < 1.2
+    assert np.abs(np.diff(draws[0])).max() < 0.5 * np.ptp(draws[0]) + 1e-9   # one draw is smooth
+
+
+def test_gp_sample_is_fast_enough_for_the_candidate_pool(toy):
+    """If one draw over 4000 candidates takes several seconds, a Thompson recommendation looks hung.
+
+    The SVD path (sklearn sample_y) took 8 s, Cholesky 0.3 s. 5 s allows for slow runners.
+    """
+    import time
+
+    XN, y, model = toy
+    pool = np.random.default_rng(0).random((4000, 1))
+    t0 = time.perf_counter()
+    s = model.sample(pool, np.random.default_rng(1))
+    assert time.perf_counter() - t0 < 5.0
+    assert s.shape == (4000,) and np.isfinite(s).all()
+
+
 def test_thompson_refuses_continuous_optimisation(toy):
     XN, y, model = toy
     with pytest.raises(ValueError, match="continuous"):
