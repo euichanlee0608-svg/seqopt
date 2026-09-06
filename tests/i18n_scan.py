@@ -45,7 +45,7 @@ TEXT_CALLS = {
     "set_label", "set_xticklabels", "set_yticklabels", "figtext",
     # reportlab / csv
     "Paragraph", "drawString", "drawCentredString", "drawRightString", "setAuthor", "setSubject",
-    "writerow", "writerows",
+    "writerow", "writerows", "drawText",
 }
 TEXT_KWARGS = {"text", "title", "desc", "summary", "label", "placeholderText", "toolTip", "tooltip",
                "suffix", "prefix", "xlabel", "ylabel", "tags", "headline", "message", "note", "when",
@@ -66,8 +66,8 @@ QUIET_CALLS = {
     "setShortcut", "QKeySequence", "setAccessibleName", "setWindowIconText", "processEvents",
     "setPixelSize", "setPointSize", "addFont", "applicationFontFamilies", "families", "rc",
     "rcParams", "use", "set_cmap", "get_cmap", "colormaps", "set_prop_cycle", "grid", "tick_params",
-    "setDefaultStyleSheet", "setLayoutDirection", "setPen", "setBrush", "drawText", "elidedText",
-    "horizontalAdvance", "boundingRect", "tr", "_pct", "spec", "getSaveFileName_filter",
+    "setDefaultStyleSheet", "setLayoutDirection", "setPen", "setBrush", "elidedText",
+    "horizontalAdvance", "boundingRect", "tr", "_pct", "spec",
 }
 LETTERS = re.compile(r"[A-Za-z]{2,}")
 PROSE = re.compile(r"[A-Za-z]{2,}[^\n]*\s[^\n]*[A-Za-z]{2,}")      # two words with whitespace between
