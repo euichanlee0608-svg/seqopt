@@ -32,24 +32,24 @@ def save(app: QApplication, widget, path: Path) -> Path:
     return path
 
 
-def capture_tabs(app: QApplication, win, out: Path, prefix: str = "") -> list[Path]:
-    """Every tab of a workspace window with a project loaded. `win` is an already show()n MainWindow."""
+def visit_tabs(app: QApplication, win, tag: str = ""):
+    """Walk every tab of a shown workspace window with a project loaded, waiting for each computation.
+
+    Yields (name, widget) once a screen is settled — `capture_tabs` saves the widget as name.png,
+    `tests/test_layout.py` measures the window for clipped text. One walk, two consumers, so
+    what CI photographs and what the layout test checks can never drift apart.
+    """
     win.shell.setCurrentIndex(1)
     win.runner.wait()
     app.processEvents()
-    files: list[Path] = []
-
-    def shot(widget, name):
-        files.append(save(app, widget, out / f"{prefix}{name}.png"))
-
     for row, name in TABS:
-        boot.mark(f"capture {out.name}/{name}")       # the log shows where it stalled
+        boot.mark(f"capture {tag}/{name}")       # the log shows where it stalled
         win.nav.setCurrentRow(row)
         if row == 2:
             win.tab_diag.toggle.setChecked(True)
             app.processEvents()
             # the whole scroll interior — including what is folded below, in one image
-            shot(win.tab_diag.findChild(QScrollArea).widget(), "04_diag_full")
+            yield "04_diag_full", win.tab_diag.findChild(QScrollArea).widget()
         if row == 3:
             win.tab_model.canvas.draw()
         if row == 4:
@@ -60,12 +60,16 @@ def capture_tabs(app: QApplication, win, out: Path, prefix: str = "") -> list[Pa
         if row == 6:
             win.tab_help.show_topic("gate")
         app.processEvents()
-        shot(win, name)
+        yield name, win
         if row == 3:
             win.tab_model.tabs.setCurrentIndex(1)
             app.processEvents()
-            shot(win, "06_model_checks")
-    return files
+            yield "06_model_checks", win
+
+
+def capture_tabs(app: QApplication, win, out: Path, prefix: str = "") -> list[Path]:
+    """Every tab of a workspace window with a project loaded. `win` is an already show()n MainWindow."""
+    return [save(app, widget, out / f"{prefix}{name}.png") for name, widget in visit_tabs(app, win, out.name)]
 
 
 def capture_examples(app: QApplication, start_win, out: Path,

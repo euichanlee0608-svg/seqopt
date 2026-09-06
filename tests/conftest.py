@@ -12,3 +12,20 @@ def qapp():
     from PySide6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
     yield app
+
+
+@pytest.fixture(autouse=True)
+def _english_by_default():
+    """Tests assert English text. A test that switches to Korean must not leak into the next one."""
+    from core import i18n
+    i18n.set_language("en")
+    yield
+    i18n.set_language("en")
+
+
+@pytest.fixture
+def korean():
+    from core import i18n
+    i18n.set_language("ko")
+    yield
+    i18n.set_language("en")
