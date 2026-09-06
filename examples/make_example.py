@@ -34,7 +34,7 @@ from core.project import Project                                        # noqa: 
 from core.spec import ObjSpec, VarSpec                                  # noqa: E402
 
 N_CONDITIONS = 48
-BUDGET = 40
+BUDGET = 100
 RESPONSE = "Conductivity (measured) (S/cm)"
 
 

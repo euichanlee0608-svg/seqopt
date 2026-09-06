@@ -119,3 +119,45 @@ newest request survives (`DiagnosticsRunner`).
 | import matplotlib before the window shows | the font-cache scan froze startup for 100+ s (measured) |
 | repaint hidden tabs / whole tables per keystroke | 972 ms per edited cell before the fix, 1 ms after |
 | auto-update a regression expectation | that is how regressions get through — say what changed first |
+
+## 6. Two languages — English is the key, Korean is the catalog
+
+Every string a user can see goes through `tr()` (`core/i18n.py`). The English
+text **is** the key; the Korean lives next to it in `core/lang/ko_*.py`, one
+file per area (`shell` · `data` · `model` · `diag` · `help` · `report` ·
+`core`), merged into one dictionary at import. A missing key falls back to the
+English and is recorded (`i18n.missing()`), so a forgotten translation never
+crashes — it fails a test instead.
+
+```python
+from core.i18n import tr
+
+lbl.setText(tr("Budget used: {used} of {total}", used=n, total=budget))
+```
+
+Rules that keep this working:
+
+- **Never call `tr()` at import time** — no module constants, class attributes
+  or default arguments. The language is chosen after the settings are read, and
+  the window is rebuilt when it changes. Turn the constant into a function.
+- **No f-strings as keys.** Use `{field}` placeholders and pass keyword
+  arguments; the Korean text reorders them freely.
+- A literal that is *looked up later* (`tr(variable)`) is marked `# i18n: key`
+  on its line so the scanner counts it as a key; developer-only text (log
+  markers, object names, file names) is marked `# i18n: skip`.
+- `core/` stays GUI-free: `i18n.py` imports nothing from Qt, and the language
+  choice (`default_language`) is `SEQOPT_LANG` → saved setting → OS locale.
+- Figures and PDFs are translated too; `core/plotstyle.py` and `core/fonts.py`
+  pick a CJK font when the text needs one (Helvetica fallback otherwise).
+
+What enforces it — three tests, all red on a plain string:
+
+| test | fails when |
+|---|---|
+| `tests/test_i18n.py` (scanner `tests/i18n_scan.py`) | a user-visible literal is not wrapped in `tr()`; a key has no Korean; a Korean entry is stale; placeholders disagree; a "translation" is still English; a private-lab token leaks in |
+| `tests/test_layout.py` (`tests/clipcheck.py`) | any label, button, tab, column header, figure title or table is cut off — every tab of every bundled example, **en × ko × 1024×660 × 1366×768** |
+| CI `windows-build` | the shipped exe is captured on a real Windows display in both languages (`seqopt-windows-shots/en`, `/ko`), 19 screens each |
+
+Adding a string therefore means: write it in English inside `tr()`, add the
+Korean line to the area's `ko_*.py`, and run the two tests. Adding a language
+means one more `core/lang/<code>_*.py` set and one entry in `LANGUAGES`.

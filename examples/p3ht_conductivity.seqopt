@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "name": "Example — P3HT:CNT conductivity",
- "created": "2026-09-05T11:14:33+09:00",
+ "created": "2026-09-06T23:53:49+09:00",
  "objective": {
   "name": "Conductivity",
   "unit": "S/cm",
@@ -57,7 +57,7 @@
  ],
  "constraint": null,
  "budget": {
-  "total": 40,
+  "total": 100,
   "used": 69,
   "initial_design": 11
  },

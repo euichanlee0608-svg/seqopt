@@ -126,7 +126,7 @@ jobs:
           Write-Host "$n child processes hidden (0 means this Python/joblib version spawns none)"
         shell: pwsh
 
-      - name: Capture every tab of every example (real display)
+      - name: Capture every tab of every example (real display, English)
         # How the shipped exe actually looks on a real Windows display — fonts, scaling and
         # plugins cannot be seen offscreen. The result is uploaded as the artifact
         # seqopt-windows-shots, and a person looks at it.
@@ -134,14 +134,33 @@ jobs:
         # The limit here is the safety net behind that.
         timeout-minutes: 10
         env:
-          SEQOPT_SHOTS: ${{ github.workspace }}\shots
+          SEQOPT_SHOTS: ${{ github.workspace }}\shots\en
+          SEQOPT_LANG: en
         run: |
           $p = Start-Process -FilePath dist\seqopt\seqopt.exe -Wait -PassThru -NoNewWindow
           if ($p.ExitCode -ne 0) { Write-Error "Capture run failed (exit code $($p.ExitCode))"; exit 1 }
-          $pngs = Get-ChildItem -Path shots -Recurse -Filter *.png
+          $pngs = Get-ChildItem -Path shots\en -Recurse -Filter *.png
           Write-Host "$($pngs.Count) screens captured"
-          Get-Content shots\index.txt -Encoding UTF8
+          Get-Content shots\en\index.txt -Encoding UTF8
           if ($pngs.Count -lt 19) { Write-Error "Too few screens captured (19 expected)"; exit 1 }
+          foreach ($f in $pngs) { if ($f.Length -lt 10000) { Write-Error "Empty image: $($f.FullName)"; exit 1 } }
+        shell: pwsh
+
+      - name: Capture every tab of every example (real display, Korean)
+        # Same run in Korean. The UI, the help and the figures are translated at runtime
+        # (core/i18n.py); Windows renders Hangul with its own fonts, so this is the only
+        # place where the Korean screens are seen the way a Korean-Windows user sees them.
+        timeout-minutes: 10
+        env:
+          SEQOPT_SHOTS: ${{ github.workspace }}\shots\ko
+          SEQOPT_LANG: ko
+        run: |
+          $p = Start-Process -FilePath dist\seqopt\seqopt.exe -Wait -PassThru -NoNewWindow
+          if ($p.ExitCode -ne 0) { Write-Error "Korean capture run failed (exit code $($p.ExitCode))"; exit 1 }
+          $pngs = Get-ChildItem -Path shots\ko -Recurse -Filter *.png
+          Write-Host "$($pngs.Count) Korean screens captured"
+          Get-Content shots\ko\index.txt -Encoding UTF8
+          if ($pngs.Count -lt 19) { Write-Error "Too few Korean screens captured (19 expected)"; exit 1 }
           foreach ($f in $pngs) { if ($f.Length -lt 10000) { Write-Error "Empty image: $($f.FullName)"; exit 1 } }
         shell: pwsh
 
