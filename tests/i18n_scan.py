@@ -201,14 +201,19 @@ def scan_file(path: Path) -> Scan:
     for node in ast.walk(tree):
         if not isinstance(node, (ast.List, ast.Tuple)):
             continue
-        strings = [e for e in node.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)
+        elts = list(node.elts)
+        for e in node.elts:                                  # one level of nesting: ((0, "name"), …)
+            if isinstance(e, (ast.List, ast.Tuple)):
+                elts += e.elts
+        strings = [e for e in elts if isinstance(e, ast.Constant) and isinstance(e.value, str)
                    and LETTERS.search(e.value)]
         if len(strings) < 2:
             continue
         at_module = isinstance(parents.get(node), (ast.Assign, ast.AnnAssign)) \
             and isinstance(parents.get(parents[node]), ast.Module) \
             and (rel.startswith("ui/") or rel == "app.py")
-        if any(e in flagged_nodes for e in strings) or (at_module and len(strings) >= 3):
+        wordy = any(" " in e.value or re.search(r"[A-Za-z]{8,}", e.value) for e in strings)
+        if any(e in flagged_nodes for e in strings) or (at_module and len(strings) >= 3 and wordy):
             for e in strings:
                 if e in flagged_nodes or e in docstrings or marked(e, SKIP) or marked(e, KEY):
                     continue

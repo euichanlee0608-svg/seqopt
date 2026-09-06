@@ -21,8 +21,8 @@ from PySide6.QtWidgets import QApplication, QScrollArea
 from core import boot
 
 # (row in the left rail, file name) — the number in the name is the flow order (01 is the import wizard)
-TABS = ((0, "02_setup"), (1, "03_data"), (2, "04_diag"), (3, "05_model"),
-        (4, "07_recommend"), (5, "08_report"), (6, "09_help"))
+TABS = ((0, "02_setup"), (1, "03_data"), (2, "04_diag"), (3, "05_model"),          # i18n: skip
+        (4, "07_recommend"), (5, "08_report"), (6, "09_help"))                   # i18n: skip
 
 
 def save(app: QApplication, widget, path: Path) -> Path:
