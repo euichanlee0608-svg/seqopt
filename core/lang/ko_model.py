@@ -96,8 +96,6 @@ KO: dict[str, str] = {
         '추천 · {acq} · 예측 {mean}±{sd}',
     'Export instruction sheet':
         '지시서 내보내기',
-    'CSV (*.csv)':
-        'CSV (*.csv)',
     'Exported':
         '내보냈습니다',
     '{path}\n\nFill in the values after measuring.':
