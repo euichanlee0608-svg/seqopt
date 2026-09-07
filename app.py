@@ -42,6 +42,8 @@ _pin_matplotlib_cache()
 # without a window those flash as console windows (see the core/boot.py header).
 # The log is ~/.seqopt/seqopt.log.
 from core import boot  # noqa: E402  (a standard-library-only module)
+from core import i18n  # noqa: E402  (stdlib only — picks the language before anything is drawn)
+from core.i18n import tr  # noqa: E402
 
 boot.start()
 boot.mark("font cache location pinned")
@@ -72,7 +74,7 @@ def _install_crash_log() -> Path:
         stamp = datetime.now().astimezone().isoformat(timespec="seconds")
         try:
             with open(log, "a", encoding="utf-8") as f:
-                f.write(f"\n{'=' * 70}\n{stamp}  seqopt {platform.platform()}\n"
+                f.write(f"\n{'=' * 70}\n{stamp}  seqopt {platform.platform()}\n"      # i18n: skip
                         f"python {sys.version.split()[0]}\n{text}")
         except OSError:
             pass
@@ -82,11 +84,11 @@ def _install_crash_log() -> Path:
             if QApplication.instance() is not None and not _headless():
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Critical)
-                box.setWindowTitle("Something went wrong")
-                box.setText(f"{exc_type.__name__}: {exc}")
-                box.setInformativeText(
+                box.setWindowTitle(tr("Something went wrong"))
+                box.setText(f"{exc_type.__name__}: {exc}")                       # i18n: skip (a Python exception)
+                box.setInformativeText(tr(
                     "The details were written to the file below. "
-                    f"Send that file and this can be fixed.\n\n{log}")
+                    "Send that file and this can be fixed.\n\n{log}", log=log))
                 box.setDetailedText(text)
                 box.exec()
         except Exception:                        # noqa: BLE001
@@ -114,13 +116,14 @@ def selftest() -> int:
 
     examples = example_files()
     if len(examples) < len(EXAMPLES):
-        problems.append(f"an example project is missing ({EXAMPLE_DIR}: {[p.name for p in examples]})")
+        problems.append(tr("an example project is missing ({where}: {found})",
+                           where=EXAMPLE_DIR, found=[p.name for p in examples]))
     for path in examples:
         try:
             if Project.load(str(path)).dataset().n_conditions < 2:
-                problems.append(f"the example opened but has too few conditions: {path.name}")
+                problems.append(tr("the example opened but has too few conditions: {name}", name=path.name))
         except Exception as e:                   # noqa: BLE001
-            problems.append(f"could not open the example: {path.name}: {e}")
+            problems.append(tr("could not open the example: {name}: {why}", name=path.name, why=e))
 
     # The math bundle (numpy · scipy · scikit-learn) must actually run —
     # importing is not enough. sklearn opens its OpenMP DLL via ctypes at
@@ -131,13 +134,14 @@ def selftest() -> int:
         from core.diagnostics import discriminability, loocv_r2
         reps = [np.array([1.0, 1.02]), np.array([1.3, 1.28]), np.array([0.9, 0.94])]
         if discriminability(reps).sigma_w is None:
-            problems.append("the discriminability calculation produced nothing")
+            problems.append(tr("the discriminability calculation produced nothing"))
         loocv_r2(np.array([[0.0], [0.5], [1.0]]), np.array([0.1, 0.6, 0.3]))
     except Exception as e:                       # noqa: BLE001
-        problems.append(f"the math bundle does not work: {type(e).__name__}: {e}")
+        problems.append(tr("the math bundle does not work: {why}", why=f"{type(e).__name__}: {e}"))
 
-    report = "\n".join(problems) if problems else "OK"
-    detail = (f"{report}\n\n[environment]\n{platform.platform()}\n"
+    report = "\n".join(problems) if problems else tr("OK")
+    # the machine fingerprint below the verdict — versions and paths, the same in any language
+    detail = (f"{report}\n\n[environment]\n{platform.platform()}\n"      # i18n: skip
               f"python {sys.version.split()[0]}\n"
               f"frozen={getattr(sys, 'frozen', False)}\n"
               f"exe={sys.argv[0]}")
@@ -178,13 +182,13 @@ def _splash(app):
     title = QFont(family, -1, QFont.DemiBold)
     title.setPixelSize(theme.H1 + 6)
     p.setFont(title)
-    p.drawText(QRect(112, 36, w - 130, 36), Qt.AlignLeft | Qt.AlignVCenter, "seqopt")
+    p.drawText(QRect(112, 36, w - 130, 36), Qt.AlignLeft | Qt.AlignVCenter, "seqopt")   # i18n: skip (the name)
     body = QFont(family)
     body.setPixelSize(theme.FONT_SIZE)
     p.setFont(body)
     p.setPen(QColor(theme.TEXT_MUTED))
     p.drawText(QRect(112, 72, w - 130, 24), Qt.AlignLeft | Qt.AlignVCenter,
-               "Sequential optimization — requirements first")
+               tr("Sequential optimization — requirements first"))
     p.end()
 
     splash = QSplashScreen(pm, Qt.WindowStaysOnTopHint)
@@ -196,7 +200,7 @@ def _splash(app):
         app.processEvents()
 
     splash.show()
-    say("Opening…")
+    say(tr("Opening…"))
     return splash, say
 
 
@@ -220,7 +224,7 @@ def main() -> int:
 
     log = _install_crash_log()
 
-    from PySide6.QtCore import Qt
+    from PySide6.QtCore import QLocale, QSettings, Qt
     from PySide6.QtGui import QGuiApplication, QIcon
     from PySide6.QtWidgets import QApplication
 
@@ -240,6 +244,13 @@ def main() -> int:
 
     app = QApplication(sys.argv)
     app.setApplicationName("seqopt")
+
+    # The language is chosen here, before the first widget exists — SEQOPT_LANG → the saved
+    # setting → the OS locale. The env override is for one run (CI captures both languages)
+    # and is never written back into the settings; only the Language menu saves.
+    i18n.set_language(i18n.default_language(QSettings("seqopt", "seqopt").value("language"),
+                                            QLocale.system().name()))
+
     from ui import theme
     from ui.resources import icon_path
     app.setWindowIcon(QIcon(str(icon_path())))
@@ -247,15 +258,15 @@ def main() -> int:
     splash, say = _splash(app)
 
     # From here on it gets heavy. Every stage goes on the card and into the log.
-    say("Loading the math engine… (numpy · scipy · scikit-learn)")
+    say(tr("Loading the math engine… (numpy · scipy · scikit-learn)"))
     from core.project import Project
     import core.diagnostics  # noqa: F401  — this is where scikit-learn comes up (2–3 seconds)
-    say("Building the screens…")
+    say(tr("Building the screens…"))
     from ui.main_window import MainWindow
 
     project = None
     if len(sys.argv) > 1 and sys.argv[1].endswith(".seqopt"):
-        say("Opening the project…")
+        say(tr("Opening the project…"))
         project = Project.load(sys.argv[1])
 
     win = MainWindow(project)
