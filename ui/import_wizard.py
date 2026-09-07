@@ -239,8 +239,10 @@ class ImportWizard(QDialog):
         self.mapper.setColumnWidth(5, max(fm.horizontalAdvance(tr(t)) for t in TYPE_KEYS) + 64)
         # What the six columns actually need, in the language that is on. Saying so keeps the
         # splitter from crushing "sample values" to nothing — the preview scrolls, this does not.
+        # The content-sized columns count what they got (a column name is often wider than the
+        # "name" header); the stretch column counts its header, which is all it must show.
         hh = self.mapper.horizontalHeader()
-        need = sum(self.mapper.columnWidth(c) if c in (2, 5) else hh.sectionSizeHint(c)
+        need = sum(hh.sectionSizeHint(c) if c == 1 else self.mapper.columnWidth(c)
                    for c in range(self.mapper.columnCount()))
         self.mapper.setMinimumWidth(need + 2 * self.mapper.frameWidth()
                                     + self.mapper.verticalScrollBar().sizeHint().width() + 2)
