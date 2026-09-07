@@ -286,12 +286,12 @@ def report_figures(data: ReportData) -> list[tuple[str, io.BytesIO]]:
     _, reps, means = replicate_scatter(ds)
     for k, v in enumerate(reps):
         ax.scatter([k] * len(v), v, s=20, c=C_RAW, zorder=3)
-    ax.plot(range(len(means)), means, color=C_MEAN, lw=1.4, label="condition mean")
-    ax.set_xlabel("condition (sorted by mean)")
+    ax.plot(range(len(means)), means, color=C_MEAN, lw=1.4, label=tr("condition mean"))
+    ax.set_xlabel(tr("condition (sorted by mean)"))
     ax.set_ylabel(data.project.objective.name)
-    ax.set_title("Replicate scatter — how much re-measuring the same condition wobbles")
+    ax.set_title(tr("Replicate scatter — how much re-measuring the same condition wobbles"))
     ax.legend(loc="best")
-    out.append(("Replicate scatter", _png(fig)))
+    out.append((tr("Replicate scatter"), _png(fig)))
 
     # LOOCV scatter — makes R² < 0 visible
     if data.loocv is not None:
@@ -299,26 +299,26 @@ def report_figures(data: ReportData) -> list[tuple[str, io.BytesIO]]:
         y, pred = ds.y_mean, data.loocv.pred
         ax.scatter(y, pred, s=26, c=C_POINT, edgecolors="white", linewidths=0.6, zorder=5)
         lim = [min(y.min(), pred.min()), max(y.max(), pred.max())]
-        ax.plot(lim, lim, color=C_AXIS, lw=1, label="perfect prediction")
-        ax.axhline(y.mean(), color=C_BEST, ls="--", lw=1.2, label="always answer the mean")
-        ax.set_xlabel("measured (condition mean)")
-        ax.set_ylabel("LOOCV prediction")
-        ax.set_title(f"Learnability R² = {data.loocv.r2:+.3f}")
+        ax.plot(lim, lim, color=C_AXIS, lw=1, label=tr("perfect prediction"))
+        ax.axhline(y.mean(), color=C_BEST, ls="--", lw=1.2, label=tr("always answer the mean"))
+        ax.set_xlabel(tr("measured (condition mean)"))
+        ax.set_ylabel(tr("LOOCV prediction"))
+        ax.set_title(tr("Learnability R² = {r2}", r2=f"{data.loocv.r2:+.3f}"))
         ax.legend(loc="best", fontsize=7)
-        out.append(("Learnability", _png(fig)))
+        out.append((tr("Learnability"), _png(fig)))
 
     # Semivariogram
     if data.nugget is not None:
         n = data.nugget
         fig, ax = plt.subplots(figsize=(3.5, 3.0))
         ax.plot(n.bin_centers, n.bin_gamma, "o-", color=C_MEAN, ms=4, lw=1.4)
-        ax.axhline(n.sill, color=C_AXIS, ls="--", lw=1, label=f"sill {n.sill:.2f}")
-        ax.axhline(n.nugget, color=C_BEST, ls=":", lw=1.2, label=f"nugget {n.nugget:.2f}")
-        ax.set_xlabel("distance between conditions (normalized)")
-        ax.set_ylabel("semivariance γ")
-        ax.set_title(f"Terrain roughness — nugget ratio {n.ratio:.3f}")
+        ax.axhline(n.sill, color=C_AXIS, ls="--", lw=1, label=tr("sill {v}", v=f"{n.sill:.2f}"))
+        ax.axhline(n.nugget, color=C_BEST, ls=":", lw=1.2, label=tr("nugget {v}", v=f"{n.nugget:.2f}"))
+        ax.set_xlabel(tr("distance between conditions (normalized)"))
+        ax.set_ylabel(tr("semivariance γ"))
+        ax.set_title(tr("Terrain roughness — nugget ratio {v}", v=f"{n.ratio:.3f}"))
         ax.legend(loc="best", fontsize=7)
-        out.append(("Terrain", _png(fig)))
+        out.append((tr("Terrain"), _png(fig)))
 
     # Response surface — 1 or 2 variables only (3+ needs a slice choice; use the screen)
     if data.model is not None and ds.XN.shape[1] in (1, 2):
@@ -329,21 +329,21 @@ def report_figures(data: ReportData) -> list[tuple[str, io.BytesIO]]:
             fig, ax = plt.subplots(figsize=(7.2, 3.0))
             ax.fill_between(c.x_real, c.mu - 2 * c.sd, c.mu + 2 * c.sd,
                             color=C_BAND, alpha=0.45, lw=0, label="μ ± 2σ")
-            ax.plot(c.x_real, c.mu, color=C_MEAN, lw=2, label="predicted mean")
+            ax.plot(c.x_real, c.mu, color=C_MEAN, lw=2, label=tr("predicted mean"))
             for x, v in zip(ds.X[:, 0], ds.reps):
                 ax.scatter([x] * len(v), v, s=20, c=C_POINT, zorder=5)
             ax.set_xlabel(data.project.inputs[0].name)
             ax.set_ylabel(data.project.objective.name)
-            ax.set_title("Response surface")
+            ax.set_title(tr("Response surface"))
             ax.legend(loc="best", fontsize=7)
         else:
             g = grid_2d(data.model, ds, best, acq, 0, 1, None, n=50)
             extent = [g.x_real[0], g.x_real[-1], g.y_real[0], g.y_real[-1]]
             fig, axes = plt.subplots(1, 3, figsize=(7.6, 2.6))
             for ax, (title, Z, cmap) in zip(axes, [
-                    ("predicted mean μ", g.mu, CMAP_MU),
-                    ("uncertainty σ", g.sd, CMAP_SD),
-                    ("EI — where to measure next", g.ei, CMAP_EI)]):
+                    (tr("predicted mean μ"), g.mu, CMAP_MU),
+                    (tr("uncertainty σ"), g.sd, CMAP_SD),
+                    (tr("EI — where to measure next"), g.ei, CMAP_EI)]):
                 im = ax.imshow(Z, origin="lower", extent=extent, aspect="auto", cmap=cmap)
                 fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
                 ax.scatter(ds.X[:, 0], ds.X[:, 1], s=12, c=C_POINT,
@@ -352,17 +352,17 @@ def report_figures(data: ReportData) -> list[tuple[str, io.BytesIO]]:
                 ax.set_xlabel(data.project.inputs[0].name, fontsize=7)
                 ax.set_ylabel(data.project.inputs[1].name, fontsize=7)
                 ax.grid(False)
-        out.append(("Response surface", _png(fig)))
+        out.append((tr("Response surface"), _png(fig)))
 
     # Trajectory
     n, run = trajectory(data.project.measurements, data.project.objective)
     if len(n):
         fig, ax = plt.subplots(figsize=(3.5, 2.6))
         ax.step(n, run, where="post", color=C_MEAN, lw=1.6)
-        ax.set_xlabel("measurements (cumulative)")
+        ax.set_xlabel(tr("measurements (cumulative)"))
         ax.set_ylabel(data.project.objective.name)
-        ax.set_title("Trajectory — best measured value so far")
-        out.append(("Trajectory", _png(fig)))
+        ax.set_title(tr("Trajectory — best measured value so far"))
+        out.append((tr("Trajectory"), _png(fig)))
     return out
 
 
