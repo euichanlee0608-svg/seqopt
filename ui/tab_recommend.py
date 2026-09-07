@@ -25,9 +25,9 @@ import csv
 
 from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox,
-                               QFileDialog, QGridLayout, QHBoxLayout, QHeaderView, QLabel,
-                               QMessageBox, QPushButton, QSpinBox, QTableWidget,
-                               QTableWidgetItem, QVBoxLayout, QWidget)
+                               QFileDialog, QFrame, QGridLayout, QHBoxLayout, QHeaderView,
+                               QLabel, QMessageBox, QPushButton, QScrollArea, QSpinBox,
+                               QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.acquisition import ACQUISITIONS, make_acquisition
 from core.i18n import tr
@@ -38,6 +38,22 @@ from .widgets.advanced import Advanced
 from .widgets.section import PageHeader, Section, link_button
 
 MAX_BATCH = 10
+
+
+def _wrapping(label: QLabel) -> QLabel:
+    """A label that wraps **and says so to its layout.**
+
+    A plain `setWordWrap(True)` is not enough: a QLabel's size policy does not
+    advertise height-for-width, so a box layout asks for one line's height and
+    the second line is cut. Korean and English wrap at different places, so this
+    is the difference between a label that fits in one language and one that
+    fits in both.
+    """
+    label.setWordWrap(True)
+    policy = label.sizePolicy()
+    policy.setHeightForWidth(True)
+    label.setSizePolicy(policy)
+    return label
 
 
 class _AltTable(QTableWidget):
@@ -93,10 +109,22 @@ class RecommendTab(QWidget):
         head.add_right(why)
         root.addWidget(head)
 
-        self.status = QLabel()
-        self.status.setWordWrap(True)
+        # The page is taller than the 1024×660 minimum window once five variables
+        # are on the card — it scrolls vertically instead of squeezing its labels.
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        page = QWidget()
+        body = QVBoxLayout(page)
+        body.setContentsMargins(0, 0, 6, 0)
+        body.setSpacing(12)
+        scroll.setWidget(page)
+        root.addWidget(scroll, 1)
+
+        self.status = _wrapping(QLabel())
         self.status.setStyleSheet(theme.card())
-        root.addWidget(self.status)
+        body.addWidget(self.status)
 
         # The picking method — not hidden. Named plainly so the single default suffices.
         pick = Section(tr("How the next candidate is chosen"))
@@ -110,12 +138,11 @@ class RecommendTab(QWidget):
         prow.addWidget(self.method)
         prow.addStretch(1)
         pv.addLayout(prow)
-        self.method_why = QLabel()
-        self.method_why.setWordWrap(True)
+        self.method_why = _wrapping(QLabel())
         self.method_why.setStyleSheet(theme.muted())
         pv.addWidget(self.method_why)
         self.pick_box = pick
-        root.addWidget(pick)
+        body.addWidget(pick)
 
         bar = QHBoxLayout()
         self.run = QPushButton(tr("Recommend next candidates"))
@@ -131,7 +158,7 @@ class RecommendTab(QWidget):
         self.override.stateChanged.connect(self._on_override)
         bar.addWidget(self.override)
         bar.addStretch(1)
-        root.addLayout(bar)
+        body.addLayout(bar)
 
         # One at a time is the default. Whether batches beat sequential picking
         # has not been validated — so it does not get a prominent spot.
@@ -157,7 +184,7 @@ class RecommendTab(QWidget):
         bl.addWidget(self.beta)
         bl.addStretch(1)
         self.adv.add(self.beta_row)
-        root.addWidget(self.adv)
+        body.addWidget(self.adv)
 
         # ── the one to act on ──────────────────────────────────────
         self.card = Section(tr("Measure this next"))
@@ -166,23 +193,21 @@ class RecommendTab(QWidget):
         self.card_grid.setVerticalSpacing(4)
         self.card_grid.setColumnStretch(0, 1)
         self.card.add_layout(self.card_grid)
-        self.card_meta = QLabel()
-        self.card_meta.setWordWrap(True)
+        self.card_meta = _wrapping(QLabel())
         theme.set_role(self.card_meta, "muted")
         self.card.add(self.card_meta)
-        self.card_flag = QLabel()
-        self.card_flag.setWordWrap(True)
+        self.card_flag = _wrapping(QLabel())
         self.card_flag.setStyleSheet(f"color:{theme.WARN};")
         self.card_flag.setVisible(False)
         self.card.add(self.card_flag)
         self.card.setVisible(False)
-        root.addWidget(self.card)
+        body.addWidget(self.card)
 
         # ── the runners-up ─────────────────────────────────────────
         self.alt_title = QLabel(tr("Other candidates"))
         theme.set_role(self.alt_title, "h2")
         self.alt_title.setVisible(False)
-        root.addWidget(self.alt_title)
+        body.addWidget(self.alt_title)
 
         self.table = _AltTable(self._fit_columns)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -192,12 +217,11 @@ class RecommendTab(QWidget):
         # the widths are set from font metrics below — no floor of the style's own
         self.table.horizontalHeader().setMinimumSectionSize(1)
         self.table.setVisible(False)
-        root.addWidget(self.table, 1)
+        body.addWidget(self.table)
 
-        self.note = QLabel()
-        self.note.setWordWrap(True)
+        self.note = _wrapping(QLabel())
         self.note.setStyleSheet(theme.muted())
-        root.addWidget(self.note)
+        body.addWidget(self.note)
 
         out = QHBoxLayout()
         self.accept = QPushButton(tr("Insert into the data table"))
@@ -210,6 +234,7 @@ class RecommendTab(QWidget):
         out.addWidget(self.accept)
         out.addWidget(self.export)
         out.addStretch(1)
+        body.addStretch(1)
         root.addLayout(out)
 
         self._set_enabled(False)
@@ -359,6 +384,10 @@ class RecommendTab(QWidget):
         # a single suggestion has no runners-up — an empty table would only take room
         self.alt_title.setVisible(bool(rest))
         self.table.setVisible(bool(rest))
+        # exactly as tall as its rows: the page scrolls, the table does not
+        self.table.setFixedHeight(self.table.horizontalHeader().sizeHint().height()
+                                  + sum(self.table.rowHeight(r) for r in range(len(rest)))
+                                  + 2 * self.table.frameWidth())
         self._fit_columns()
 
     def _fit_columns(self) -> None:
