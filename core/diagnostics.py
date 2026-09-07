@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 import numpy as np
 from sklearn.model_selection import LeaveOneOut
 
+from .i18n import tr
 from .protocols import Surrogate
 from .surrogate import LENGTH_SCALE_BOUNDS, fit
 
@@ -33,18 +34,23 @@ NUGGET_THRESHOLD = 0.3
 #                      system can split condition differences into five steps.
 D_RECOMMENDED = 2.0
 D_COMFORTABLE = 3.5
+# The three texts of each level are **translation keys** — the screen looks them up with
+# tr() when it draws them (tr() must never run at import time: the language can change).
 D_LEVELS = [
-    (D_THRESHOLD, "Gate (minimum)", "difference = wobble",
-     "Follows from the definition of D. With σb < σw, condition differences are smaller than replicate wobble"),
-    (D_RECOMMENDED, "Recommended", "difference ≈ wobble × 2",
-     "Two means about two standard errors apart — the usual boundary for 'different' (95%, z≈1.96)"),
-    (D_COMFORTABLE, "Comfortable", "difference ≈ wobble × 3.5",
-     "Matches the AIAG MSA distinct-category requirement ndc = 1.41·σb/σw ≥ 5"),
+    (D_THRESHOLD, "Gate (minimum)", "difference = wobble",                                  # i18n: key
+     "Follows from the definition of D. With σb < σw, condition differences are smaller "   # i18n: key
+     "than replicate wobble"),
+    (D_RECOMMENDED, "Recommended", "difference ≈ wobble × 2",                               # i18n: key
+     "Two means about two standard errors apart — the usual boundary for 'different' "      # i18n: key
+     "(95%, z≈1.96)"),
+    (D_COMFORTABLE, "Comfortable", "difference ≈ wobble × 3.5",                             # i18n: key
+     "Matches the AIAG MSA distinct-category requirement ndc = 1.41·σb/σw ≥ 5"),            # i18n: key
 ]
 
 # Nugget-ratio scale (geostatistics, Cambardella et al. 1994) — a reference
-# scale, separate from this tool's own gate (0.3)
-NUGGET_CLASSES = [(0.25, "strong structure"), (0.75, "moderate"), (float("inf"), "weak structure")]
+# scale, separate from this tool's own gate (0.3). The names are translation keys.
+NUGGET_CLASSES = [(0.25, "strong structure"), (0.75, "moderate"),                           # i18n: key
+                  (np.inf, "weak structure")]                                               # i18n: key
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -165,7 +171,7 @@ def _bootstrap_ci(reps: list[np.ndarray]) -> tuple[float | None, float | None]:
 def required_reps(sigma_b: float, sigma_w: float, target_D: float) -> int:
     """Replicates needed for a target discriminability (F-16). Solves D(n)=σb/(σw/√n) for n."""
     if sigma_b <= 0:
-        raise ValueError("σb is ≤ 0 — there is no between-condition difference")
+        raise ValueError(tr("σb is ≤ 0 — there is no difference between the conditions"))
     n = (target_D * sigma_w / sigma_b) ** 2
     return max(1, int(np.ceil(n)))
 
@@ -328,28 +334,28 @@ def gate(n_candidates: int | None, budget: int, r2: float | None, disc: DiscResu
     # ① Candidate count. Choosing only makes sense when there are more selectable conditions than budget
     g.cond_count = "OK" if n_candidates is None or n_candidates > budget else "FAIL"
     if g.cond_count == "FAIL":
-        g.reasons.append(f"Selectable conditions {n_candidates} ≤ budget {budget} runs → "
-                         f"measuring everything is better")
+        g.reasons.append(tr("Selectable conditions {n} ≤ budget {budget} runs → "
+                            "measuring everything is better", n=n_candidates, budget=budget))
 
     # ② Learnability
     if r2 is None:
         g.learnable = "PENDING"
-        g.reasons.append("Learnability R² still computing")
+        g.reasons.append(tr("Learnability R² still computing"))
     else:
         g.learnable = "OK" if r2 > 0 else "FAIL"
         if g.learnable == "FAIL":
-            g.reasons.append(
-                f"Learnability R² = {r2:+.3f} ≤ 0 → worse than always answering the overall mean")
+            g.reasons.append(tr("Learnability R² = {r2} ≤ 0 → worse than always answering "
+                                "the overall mean", r2=f"{r2:+.3f}"))
 
     # ③ Discriminability
     g.discrim = disc.verdict
     if g.discrim == "FAIL":
-        g.reasons.append(
-            f"Discriminability interval upper bound {disc.ci_hi:.2f} < 1.0 → conditions cannot be told apart")
+        g.reasons.append(tr("Discriminability interval upper bound {hi} < 1.0 → "
+                            "conditions cannot be told apart", hi=f"{disc.ci_hi:.2f}"))
     elif g.discrim == "UNDECIDED":
-        g.reasons.append("The discriminability interval straddles 1.0 → undecided")
+        g.reasons.append(tr("The discriminability interval straddles 1.0 → undecided"))
     elif g.discrim == "UNCOMPUTABLE":
-        g.reasons.append("No replicate measurements, so discriminability cannot be computed")
+        g.reasons.append(tr("No replicate measurements, so discriminability cannot be computed"))
 
     # ④ Replicates
     g.replicates = "OK" if frac_with_reps >= 0.5 else "WARN"

@@ -26,7 +26,7 @@ class Registry(Generic[T]):
     def register(self, name: str) -> Callable[[type[T]], type[T]]:
         def wrap(cls: type[T]) -> type[T]:
             if name in self._items:
-                raise ValueError(f"{self.what} '{name}' is already registered")
+                raise ValueError(f"{self.what} '{name}' is already registered")   # i18n: skip (a programming mistake)
             cls.name = name                       # type: ignore[attr-defined]
             self._items[name] = cls
             return cls
@@ -36,7 +36,7 @@ class Registry(Generic[T]):
         """Build a part by name. An unknown name **tells you what exists.**"""
         if name not in self._items:
             raise KeyError(
-                f"Unknown {self.what}: '{name}'. Available — {', '.join(self._items)}")
+                f"Unknown {self.what}: '{name}'. Available — {', '.join(self._items)}")   # i18n: skip (a programming mistake)
         return self._items[name](**kwargs)
 
     def label_of(self, name: str) -> str:
