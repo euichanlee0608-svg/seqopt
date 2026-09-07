@@ -94,6 +94,7 @@ KO: dict[str, str] = {
     "condition": "조건",
     "n\n(replicates)": "n\n(반복 횟수)",
     "mean": "평균",
+    "mean\n(log10)": "평균\n(log10)",
     "sample SD\n(wobble)": "표본SD\n(흔들림)",
     "(n−1)·var\n(σw share)": "(n−1)·var\n(σw 기여분)",
     "The combination of input values, in the order defined on the Setup tab.":

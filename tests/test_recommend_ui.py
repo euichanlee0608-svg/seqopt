@@ -128,6 +128,37 @@ def test_nothing_is_cut_off_at_a_narrow_window(qapp, lang):
         qapp.processEvents()
 
 
+# ══════════════════════════════════════════════════════════════════════
+# the response in the user's frame — the internal number is never printed
+# ══════════════════════════════════════════════════════════════════════
+def test_the_log_example_answers_in_the_users_own_units(qapp):
+    """P3HT is modelled in log10. The screen said "best measured so far 2.931"
+    while the Data tab, two clicks away, read 853 S/cm — the same measurement.
+    The status line now speaks in S/cm, and the card says the transform out loud."""
+    from core.project import Project
+    from ui.start_screen import example_files
+    from ui.tab_recommend import RecommendTab
+
+    project = Project.load(str(next(p for p in example_files() if "p3ht" in p.stem)))
+    assert project.objective.log                      # the premise of this test
+    ds = project.dataset()
+    tab = RecommendTab(project)
+    tab.resize(NARROW, 640)
+    tab.show()
+    tab.set_context(ds, Gate(cond_count="OK", learnable="OK", discrim="OK",
+                             replicates="OK", locked=False),
+                    fit(ds.XN, ds.y_mean), ExpectedImprovement())
+    try:
+        tab.request()
+        qapp.processEvents()
+        assert isinstance(tab.result, Recommendation)
+        assert "S/cm" in tab.status.text(), tab.status.text()
+        assert "log10" in tab.card_meta.text(), tab.card_meta.text()
+    finally:
+        tab.close()
+        qapp.processEvents()
+
+
 def test_a_lone_suggestion_hides_the_alternatives_table(tab, qapp):
     tab.batch.setValue(1)
     tab.request()

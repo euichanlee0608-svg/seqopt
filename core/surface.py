@@ -16,8 +16,9 @@ from decimal import Decimal
 
 import numpy as np
 
+from .i18n import tr
 from .protocols import Acquisition, Surrogate
-from .spec import Dataset, VarSpec
+from .spec import Dataset, ObjSpec, VarSpec
 
 
 def to_real(xn: np.ndarray, X: np.ndarray) -> np.ndarray:
@@ -110,7 +111,9 @@ def trajectory(measurements: list[dict], objective) -> tuple[np.ndarray, np.ndar
     if not vals:
         return np.array([]), np.array([])
     run = np.maximum.accumulate(np.asarray(vals, dtype=float))
-    return np.arange(1, len(run) + 1), run
+    # the running best is found where bigger is better, then handed back in plot
+    # space — a minimization goal must not show its own trajectory as negatives
+    return np.arange(1, len(run) + 1), objective.to_plot(run)
 
 
 def replicate_scatter(ds: Dataset) -> tuple[np.ndarray, list[np.ndarray], np.ndarray]:
@@ -152,6 +155,34 @@ def fmt_value(var: VarSpec, x: float) -> str:
         k = int(min(max(round(float(x)), 0), len(var.levels) - 1))
         return var.levels[k]
     return f"{float(x):.{decimals(var)}f}"
+
+
+def fmt_response(obj: ObjSpec, v_internal: float) -> str:
+    """One response value **in the user's own frame** — sign and log both undone, unit attached.
+
+    Everything the model touches lives in internal coordinates (§5-1: log10 when
+    asked for, negated for a minimization goal). Printing those raw said
+    "best measured so far 2.931" for a project whose data table reads 853 S/cm.
+    Four significant digits, because that is what an instrument reading is worth.
+    """
+    v = f"{float(obj.from_internal(float(v_internal))):.4g}"
+    return f"{v} {obj.unit}" if obj.unit else v
+
+
+def fmt_prediction(obj: ObjSpec, mean_internal: float, sd_internal: float) -> str:
+    """A prediction and its uncertainty, in the user's frame.
+
+    Without a log the σ is in the same units as the mean, so the familiar
+    `0.9594 ± 0.017 a.u.` holds. With one it does not: the interval is symmetric
+    in log space only, and 10**(μ±σ) is not μ' ± σ'. So the value is converted
+    and the pair it came from is shown beside it, log said out loud.
+    """
+    m = float(obj.to_plot(float(mean_internal)))
+    sd, unit = float(sd_internal), (f" {obj.unit}" if obj.unit else "")
+    if not obj.log:
+        return f"{m:.4g} ± {sd:.3g}{unit}"
+    return tr("≈ {value} (log10 {mean} ± {sd})",
+              value=f"{10.0 ** m:.4g}{unit}", mean=f"{m:.4g}", sd=f"{sd:.3g}")
 
 
 def format_condition(x_real: np.ndarray, inputs: list[VarSpec]) -> str:

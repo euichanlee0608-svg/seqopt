@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleS
 from core.acquisition import ACQUISITIONS, make_acquisition
 from core.i18n import tr
 from core.recommend import Locked, Recommendation, RecommendResult, recommend
-from core.surface import fmt_value
+from core.surface import fmt_prediction, fmt_response, fmt_value
 from . import theme
 from .widgets.advanced import Advanced
 from .widgets.section import PageHeader, Section, link_button, wrapping
@@ -344,8 +344,8 @@ class RecommendTab(QWidget):
         for (_, value), v, x in zip(self._card_labels(), self.project.inputs, top.x_real):
             value.setText(fmt_value(v, x) + (f" {v.unit}" if v.unit else ""))
         self.card_meta.setText(tr(
-            "predicted {mean} ± {sd} · acquisition {acq} · suggested reps ×{n}",
-            mean=f"{top.predicted_mean:.4g}", sd=f"{top.predicted_std:.3g}",
+            "predicted {pred} · acquisition {acq} · suggested reps ×{n}",
+            pred=fmt_prediction(self.project.objective, top.predicted_mean, top.predicted_std),
             acq=f"{top.acq_value:.4g}", n=top.suggested_reps))
         self.card_flag.setText(tr("outside measured range") if top.extrapolated else "")
         self.card_flag.setVisible(top.extrapolated)
@@ -355,8 +355,12 @@ class RecommendTab(QWidget):
     def _fill_alternatives(self, rest: list) -> None:
         self._alt_headers = [(v.name, f"{v.name} ({v.unit})" if v.unit else v.name)
                              for v in self.project.inputs]
+        # σ has no meaning in the user's units under a log transform (the interval
+        # is symmetric in log space only), so that column stays internal and says so
+        log = self.project.objective.log
         self._alt_headers += [(tr("predicted"), tr("predicted mean")),
-                              ("σ", tr("uncertainty σ")),      # a symbol, not text — the scanner does not see it either
+                              (tr("σ (log10)") if log else "σ",   # a symbol, not text — the scanner does not see it either
+                               tr("uncertainty σ (log10)") if log else tr("uncertainty σ")),
                               (tr("acq."), tr("acq. value"))]
         self.table.setColumnCount(len(self._alt_headers))
         self.table.setHorizontalHeaderLabels([h for h, _ in self._alt_headers])
@@ -365,7 +369,8 @@ class RecommendTab(QWidget):
         for r, s in enumerate(rest):
             for c, x in enumerate(s.x_real):
                 self.table.setItem(r, c, QTableWidgetItem(fmt_value(self.project.inputs[c], x)))
-            self.table.setItem(r, d, QTableWidgetItem(f"{s.predicted_mean:.4g}"))
+            self.table.setItem(r, d, QTableWidgetItem(
+                fmt_response(self.project.objective, s.predicted_mean)))
             self.table.setItem(r, d + 1, QTableWidgetItem(f"{s.predicted_std:.4g}"))
             self.table.setItem(r, d + 2, QTableWidgetItem(f"{s.acq_value:.4g}"))
             if s.extrapolated:
@@ -429,7 +434,8 @@ class RecommendTab(QWidget):
         head = [tr("<b>1 condition suggested.</b>") if n == 1
                 else tr("<b>{n} conditions suggested.</b>", n=n),
                 rec.acquisition_label, rec.surrogate_label,
-                tr("best measured so far {best}", best=f"{rec.best_measured:.4g}")]
+                tr("best measured so far {best}",
+                   best=fmt_response(self.project.objective, rec.best_measured))]
         text = " · ".join(head)
         if rec.gate_bypassed:
             text = tr("<b style='color:{c}'>This recommendation was forced with requirements "
@@ -469,10 +475,11 @@ class RecommendTab(QWidget):
     def _accept(self) -> None:
         if not isinstance(self.result, Recommendation):
             return
+        obj = self.project.objective
         payload = [(list(s.x_real),
-                    tr("suggested · {acq} · predicted {mean}±{sd}",
+                    tr("suggested · {acq} · predicted {pred}",
                        acq=self.result.acquisition_label,
-                       mean=f"{s.predicted_mean:.4g}", sd=f"{s.predicted_std:.3g}"))
+                       pred=fmt_prediction(obj, s.predicted_mean, s.predicted_std)))
                    for s in self.result.suggestions]
         self.points_accepted.emit(payload)
 
@@ -485,15 +492,20 @@ class RecommendTab(QWidget):
                                             tr("CSV (*.csv)"))
         if not fn:
             return
+        obj = self.project.objective
         with open(fn, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.writer(f)
+            # the sheet is read away from the program, so the columns have to say
+            # which frame they are in — a bare 2.836 is not a conductivity
             w.writerow([f"{v.name} ({v.unit})" if v.unit else v.name
                         for v in self.project.inputs]
-                       + [tr("suggested reps"), tr("predicted mean"), tr("uncertainty σ"),
+                       + [tr("suggested reps"),
+                          tr("predicted mean (log10)") if obj.log else tr("predicted mean"),
+                          tr("uncertainty σ (log10)") if obj.log else tr("uncertainty σ"),
                           tr("acq. value"), tr("note")])
             for s in self.result.suggestions:
                 w.writerow([fmt_value(v, x) for v, x in zip(self.project.inputs, s.x_real)]
-                           + [s.suggested_reps, f"{s.predicted_mean:.6g}",
+                           + [s.suggested_reps, f"{obj.to_plot(s.predicted_mean):.6g}",
                               f"{s.predicted_std:.6g}", f"{s.acq_value:.6g}",
                               tr("outside measured range") if s.extrapolated else ""])
             w.writerow([])

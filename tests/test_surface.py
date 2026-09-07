@@ -13,9 +13,9 @@ from core.acquisition import ExpectedImprovement
 from core.dataset import build
 from core.diagnostics import loocv_r2
 from core.spec import ObjSpec, VarSpec
-from core.surface import (curve_1d, decimals, fmt_value, format_condition, grid_2d,
-                          nearest_measured, replicate_scatter, slice_defaults, to_real,
-                          trajectory)
+from core.surface import (curve_1d, decimals, fmt_prediction, fmt_response, fmt_value,
+                          format_condition, grid_2d, nearest_measured, replicate_scatter,
+                          slice_defaults, to_real, trajectory)
 from core.surrogate import fit
 from tests.loaders import external, synthetic
 
@@ -77,6 +77,24 @@ def test_fmt_value_never_invents_precision():
     assert fmt_value(v, 89.09153) == "89.09"
     assert fmt_value(VarSpec("t", "s", "continuous", 5, 60, step=0.5), 12.5) == "12.5"
     assert fmt_value(VarSpec("n", "", "integer", 1, 9), 4.0) == "4"
+
+
+# ══════════════════════════════════════════════════════════════════════
+# the response in the user's frame — never the internal sign, log said out loud
+# ══════════════════════════════════════════════════════════════════════
+def test_fmt_response_undoes_sign_and_log():
+    """A screen shows what the data table shows. `2.931` for a project reading 853 S/cm was the bug."""
+    assert fmt_response(ObjSpec("crystallinity", "a.u."), 0.93871) == "0.9387 a.u."
+    assert fmt_response(ObjSpec("loss", goal="min"), -4.25) == "4.25"          # min goal → positive
+    assert fmt_response(ObjSpec("Conductivity", "S/cm", log=True), 2.93095) == "853 S/cm"
+
+
+def test_fmt_prediction_says_log_out_loud():
+    """Without a log, mean ± σ in the user's units; with one, the value *and* the pair it came from."""
+    assert fmt_prediction(ObjSpec("crystallinity", "a.u."), 0.95936, 0.017) == "0.9594 ± 0.017 a.u."
+    assert fmt_prediction(ObjSpec("loss", goal="min"), -4.25, 0.1) == "4.25 ± 0.1"
+    got = fmt_prediction(ObjSpec("Conductivity", "S/cm", log=True), 2.83569, 0.1934)
+    assert got == "≈ 685 S/cm (log10 2.836 ± 0.193)"
 
 
 def test_fmt_value_of_a_categorical_is_its_level_name():
@@ -163,11 +181,17 @@ def test_trajectory_skips_excluded_rows():
 
 
 def test_trajectory_follows_minimisation_goal():
-    """A minimization goal flips the internal sign, so "smaller is better" shows in the trajectory."""
+    """A min goal is minimized internally by negating — but the figure shows the user's own numbers.
+
+    The running best of a loss is the running *minimum*, and it is drawn positive.
+    Printing the internal −5.0 was the whole defect this guards.
+    """
     obj = ObjSpec("loss", goal="min")
     ms = [dict(inputs=[0], value=v, excluded=False) for v in (5.0, 3.0, 4.0, 1.0)]
     _, run = trajectory(ms, obj)
-    assert list(run) == [-5.0, -3.0, -3.0, -1.0]
+    assert list(run) == [5.0, 3.0, 3.0, 1.0]
+    assert (run > 0).all()
+    assert all(run[i] >= run[i + 1] for i in range(len(run) - 1))
 
 
 def test_replicate_scatter_is_sorted_by_condition_mean(syn):

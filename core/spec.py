@@ -223,6 +223,30 @@ class ObjSpec:
             v = np.log10(np.maximum(v, 1e-12))
         return v * self.sign
 
+    def to_plot(self, v: np.ndarray) -> np.ndarray:
+        """Internal coordinates → what a figure may show. **Undoes the sign only.**
+
+        The log stays, because the model — and therefore the ±2σ band, the LOOCV
+        residuals and the surface itself — lives in log space. Squeezing it back
+        would bend those distances. The axis says so instead (`plot_label`).
+        """
+        return v * self.sign
+
+    def from_internal(self, v: np.ndarray) -> np.ndarray:
+        """Internal coordinates → **the user's own number.** The full inverse of `to_internal`."""
+        v = v * self.sign
+        return 10.0 ** v if self.log else v
+
+    def plot_label(self, stacked: bool = False) -> str:
+        """The axis label for a figure drawn in plot space — the log is said out loud.
+
+        `stacked` puts the log on its own line: rotated along a small validation panel,
+        "log10 Conductivity" in one line is longer than the panel is tall.
+        """
+        if not self.log:
+            return self.name
+        return tr("log10\n{name}", name=self.name) if stacked else tr("log10 {name}", name=self.name)
+
 
 def suggest_log_transform(values: np.ndarray) -> bool:
     """Recommend a log transform when the response spans orders of magnitude (§5-1 item 4).
