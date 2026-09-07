@@ -20,14 +20,16 @@ from __future__ import annotations
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QToolButton, QVBoxLayout, QWidget
 
+from core.i18n import tr
 from .. import theme
 
 
 class Advanced(QWidget):
     """Folds away settings whose defaults are enough. Closed by default."""
 
-    def __init__(self, summary: str = "", label: str = "Advanced", parent=None):
+    def __init__(self, summary: str = "", label: str = "", parent=None):
         super().__init__(parent)
+        label = label or tr("Advanced")      # a default cannot be tr()'d — the language is picked later
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 4, 0, 0)
         root.setSpacing(4)

@@ -86,4 +86,66 @@ KO: dict[str, str] = {
     "Could not open": "열지 못했습니다",
     "Could not save": "저장하지 못했습니다",
     "Saved — {path}": "저장했습니다 — {path}",
+
+    # ── ui/tab_report.py ─────────────────────────────────────────────────
+    "Report — leave the whole evidence trail": "리포트 — 근거 일체를 남깁니다",
+    "Exports the gate verdict, calculation log, figures and raw-data summary as PDF and text — plus a script that reproduces the same numbers.":
+        "요건 판정 · 계산 과정 · 그림 · 원자료 요약을 PDF 와 텍스트로 내보냅니다. 같은 숫자를 다시 내는 스크립트도 함께 나옵니다.",
+    "Build report": "리포트 만들기",
+    "Press \"Build report\" to assemble the full evidence from the current data.":
+        "‘리포트 만들기’ 를 누르면 지금 데이터로 근거 일체를 만듭니다.",
+    "Export": "내보내기",
+    "PDF report": "PDF 리포트",
+    "Gate verdict + calculation log + figures + raw-data summary.\nEmbeds the font, so it renders the same on any PC.":
+        "요건 판정 + 계산 과정 + 그림 + 원자료 요약.\n글꼴을 파일 안에 넣으므로 어느 PC 에서도 같게 보입니다.",
+    "Calculation log (txt)": "계산 로그 (txt)",
+    "Every number's formula and intermediate values. Followable by hand.":
+        "모든 수치의 산출식과 중간값. 손으로 따라갈 수 있습니다.",
+    "Reproduction script (py)": "재현 스크립트 (py)",
+    "This one file reproduces the same numbers.": "이 파일 하나로 같은 숫자를 다시 냅니다.",
+    "Calculation-log preview": "계산 과정 미리보기",
+    "No measurements": "측정값이 없습니다",
+    "Enter values on the Data tab first.": "데이터 탭에서 값을 먼저 넣으세요.",
+    "Computing… (includes learnability LOOCV, so many conditions take tens of seconds)":
+        "계산 중입니다… (학습가능성 LOOCV 를 포함하므로 조건이 많으면 수십 초 걸립니다)",
+    "<b>Ready.</b> {n} usable conditions · {m} measurements · {what} {verdict}":
+        "<b>준비됐습니다.</b> 유효 조건 {n}개 · 측정 {m}회 · {what} {verdict}",
+    "Requirements unmet — the PDF cover and every page get a \"{stamp}\" stamp.":
+        "요건 미달 상태입니다 — PDF 표지와 모든 쪽에 ‘{stamp}’ 도장이 찍힙니다.",
+    "Could not build the report — {why}": "리포트를 만들지 못했습니다 — {why}",
+    "Could not build the PDF": "PDF 를 만들지 못했습니다",
+    "Saved": "저장했습니다",
+    "PDF (*.pdf)": "PDF (*.pdf)",
+    "Text (*.txt)": "텍스트 (*.txt)",
+    "Python (*.py)": "파이썬 (*.py)",
+    "{path}\n\nRun `python {name}` inside the seqopt folder\nand the report's numbers come out again.":
+        "{path}\n\nseqopt 폴더 안에서 `python {name}` 으로 돌리면\n리포트와 같은 숫자가 다시 나옵니다.",
+
+    # ── ui/stepper.py — the four steps, why a step is blocked, what to do next ──
+    "Define the variables and the objective": "변수와 목표를 정합니다",
+    "Enter your measurements": "측정값을 넣습니다",
+    "See whether this data can be used": "이 데이터를 써도 되는지 봅니다",
+    "Get the next condition to measure": "다음에 잴 조건을 받습니다",
+    "Define your input variables on the Setup tab first.": "먼저 설정 탭에서 입력 변수를 정의하세요.",
+    "Diagnosis needs at least 2 conditions. Enter measurements on the Data tab.":
+        "조건이 2개 이상이어야 진단할 수 있습니다. 데이터 탭에서 측정값을 넣으세요.",
+    "Drawing the response surface needs at least 3 conditions.": "응답면을 그리려면 조건이 3개 이상이어야 합니다.",
+    "Recommendations become available once diagnosis has run.": "진단이 끝나야 추천을 낼 수 있습니다.",
+    "A report needs at least one measurement.": "측정값이 있어야 리포트를 만들 수 있습니다.",
+    "Define at least one input variable — \"+ Add variable\"": "입력 변수를 1개 이상 정의하세요 — 「+ 변수 추가」",
+    "Enter measurements — import a file · Ctrl+V · add rows": "측정값을 넣으세요 — 파일에서 가져오기 · Ctrl+V · 행 추가",
+    "Diagnosis needs at least 2 conditions": "조건이 2개 이상이어야 진단할 수 있습니다",
+    "Diagnosing…": "진단하는 중입니다…",
+    "Requirements unmet — see the prescription on the Diagnose tab": "요건 미달입니다 — 진단 탭의 처방을 보세요",
+    "Check the requirements": "요건을 확인하세요",
+    "1 recommended condition is waiting on the Data tab (gray row) — measure it and fill in the value, and it enters the next diagnosis":
+        "데이터 탭에 추천 조건 1개가 기다리고 있습니다 (회색 행) — 재서 값을 채우면 다음 진단에 들어갑니다",
+    "{n} recommended conditions are waiting on the Data tab (gray rows) — measure them and fill in the values, and they enter the next diagnosis":
+        "데이터 탭에 추천 조건 {n}개가 기다리고 있습니다 (회색 행) — 재서 값을 채우면 다음 진단에 들어갑니다",
+    "Requirements met — get your next candidates": "요건을 통과했습니다 — 다음 후보를 받으세요",
+
+    # ── ui/widgets/ — the "Advanced" fold, the step rail's state tags ────
+    "Advanced": "고급 설정",
+    "locked": "잠김",
+    "next": "다음",
 }

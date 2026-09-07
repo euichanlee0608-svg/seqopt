@@ -14,9 +14,10 @@ Design-Expert's left rail, **the numbered circle does the talking.**
 from __future__ import annotations
 
 from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtGui import QColor, QFont, QPainter, QPen
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QPainter, QPen
 from PySide6.QtWidgets import QListWidget, QListWidgetItem, QStyle, QStyledItemDelegate
 
+from core.i18n import tr
 from .. import theme
 
 ITEM_H = 44
@@ -87,7 +88,7 @@ class _Delegate(QStyledItemDelegate):
         p.drawText(text_rect, Qt.AlignVCenter | Qt.AlignLeft, index.data(Qt.DisplayRole) or "")
 
         # right-hand state tag
-        tag = {"locked": "locked", "next": "next"}.get(state, "")
+        tag = {"locked": tr("locked"), "next": tr("next")}.get(state, "")
         if tag and not selected:
             f3 = QFont(option.font)
             f3.setPixelSize(11)
@@ -115,6 +116,19 @@ class NavList(QListWidget):
             it.setData(ROLE_STATE, "ready")
             it.setSizeHint(QSize(theme.NAV_WIDTH - 16, ITEM_H))
             self.addItem(it)
+
+    def clipped_texts(self) -> list[str]:
+        """Step names that do not fit — the layout gate reads this (tests/clipcheck.py).
+
+        The delegate paints the name itself, and every item's sizeHint is the full row width,
+        so measuring the list the ordinary way can never see a name cut. The room the delegate
+        leaves is the row minus the numbered circle and its gaps (see `_Delegate.paint`).
+        """
+        fm = QFontMetrics(self.font())
+        room = self.viewport().width() - 60
+        return [f"step name does not fit: {t!r}"                      # i18n: skip (a test report)
+                for t in (self.item(i).text() for i in range(self.count()))
+                if fm.horizontalAdvance(t) > room]
 
     def set_state(self, row: int, state: str) -> None:
         it = self.item(row)

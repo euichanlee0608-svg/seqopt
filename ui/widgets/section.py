@@ -75,7 +75,17 @@ class Section(QFrame):
         self.body = QVBoxLayout()
         self.body.setSpacing(8)
         outer.addLayout(self.body)
-        self.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
+
+        # Height-for-width, or the description loses its last line. A card used to be
+        # QSizePolicy.Maximum vertically, which caps it at its own sizeHint — and a sizeHint
+        # is measured at the width Qt *wants*, not the narrower width the card actually gets.
+        # Wrapped prose then needs more lines than the cap allows and the bottom one is cut.
+        sp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        sp.setHeightForWidth(True)
+        self.setSizePolicy(sp)
+        dsp = self.desc.sizePolicy()
+        dsp.setHeightForWidth(True)
+        self.desc.setSizePolicy(dsp)
 
     def add(self, widget: QWidget, stretch: int = 0) -> None:
         self.body.addWidget(widget, stretch)
