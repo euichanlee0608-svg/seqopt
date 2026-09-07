@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (QComboBox, QDoubleSpinBox, QGroupBox, QHBoxLayout
 
 from core.acquisition import ACQUISITIONS, make_acquisition
 from core.diagnostics import sensitivity
+from core.i18n import tr
 from . import theme
 from .widgets.section import PageHeader
 from core.surface import (curve_1d, format_condition, grid_2d, nearest_measured,
@@ -32,6 +33,20 @@ from .widgets.plots import (C_AXIS, C_BAND, C_BEST, C_MEAN, C_POINT, C_RAW, C_RE
 
 GRID_N = 60
 DEBOUNCE_MS = 120
+
+
+def _tell_true_height(w: QWidget) -> QWidget:
+    """Let `w` tell its layout the height it needs **at the width it actually gets**.
+
+    A word-wrapped label's sizeHint is measured at the width Qt would like to give
+    it; hand it less and the extra lines are simply cut off, because Qt asks
+    `heightForWidth()` only when the size policy says to. Every caption here is
+    prose whose line count differs between English and Korean — so every one says to.
+    """
+    sp = w.sizePolicy()
+    sp.setHeightForWidth(True)
+    w.setSizePolicy(sp)
+    return w
 
 
 class ModelTab(QWidget):
@@ -59,17 +74,18 @@ class ModelTab(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(12)
 
-        head = PageHeader("Model — the surface drawn from the current data",
-                          "The terrain as the model sees it, plus the validation figures that say how far to trust it.")
+        head = PageHeader(tr("Model — the surface drawn from the current data"),
+                          tr("The terrain as the model sees it, plus the validation figures "
+                             "that say how far to trust it."))
         root.addWidget(head)
 
-        self.banner = QLabel()
+        self.banner = _tell_true_height(QLabel())
         self.banner.setWordWrap(True)
         self.banner.setVisible(False)
         root.addWidget(self.banner)
 
         bar = QHBoxLayout()
-        self.readout = QLabel()
+        self.readout = _tell_true_height(QLabel())
         self.readout.setWordWrap(True)
         self.readout.setStyleSheet(theme.muted())
         bar.addWidget(self.readout, 1)
@@ -86,14 +102,23 @@ class ModelTab(QWidget):
         # ── the surface ────────────────────────────────────────────
         surf = QWidget()
         sv = QHBoxLayout(surf)
+        # The panel titles are single symbols (μ · σ · EI) because a figure title
+        # cannot wrap and Korean and English need different widths. What each
+        # panel means is said underneath, in a label that can.
+        left = QVBoxLayout()
         self.canvas = Canvas(width=8.4, height=6.0)
-        sv.addWidget(self.canvas, 1)
+        left.addWidget(self.canvas, 1)
+        self.surface_caption = _tell_true_height(QLabel())
+        self.surface_caption.setWordWrap(True)
+        self.surface_caption.setStyleSheet(theme.small())
+        left.addWidget(self.surface_caption)
+        sv.addLayout(left, 1)
 
         side = QWidget()
         side.setFixedWidth(320)
         sd = QVBoxLayout(side)
 
-        self.cut_box = QGroupBox("Slice")
+        self.cut_box = QGroupBox(tr("Slice"))
         cv = QVBoxLayout(self.cut_box)
         row = QHBoxLayout()
         self.ax_i = QComboBox()
@@ -107,31 +132,41 @@ class ModelTab(QWidget):
         cv.addLayout(row)
         self.slider_box = QVBoxLayout()
         cv.addLayout(self.slider_box)
-        self.cut_hint = QLabel()
+        self.cut_hint = _tell_true_height(QLabel())
         self.cut_hint.setWordWrap(True)
         self.cut_hint.setStyleSheet(theme.muted())
         cv.addWidget(self.cut_hint)
         sd.addWidget(self.cut_box)
 
-        gs = QGroupBox("Sensitivity — which knob bites hardest")
+        gs = QGroupBox(tr("Sensitivity — which knob bites hardest"))
         gsv = QVBoxLayout(gs)
         self.sens_canvas = Canvas(width=2.6, height=2.0, dpi=100)
+        # squeeze this figure and matplotlib gives up on the layout, dropping the
+        # x label off the bottom edge — it keeps the height its own figure asks for
+        self.sens_canvas.setMinimumHeight(self.sens_canvas.sizeHint().height())
         gsv.addWidget(self.sens_canvas)
-        self.sens_note = QLabel()
+        self.sens_note = _tell_true_height(QLabel())
         self.sens_note.setWordWrap(True)
         self.sens_note.setStyleSheet(theme.muted())
         gsv.addWidget(self.sens_note)
         sd.addWidget(gs)
         sd.addStretch(1)
         sv.addWidget(side)
-        self.tabs.addTab(surf, "Surface")
+        self.tabs.addTab(surf, tr("Surface"))
 
         # ── validation figures ─────────────────────────────────────
         check = QWidget()
         cvv = QVBoxLayout(check)
         self.check_canvas = Canvas(width=9.0, height=6.4)
-        cvv.addWidget(self.check_canvas)
-        self.tabs.addTab(check, "Validation")
+        cvv.addWidget(self.check_canvas, 1)
+        self.check_caption = _tell_true_height(QLabel(tr(
+            "Top left the trajectory, top right learnability (LOOCV), bottom left the replicate "
+            "scatter — how far repeats of the same condition wobble — and bottom right the terrain "
+            "roughness.")))
+        self.check_caption.setWordWrap(True)
+        self.check_caption.setStyleSheet(theme.small())
+        cvv.addWidget(self.check_caption)
+        self.tabs.addTab(check, tr("Validation"))
 
         root.addWidget(self.tabs, 1)
 
@@ -268,8 +303,8 @@ class ModelTab(QWidget):
     def set_acquisition(self, acq) -> None:
         """Receives the method chosen on the Recommend tab and reflects it in the figures."""
         self._acq = acq
-        self.method_note.setText(f"Next-candidate method: {acq.describe()}  "
-                                 "(change it on the Recommend tab)")
+        self.method_note.setText(tr("Next-candidate method: {method}  (change it on the Recommend tab)",
+                                    method=acq.describe()))
         self.redraw()
 
     def acquisition(self):
@@ -301,10 +336,10 @@ class ModelTab(QWidget):
             self.banner.setVisible(False)
             return
         self.banner.setVisible(True)
-        self.banner.setText(
-            f"⚠ This surface is <b>unlearned</b> (LOOCV R² = {self.loocv.r2:+.3f} ≤ 0). "
-            "Its shape comes from the kernel's default assumptions more than from the data. "
-            "<b>Do not draw conclusions from the shape.</b>")
+        self.banner.setText(tr(
+            "⚠ This surface is <b>unlearned</b> (LOOCV R² = {r2} ≤ 0). Its shape comes from the "
+            "kernel's default assumptions more than from the data. "
+            "<b>Do not draw conclusions from the shape.</b>", r2=f"{self.loocv.r2:+.3f}"))
         self.banner.setStyleSheet(theme.card("fail"))
 
     def _best(self) -> float:
@@ -313,8 +348,9 @@ class ModelTab(QWidget):
     def _draw_surface(self) -> None:
         fig = self.canvas.clear()
         if self.ds is None or self.model is None:
-            fig.text(0.5, 0.5, "The surface is drawn once there are at least 3 conditions.",
-                     ha="center", va="center", color="#888")
+            self.surface_caption.setText("")
+            fig.text(0.5, 0.5, tr("The surface is drawn once there are at least 3 conditions."),
+                     ha="center", va="center", color="#888")           # i18n: skip
             self.canvas.draw_idle()
             return
 
@@ -330,23 +366,24 @@ class ModelTab(QWidget):
             self._plot_nd(fig, best, acq, kind, obj, d)
 
         if self.loocv is not None and self.loocv.r2 <= 0:
-            stamp_untrusted(fig, "UNLEARNED  R² < 0")
+            stamp_untrusted(fig, tr("UNLEARNED  R² < 0"))
         self.canvas.draw_idle()
 
     def _plot_1d(self, fig, best, acq, kind, obj) -> None:
+        self.surface_caption.setText("")
         c = curve_1d(self.model, self.ds, best, acq)
         ax1, ax2 = fig.subplots(2, 1, height_ratios=[2.2, 1], sharex=True)
 
         ax1.fill_between(c.x_real, c.mu - 2 * c.sd, c.mu + 2 * c.sd,
                          color=C_BAND, alpha=0.45, lw=0, label="μ ± 2σ")
-        ax1.plot(c.x_real, c.mu, color=C_MEAN, lw=2, label="predicted mean μ")
+        ax1.plot(c.x_real, c.mu, color=C_MEAN, lw=2, label=tr("predicted mean μ"))
         for x, v in zip(self.ds.X[:, 0], self.ds.reps):
             ax1.scatter([x] * len(v), v, s=26, c=C_POINT, edgecolors="white",
                         linewidths=0.6, zorder=5)
         bi = int(np.argmax(self.ds.y_mean))
         mark_best(ax1, self.ds.X[bi, 0], self.ds.y_mean[bi])
         ax1.set_ylabel(obj)
-        ax1.set_title("Response surface — measured points and the uncertainty around them")
+        ax1.set_title(tr("Response surface — measured points and the uncertainty around them"))
         ax1.legend(loc="best", ncols=2)
 
         ax2.fill_between(c.x_real, 0, c.ei, color=C_SUGGEST, alpha=0.3, lw=0)
@@ -354,7 +391,7 @@ class ModelTab(QWidget):
         ax2.axvline(c.x_best_ei, color=C_SUGGEST, ls="--", lw=1)
         ax2.set_ylabel(kind)
         ax2.set_xlabel(self._axis_label(0))
-        ax2.set_title(f"{kind} — where the next measurement teaches the most")
+        ax2.set_title(tr("{kind} — where the next measurement teaches the most", kind=kind))
         self._say_readout(kind, float(c.ei.max()), f"{self._axis_label(0)} = {c.x_best_ei:g}")
 
     def _plot_nd(self, fig, best, acq, kind, obj, d) -> None:
@@ -376,9 +413,14 @@ class ModelTab(QWidget):
             axes = [fig.add_subplot(gs[0, :]), fig.add_subplot(gs[1, 0]),
                     fig.add_subplot(gs[1, 1])]
 
-        panels = [("predicted mean μ", g.mu, CMAP_MU),
-                  ("uncertainty σ — darker is less known", g.sd, CMAP_SD),
-                  (f"{kind} — where to measure next", g.ei, CMAP_EI)]
+        # a title cannot wrap and these panels are ~100 px wide: the symbol names
+        # the panel, the caption under the figure carries the sentence
+        panels = [("μ", g.mu, CMAP_MU), ("σ", g.sd, CMAP_SD), (kind, g.ei, CMAP_EI)]
+        caption = [tr("μ predicted mean · σ uncertainty, darker is less known · "
+                      "{kind} where to measure next", kind=kind)]
+        if d == 2:
+            caption.insert(0, tr("Top left: the 3D surface with residual drop lines."))
+        self.surface_caption.setText(" ".join(caption))
         on_slice = self._points_on_slice(i, j)
 
         for ax, (title, Z, cmap) in zip(axes, panels):
@@ -418,7 +460,8 @@ class ModelTab(QWidget):
             ax.plot([a, a], [b, b], [y, p], color=C_RESIDUAL, lw=0.7)
         ax.set_xlabel(self._axis_label(i), labelpad=-4)
         ax.set_ylabel(self._axis_label(j), labelpad=-4)
-        ax.set_title("3D surface + residual drop lines")
+        # no title: constrained layout does not lay out a 3D axes, so a title here
+        # lands outside the figure. The caption under the figure names this panel.
         ax.tick_params(labelsize=6)
 
     def _points_on_slice(self, i: int, j: int, tol: float = 0.08) -> np.ndarray:
@@ -439,10 +482,11 @@ class ModelTab(QWidget):
         real = to_real(g.fixed, self.ds.X)
         near = nearest_measured(self.ds, g.fixed)
         n_on = len(self._points_on_slice(g.axis_i, g.axis_j))
-        self.cut_hint.setText(
-            f"pinned at: {format_condition(real, self.project.inputs)}<br>"
-            f"{n_on} measured points near this slice · closest measured condition: "
-            f"{format_condition(self.ds.X[near], self.project.inputs)}")
+        self.cut_hint.setText(tr(
+            "pinned at: {where}<br>{n} measured points near this slice · "
+            "closest measured condition: {nearest}",
+            where=format_condition(real, self.project.inputs), n=n_on,
+            nearest=format_condition(self.ds.X[near], self.project.inputs)))
 
     def _say_readout(self, kind: str, ei_max: float, where: str) -> None:
         """When the acquisition value is effectively zero, say so.
@@ -452,14 +496,15 @@ class ModelTab(QWidget):
         The yardstick matches the stopping rule (F-24): 1% of the response range.
         """
         rng = float(np.ptp(self.ds.y_mean)) if self.ds is not None else 0.0
-        base = f"{kind} max: {where}"
         if rng > 0 and ei_max < 0.01 * rng:
-            pct = ei_max / rng * 100
-            self.readout.setText(
-                f"<span style='color:{theme.FAIL}'>{base} · value {ei_max:.2g} "
-                f"= {pct:.3f}% of the response range — there is almost nothing left to learn anywhere</span>")
+            self.readout.setText(tr(
+                "<span style='color:{c}'>{kind} max: {where} · value {value} = {pct}% of the "
+                "response range — there is almost nothing left to learn anywhere</span>",
+                c=theme.FAIL, kind=kind, where=where,
+                value=f"{ei_max:.2g}", pct=f"{ei_max / rng * 100:.3f}"))
         else:
-            self.readout.setText(f"{base} · value {ei_max:.3g}")
+            self.readout.setText(tr("{kind} max: {where} · value {value}",
+                                    kind=kind, where=where, value=f"{ei_max:.3g}"))
 
     def _axis_label(self, k: int) -> str:
         v = self.project.inputs[k]
@@ -478,7 +523,7 @@ class ModelTab(QWidget):
         if not pairs:
             ax.axis("off")
             self.sens_canvas.draw_idle()
-            self.sens_note.setText("This surrogate has no length scales, so sensitivity cannot be computed.")
+            self.sens_note.setText(tr("This surrogate has no length scales, so sensitivity cannot be computed."))
             return
         labels = [n for n, _ in pairs]
         vals = [p for _, p in pairs]
@@ -486,17 +531,17 @@ class ModelTab(QWidget):
         ax.barh(y, vals, color=C_MEAN, height=0.55)
         ax.set_yticks(y, labels)
         ax.invert_yaxis()
-        ax.set_xlabel("influence [%]")
+        ax.set_xlabel(tr("influence [%]"))
         ax.set_xlim(0, max(100, max(vals) * 1.15) if vals else 100)
         for k, v in enumerate(vals):
-            ax.text(v + 1.5, k, f"{v:.0f}", va="center", fontsize=7, color=C_AXIS)
+            ax.text(v + 1.5, k, f"{v:.0f}", va="center", fontsize=7, color=C_AXIS)   # i18n: skip
         ax.grid(axis="y", visible=False)
         self.sens_canvas.draw_idle()
 
         zero = [n for n, p in pairs if p == 0.0]
-        note = "A <b>longer bar is more sensitive</b> (1 / length scale)."
+        note = tr("A <b>longer bar is more sensitive</b> (1 / length scale).")
         if zero:
-            note += f" No influence was detected for '{', '.join(zero)}'."
+            note += " " + tr("No influence was detected for '{names}'.", names=", ".join(zero))
         self.sens_note.setText(note)
 
     # ── validation figures ─────────────────────────────────────────
@@ -519,34 +564,35 @@ class ModelTab(QWidget):
             return
         ax.step(n, run, where="post", color=C_MEAN, lw=1.8)
         ax.scatter(n, run, s=12, c=C_MEAN, zorder=4)
-        ax.set_xlabel("measurements (cumulative)")
+        ax.set_xlabel(tr("measurements (cumulative)"))
         ax.set_ylabel(self.project.objective.name)
-        ax.set_title("Trajectory — best measured value so far")
+        ax.set_title(tr("Trajectory — best measured value so far"))
 
     def _plot_loocv(self, ax) -> None:
         if self.loocv is None:
-            ax.text(0.5, 0.5, "Computing learnability…", ha="center", va="center", color="#888")
+            ax.text(0.5, 0.5, tr("Computing learnability…"),
+                    ha="center", va="center", color="#888")            # i18n: skip
             ax.axis("off")
             return
         y = self.ds.y_mean
         p = self.loocv.pred
         ax.scatter(y, p, s=30, c=C_POINT, edgecolors="white", linewidths=0.6, zorder=5)
         lim = [min(y.min(), p.min()), max(y.max(), p.max())]
-        ax.plot(lim, lim, color=C_AXIS, lw=1, label="perfect prediction")
-        ax.axhline(y.mean(), color=C_BEST, ls="--", lw=1.2, label="always answer the mean")
-        ax.set_xlabel("measured (condition mean)")
-        ax.set_ylabel("LOOCV prediction")
-        ax.set_title(f"Learnability R² = {self.loocv.r2:+.3f}")
+        ax.plot(lim, lim, color=C_AXIS, lw=1, label=tr("perfect prediction"))
+        ax.axhline(y.mean(), color=C_BEST, ls="--", lw=1.2, label=tr("always answer the mean"))
+        ax.set_xlabel(tr("measured (condition mean)"))
+        ax.set_ylabel(tr("LOOCV prediction"))
+        ax.set_title(tr("Learnability R² = {r2}", r2=f"{self.loocv.r2:+.3f}"))
         ax.legend(loc="best")
 
     def _plot_replicates(self, ax) -> None:
         order, reps, means = replicate_scatter(self.ds)
         for k, v in enumerate(reps):
             ax.scatter([k] * len(v), v, s=22, c=C_RAW, zorder=3)
-        ax.plot(range(len(means)), means, color=C_MEAN, lw=1.4, zorder=4, label="condition mean")
-        ax.set_xlabel("condition (sorted by mean)")
+        ax.plot(range(len(means)), means, color=C_MEAN, lw=1.4, zorder=4, label=tr("condition mean"))
+        ax.set_xlabel(tr("condition (sorted by mean)"))
         ax.set_ylabel(self.project.objective.name)
-        ax.set_title("Replicate scatter — how much re-measuring the same condition wobbles")
+        ax.set_title(tr("Replicate scatter"))       # the sentence is in the caption below
         ax.legend(loc="best")
 
     def _plot_variogram(self, ax) -> None:
@@ -555,9 +601,9 @@ class ModelTab(QWidget):
             ax.axis("off")
             return
         ax.plot(n.bin_centers, n.bin_gamma, "o-", color=C_MEAN, ms=4, lw=1.4)
-        ax.axhline(n.sill, color=C_AXIS, ls="--", lw=1, label=f"sill {n.sill:.2f}")
-        ax.axhline(n.nugget, color=C_BEST, ls=":", lw=1.2, label=f"nugget {n.nugget:.2f}")
-        ax.set_xlabel("distance between conditions (normalized)")
-        ax.set_ylabel("semivariance γ")
-        ax.set_title(f"Terrain roughness — nugget ratio {n.ratio:.3f}")
+        ax.axhline(n.sill, color=C_AXIS, ls="--", lw=1, label=tr("sill {v}", v=f"{n.sill:.2f}"))
+        ax.axhline(n.nugget, color=C_BEST, ls=":", lw=1.2, label=tr("nugget {v}", v=f"{n.nugget:.2f}"))
+        ax.set_xlabel(tr("distance between conditions (normalized)"))
+        ax.set_ylabel(tr("semivariance γ"))
+        ax.set_title(tr("Terrain roughness — nugget ratio {ratio}", ratio=f"{n.ratio:.3f}"))
         ax.legend(loc="best")

@@ -124,4 +124,82 @@ KO: dict[str, str] = {
         '주의',
     'generated with requirements unmet':
         '요건 미달 상태에서 생성됨',
+    'Model — the surface drawn from the current data':
+        '모델 — 지금 데이터로 그린 응답면',
+    'The terrain as the model sees it, plus the validation figures that say how far to trust it.':
+        '모델이 본 지형과, 그 모델을 얼마나 믿을 수 있는지 보여 주는 검증 그림입니다.',
+    'Slice':
+        '절단면',
+    'Sensitivity — which knob bites hardest':
+        '민감도 — 어느 손잡이가 세게 듣는가',
+    'Surface':
+        '응답면',
+    'Validation':
+        '검증 그림',
+    'Top left the trajectory, top right learnability (LOOCV), bottom left the replicate scatter — how far repeats of the same condition wobble — and bottom right the terrain roughness.':
+        '왼쪽 위는 궤적, 오른쪽 위는 학습가능성(LOOCV), 왼쪽 아래는 반복 산포 — 같은 조건을 다시 재면 얼마나 흔들리는지 — 오른쪽 아래는 지형 거칠기입니다.',
+    'Next-candidate method: {method}  (change it on the Recommend tab)':
+        '다음 후보 고르는 방식 : {method}  (추천 탭에서 바꿉니다)',
+    "⚠ This surface is <b>unlearned</b> (LOOCV R² = {r2} ≤ 0). Its shape comes from the kernel's default assumptions more than from the data. <b>Do not draw conclusions from the shape.</b>":
+        '⚠ 이 응답면은 <b>학습되지 않았습니다</b> (LOOCV R² = {r2} ≤ 0). 모양은 데이터가 아니라 커널의 기본 가정에서 나온 것에 가깝습니다. <b>모양을 근거로 결론을 내지 마세요.</b>',
+    'The surface is drawn once there are at least 3 conditions.':
+        '조건이 3개 이상이어야 응답면을 그립니다.',
+    'UNLEARNED  R² < 0':
+        '학습되지 않음  R² < 0',
+    'predicted mean μ':
+        '예측 평균 μ',
+    'Response surface — measured points and the uncertainty around them':
+        '응답면 — 실측점과 그 둘레의 불확실성',
+    '{kind} — where the next measurement teaches the most':
+        '{kind} — 다음에 재면 가장 많이 배우는 곳',
+    'μ predicted mean · σ uncertainty, darker is less known · {kind} where to measure next':
+        'μ 예측 평균 · σ 불확실성, 짙을수록 모릅니다 · {kind} 다음에 잴 곳',
+    'Top left: the 3D surface with residual drop lines.':
+        '왼쪽 위 : 잔차 수선을 세운 3D 곡면.',
+    'pinned at: {where}<br>{n} measured points near this slice · closest measured condition: {nearest}':
+        '고정 : {where}<br>이 면 근처의 실측점 {n}개 · 가장 가까운 실측 조건 {nearest}',
+    "<span style='color:{c}'>{kind} max: {where} · value {value} = {pct}% of the response range — there is almost nothing left to learn anywhere</span>":
+        "<span style='color:{c}'>{kind} 최대 : {where} · 값 {value} = 응답 범위의 {pct}% — 어디를 재도 배울 것이 거의 없습니다</span>",
+    '{kind} max: {where} · value {value}':
+        '{kind} 최대 : {where} · 값 {value}',
+    'This surrogate has no length scales, so sensitivity cannot be computed.':
+        '이 대리모델은 길이척도가 없어 민감도를 낼 수 없습니다.',
+    'influence [%]':
+        '영향 [%]',
+    'A <b>longer bar is more sensitive</b> (1 / length scale).':
+        '막대가 <b>클수록 민감</b>합니다 (1/길이척도).',
+    "No influence was detected for '{names}'.":
+        '‘{names}’ 은 영향이 잡히지 않았습니다.',
+    'measurements (cumulative)':
+        '측정 횟수 (누적)',
+    'Trajectory — best measured value so far':
+        '궤적 — 지금까지의 최선 측정값',
+    'Computing learnability…':
+        '학습가능성 계산 중…',
+    'perfect prediction':
+        '완벽한 예측',
+    'always answer the mean':
+        '전체 평균만 답하기',
+    'measured (condition mean)':
+        '실측 (조건 평균)',
+    'LOOCV prediction':
+        'LOOCV 예측',
+    'Learnability R² = {r2}':
+        '학습가능성 R² = {r2}',
+    'condition mean':
+        '조건 평균',
+    'condition (sorted by mean)':
+        '조건 (평균 오름차순)',
+    'Replicate scatter':
+        '반복 산포',
+    'sill {v}':
+        '문턱값 {v}',
+    'nugget {v}':
+        '너깃 {v}',
+    'distance between conditions (normalized)':
+        '조건 사이 거리 (정규화)',
+    'semivariance γ':
+        '반변이도 γ',
+    'Terrain roughness — nugget ratio {ratio}':
+        '지형 거칠기 — 너깃비 {ratio}',
 }
