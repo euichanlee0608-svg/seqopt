@@ -132,21 +132,28 @@ class SetupTab(QWidget):
             if it is not None:
                 it.setToolTip(tip)
         head = self.vars.horizontalHeader()
-        head.setSectionResizeMode(0, QHeaderView.Stretch)
-        for c in range(1, 6):
+        for c in range(6):
             head.setSectionResizeMode(c, QHeaderView.ResizeToContents)
-        head.setMinimumSectionSize(84)
+        # A stretched name column was squeezed to nothing at 1024 and elided the names away.
+        # Every column is sized to what it holds; the last one takes up whatever slack is left.
+        head.setStretchLastSection(True)
+        fm = self.vars.fontMetrics()
+        # 84px was a floor measured on the English headers; six of them do not fit the card at
+        # 1024, and min/max/step were pushed off the right edge where nobody could reach them.
+        # The floor is what a number needs to be readable, in whichever font is on.
+        head.setMinimumSectionSize(fm.horizontalAdvance("000000") + 16)
         # ResizeToContents measures the header, not the combo inside the cell — the type
         # column has to hold the widest label of whichever language is on
         head.setSectionResizeMode(2, QHeaderView.Fixed)
-        fm = self.vars.fontMetrics()
         self.vars.setColumnWidth(2, max(fm.horizontalAdvance(lbl)
                                         for _, lbl in type_labels()) + 64)   # combo arrow + cell padding
         # a cramped row clips the text inside cell editors
         self.vars.verticalHeader().setDefaultSectionSize(theme.ROW_HEIGHT)
         self.vars.verticalHeader().setVisible(False)
         self.vars.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.vars.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # Six editable columns do not fit the card at 1024 wide. Scrolling to min/max/step
+        # beats hiding them, so the table opts out of the width check the way the Data grid does.
+        self.vars.setProperty("clip_ok", True)
         self.vars.itemChanged.connect(self._push)
         gin.add(self.vars)
 
@@ -307,7 +314,13 @@ class SetupTab(QWidget):
         """The page scrolls, so the table grows only to its content (3 to 12 rows)."""
         rows = min(max(self.vars.rowCount(), 3), 12)
         h = self.vars.horizontalHeader().sizeHint().height() + rows * theme.ROW_HEIGHT
+        if self.vars.horizontalHeader().length() > self.vars.viewport().width():
+            h += self.vars.horizontalScrollBar().sizeHint().height()   # or it eats the last row
         self.vars.setFixedHeight(h + 2 * self.vars.frameWidth() + 2)
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._fit_vars()          # a narrower window means a scroll bar, which needs its own row
 
     # ── project ↔ screen ───────────────────────────────────────────
     def reload(self) -> None:
