@@ -17,13 +17,19 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleS
                                QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.design import initial_design, suggest_initial_size
+from core.i18n import tr
 from core.spec import (ObjSpec, SumConstraint, VarSpec, candidate_summary, count_candidates,
                        suggest_log_transform)
 from . import theme
 from .widgets.advanced import Advanced
 from .widgets.section import PageHeader, Section
 
-TYPES = [("continuous", "continuous"), ("integer", "integer"), ("categorical", "categorical")]
+TYPE_KEYS = ("continuous", "integer", "categorical")        # i18n: key
+
+
+def type_labels() -> list[tuple[str, str]]:
+    """(key, label) for the variable-type combo — translated per call, never at import."""
+    return [(k, tr(k)) for k in TYPE_KEYS]
 
 
 class SetupTab(QWidget):
@@ -41,10 +47,10 @@ class SetupTab(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(12)
 
-        head = PageHeader("Setup — what you can turn, and what should improve",
-                          "Everything defined here is the premise of every other screen. "
-                          "Invalid values never get in.")
-        head.add_right(QLabel("Project name"))
+        head = PageHeader(tr("Setup — what you can turn, and what should improve"),
+                          tr("Everything defined here is the premise of every other screen. "
+                             "Invalid values never get in."))
+        head.add_right(QLabel(tr("Project name")))
         self.name = QLineEdit()
         self.name.setMinimumWidth(260)
         self.name.textChanged.connect(self._push)
@@ -68,30 +74,31 @@ class SetupTab(QWidget):
         root.addWidget(scroll, 1)
 
         # ── input variables ────────────────────────────────────────
-        gin = Section("Input variables — the knobs you can turn",
-                      "Design variables only. Loads and ambient values a device merely "
-                      "experiences are not knobs.")
+        gin = Section(tr("Input variables — the knobs you can turn"),
+                      tr("Design variables only. Loads and ambient values a device merely "
+                         "experiences are not knobs."))
 
-        self.empty_hint = QLabel(
+        self.empty_hint = QLabel(tr(
             "No variables yet.  Press <b>\"+ Add variable\"</b> to start.<br>"
             "e.g. — name <b>power</b> · unit <b>W</b> · type <b>continuous</b> · "
-            "min <b>150</b> · max <b>200</b>")
+            "min <b>150</b> · max <b>200</b>"))
         self.empty_hint.setWordWrap(True)
         self.empty_hint.setStyleSheet(theme.card("info"))
         gin.add(self.empty_hint)
 
         self.vars = QTableWidget(0, 6)
-        self.vars.setHorizontalHeaderLabels(["name", "unit", "type", "min", "max", "step"])
+        self.vars.setHorizontalHeaderLabels([tr("name"), tr("unit"), tr("type"),
+                                             tr("min"), tr("max"), tr("step")])
         for col, tip in enumerate([
-                "Variable name. Tables, figures and reports use this name.",
-                "Unit. May be left empty.",
-                "continuous = any value · integer = 3, 4, 5… · categorical = a fixed set",
-                "The smallest value this knob can be set to",
-                "The largest value this knob can be set to",
-                "The spacing the instrument can actually be set to (continuous only). "
-                "e.g. 10 if the power supply only moves in 10 W steps.\n"
-                "Leave it empty and any value can be chosen (infinitely many candidates).\n"
-                "Requirement ① compares the candidate count on this grid with the budget."]):
+                tr("Variable name. Tables, figures and reports use this name."),
+                tr("Unit. May be left empty."),
+                tr("continuous = any value · integer = 3, 4, 5… · categorical = a fixed set"),
+                tr("The smallest value this knob can be set to"),
+                tr("The largest value this knob can be set to"),
+                tr("The spacing the instrument can actually be set to (continuous only). "
+                   "e.g. 10 if the power supply only moves in 10 W steps.\n"
+                   "Leave it empty and any value can be chosen (infinitely many candidates).\n"
+                   "Requirement ① compares the candidate count on this grid with the budget.")]):
             it = self.vars.horizontalHeaderItem(col)
             if it is not None:
                 it.setToolTip(tip)
@@ -112,14 +119,14 @@ class SetupTab(QWidget):
         gin.add(self.vars)
 
         row = QHBoxLayout()
-        add = QPushButton("+ Add variable")
+        add = QPushButton(tr("+ Add variable"))
         add.clicked.connect(self._add_var)
-        rm = QPushButton("− Remove selected")
+        rm = QPushButton(tr("− Remove selected"))
         rm.clicked.connect(self._del_var)
-        self.autofill = QPushButton("Fill ranges from data")
-        self.autofill.setToolTip("Fills min/max from the measurements you already entered.\n"
-                                 "Typing them by hand is tedious, and a typo sends the\n"
-                                 "recommendation somewhere absurd.")
+        self.autofill = QPushButton(tr("Fill ranges from data"))
+        self.autofill.setToolTip(tr("Fills min/max from the measurements you already entered.\n"
+                                    "Typing them by hand is tedious, and a typo sends the\n"
+                                    "recommendation somewhere absurd."))
         self.autofill.clicked.connect(self._autofill_ranges)
         self.var_msg = QLabel()
         self.var_msg.setWordWrap(True)
@@ -137,34 +144,34 @@ class SetupTab(QWidget):
         left.addWidget(gin)
 
         # ── sum constraint ─────────────────────────────────────────
-        gcon = Section("Sum constraint — variables with a fixed total (optional)",
-                       "Turn on when a few variables must add up to a fixed total, as a "
-                       "composition does. The initial design, the candidates and the "
-                       "recommendations all stay inside it.")
-        self.con_on = QCheckBox("Use a sum constraint")
-        self.con_on.setToolTip("e.g. A + B + C = 100 (%)  ·  additive1 + additive2 ≤ 5 (wt%)")
+        gcon = Section(tr("Sum constraint — variables with a fixed total (optional)"),
+                       tr("Turn on when a few variables must add up to a fixed total, as a "
+                          "composition does. The initial design, the candidates and the "
+                          "recommendations all stay inside it."))
+        self.con_on = QCheckBox(tr("Use a sum constraint"))
+        self.con_on.setToolTip(tr("e.g. A + B + C = 100 (%)  ·  additive1 + additive2 ≤ 5 (wt%)"))
         self.con_on.toggled.connect(self._on_constraint_toggled)
         gcon.add(self.con_on)
         self.con_body = QWidget()
         cb = QVBoxLayout(self.con_body)
         cb.setContentsMargins(0, 0, 0, 0)
         cb.setSpacing(8)
-        cb.addWidget(QLabel("Variables in the sum (2 or more)"))
+        cb.addWidget(QLabel(tr("Variables in the sum (2 or more)")))
         self.con_vars = QListWidget()
-        self.con_vars.setToolTip("The constraint applies to the sum of the checked variables. "
-                                 "Categorical variables cannot take part.")
+        self.con_vars.setToolTip(tr("The constraint applies to the sum of the checked variables. "
+                                    "Categorical variables cannot take part."))
         self.con_vars.setMaximumHeight(theme.ROW_HEIGHT * 4)
         self.con_vars.itemChanged.connect(self._push)
         cb.addWidget(self.con_vars)
         row_c = QHBoxLayout()
-        row_c.addWidget(QLabel("The sum is"))
+        row_c.addWidget(QLabel(tr("The sum is")))
         self.con_kind = QComboBox()
-        self.con_kind.addItem("= exactly", "eq")
-        self.con_kind.addItem("≤ at most", "le")
+        self.con_kind.addItem(tr("= exactly"), "eq")       # i18n: skip
+        self.con_kind.addItem(tr("≤ at most"), "le")       # i18n: skip
         self.con_kind.currentIndexChanged.connect(self._push)
         row_c.addWidget(self.con_kind)
         self.con_total = QDoubleSpinBox(minimum=-1e9, maximum=1e9, decimals=4, value=100.0)
-        self.con_total.setToolTip("The total. For a composition, 100 (%) or 1.")
+        self.con_total.setToolTip(tr("The total. For a composition, 100 (%) or 1."))
         self.con_total.valueChanged.connect(self._push)
         row_c.addWidget(self.con_total)
         row_c.addStretch(1)
@@ -178,20 +185,20 @@ class SetupTab(QWidget):
         left.addStretch(1)
 
         # ── objective ──────────────────────────────────────────────
-        gout = Section("Response — the value you want to improve",
-                       "Exactly one. Improving several values at once is outside this tool.")
+        gout = Section(tr("Response — the value you want to improve"),
+                       tr("Exactly one. Improving several values at once is outside this tool."))
         of = QFormLayout()
         of.setHorizontalSpacing(14)
         of.setVerticalSpacing(10)
         self.obj_name = QLineEdit()
         self.obj_unit = QLineEdit()
         self.goal = QComboBox()
-        self.goal.addItem("Maximize — bigger is better", "max")
-        self.goal.addItem("Minimize — smaller is better", "min")
-        self.log = QCheckBox("Work in log scale")
-        self.log.setToolTip("Turn on when the response spans orders of magnitude (say 1e-4 to 1e2).\n"
-                            "The setting is saved with the project and written into the report — "
-                            "it changes the verdicts.")
+        self.goal.addItem(tr("Maximize — bigger is better"), "max")     # i18n: skip
+        self.goal.addItem(tr("Minimize — smaller is better"), "min")    # i18n: skip
+        self.log = QCheckBox(tr("Work in log scale"))
+        self.log.setToolTip(tr("Turn on when the response spans orders of magnitude (say 1e-4 to 1e2).\n"
+                               "The setting is saved with the project and written into the report — "
+                               "it changes the verdicts."))
         self.log_hint = QLabel()
         self.log_hint.setWordWrap(True)
         self.log_hint.setStyleSheet(theme.muted())
@@ -200,9 +207,9 @@ class SetupTab(QWidget):
         self.goal.currentIndexChanged.connect(self._push)
         self.log.stateChanged.connect(self._push)
         self.log.stateChanged.connect(self._update_log_hint)
-        of.addRow("Name", self.obj_name)
-        of.addRow("Unit", self.obj_unit)
-        of.addRow("Goal", self.goal)
+        of.addRow(tr("Name"), self.obj_name)
+        of.addRow(tr("Unit"), self.obj_unit)
+        of.addRow(tr("Goal"), self.goal)
         gout.add_layout(of)
         gout.add(self.log_hint)
         adv_obj = Advanced()
@@ -211,9 +218,9 @@ class SetupTab(QWidget):
         right.addWidget(gout)
 
         # ── budget ─────────────────────────────────────────────────
-        gb = Section("Budget — how many measurements in total",
-                     "This count against the condition count decides whether optimization "
-                     "means anything at all.")
+        gb = Section(tr("Budget — how many measurements in total"),
+                     tr("This count against the condition count decides whether optimization "
+                        "means anything at all."))
         bf = QFormLayout()
         bf.setHorizontalSpacing(14)
         bf.setVerticalSpacing(10)
@@ -225,20 +232,20 @@ class SetupTab(QWidget):
         self.init_hint.setWordWrap(True)
         self.init_hint.setStyleSheet(theme.muted())
 
-        gen = QPushButton("Generate initial design → export CSV")
+        gen = QPushButton(tr("Generate initial design → export CSV"))
         gen.setProperty("primary", True)
-        gen.setToolTip("Draws the first measurement points space-filling (maximin LHS).\n"
-                       "Measured on a grid, curved terrain looks flat — and more replicates "
-                       "do not fix that.")
+        gen.setToolTip(tr("Draws the first measurement points space-filling (maximin LHS).\n"
+                          "Measured on a grid, curved terrain looks flat — and more replicates "
+                          "do not fix that."))
         gen.clicked.connect(self._make_initial)
 
-        bf.addRow("Total measurements", self.budget)
+        bf.addRow(tr("Total measurements"), self.budget)
         gb.add_layout(bf)
         gb.add(self.init_hint)
         gb.add(gen)
         self.adv_budget = Advanced()
         row_init = QHBoxLayout()
-        row_init.addWidget(QLabel("Initial design points"))
+        row_init.addWidget(QLabel(tr("Initial design points")))
         row_init.addWidget(self.init_n)
         row_init.addStretch(1)
         self.adv_budget.add_layout(row_init)
@@ -286,9 +293,9 @@ class SetupTab(QWidget):
         self.vars.setItem(i, 0, QTableWidgetItem(v.name))
         self.vars.setItem(i, 1, QTableWidgetItem(v.unit))
         cb = QComboBox()
-        for key, label in TYPES:
+        for key, label in type_labels():
             cb.addItem(label, key)
-        cb.setCurrentIndex([k for k, _ in TYPES].index(v.type))
+        cb.setCurrentIndex(TYPE_KEYS.index(v.type))
         cb.currentIndexChanged.connect(self._push)
         self.vars.setCellWidget(i, 2, cb)
         self.vars.setItem(i, 3, QTableWidgetItem("" if v.lo is None else f"{v.lo:g}"))
@@ -323,7 +330,7 @@ class SetupTab(QWidget):
             return None, ""
         names = self._checked_constraint_names()
         if len(names) < 2:
-            return None, "check at least 2 variables to put in the sum"
+            return None, tr("check at least 2 variables to put in the sum")
         try:
             c = SumConstraint(names, self.con_total.value(), self.con_kind.currentData())
             c.validate(inputs)
@@ -338,8 +345,9 @@ class SetupTab(QWidget):
         ms = [m for m in self.project.measurements
               if not m.get("excluded") and not m.get("pending")]
         if not ms:
-            QMessageBox.information(self, "No measurements",
-                                    "Enter values on the Data tab first, then the ranges can be filled.")
+            QMessageBox.information(
+                self, tr("No measurements"),
+                tr("Enter values on the Data tab first, then the ranges can be filled."))
             return
         cols = list(zip(*[m["inputs"] for m in ms]))
         self._loading = True
@@ -380,20 +388,21 @@ class SetupTab(QWidget):
             lo_s = (self.vars.item(i, 3).text() if self.vars.item(i, 3) else "").strip()
             hi_s = (self.vars.item(i, 4).text() if self.vars.item(i, 4) else "").strip()
             if not name:
-                errs.append(f"row {i + 1}: the name is empty")
+                errs.append(tr("row {row}: the name is empty", row=i + 1))
                 continue
             names.append(name)
             if vtype == "categorical":          # there is no level editor yet
-                errs.append(f"{name}: categorical variables cannot be built on this screen yet "
-                            "— use continuous or integer")
+                errs.append(tr("{name}: categorical variables cannot be built on this screen yet "
+                               "— use continuous or integer", name=name))
                 continue
             try:
                 lo, hi = float(lo_s), float(hi_s)
             except ValueError:
-                errs.append(f"{name}: min/max is not a number")
+                errs.append(tr("{name}: min/max is not a number", name=name))
                 continue
             if not lo < hi:
-                errs.append(f"{name}: min ({lo:g}) must be < max ({hi:g})")
+                errs.append(tr("{name}: min ({lo}) must be < max ({hi})",
+                               name=name, lo=f"{lo:g}", hi=f"{hi:g}"))
                 continue
             step_s = (self.vars.item(i, 5).text() if self.vars.item(i, 5) else "").strip()
             step = None
@@ -401,7 +410,7 @@ class SetupTab(QWidget):
                 try:
                     step = float(step_s)
                 except ValueError:
-                    errs.append(f"{name}: the step is not a number")
+                    errs.append(tr("{name}: the step is not a number", name=name))
                     continue
             try:
                 out.append(VarSpec(name, unit, vtype, lo, hi, step=step))
@@ -409,19 +418,20 @@ class SetupTab(QWidget):
                 errs.append(str(e))
         dup = {n for n in names if names.count(n) > 1}
         if dup:
-            errs.append(f"duplicate names: {', '.join(sorted(dup))}")
+            errs.append(tr("duplicate names: {names}", names=", ".join(sorted(dup))))
         if not out and self.vars.rowCount():
-            errs.append("define at least one input variable")
+            errs.append(tr("define at least one input variable"))
         if len(out) > 10:
-            errs.append(f"at most 10 input variables (currently {len(out)})")
+            errs.append(tr("at most 10 input variables (currently {n})", n=len(out)))
         return out, errs
 
     def _push(self) -> None:
         if self._loading:
             return
         p = self.project
-        p.name = self.name.text() or "New project"
-        p.objective = ObjSpec(self.obj_name.text() or "response", self.obj_unit.text(),
+        p.name = self.name.text() or "New project"        # i18n: skip — the saved project's name
+        p.objective = ObjSpec(self.obj_name.text() or "response",           # i18n: skip — data
+                              self.obj_unit.text(),
                               self.goal.currentData(), self.log.isChecked())
         p.budget_total = self.budget.value()
         p.initial_design = self.init_n.value()
@@ -445,7 +455,7 @@ class SetupTab(QWidget):
 
     def _constraint_status(self, c: SumConstraint, inputs: list[VarSpec]) -> str:
         """The constraint as a sentence — plus a warning if measured rows already violate it."""
-        txt = f"constraint: <b>{c.describe()}</b>"
+        txt = tr("constraint: <b>{rule}</b>", rule=c.describe())
         rows = [m for m in self.project.measurements
                 if not m.get("excluded") and not m.get("pending")]
         try:
@@ -453,8 +463,10 @@ class SetupTab(QWidget):
         except (ValueError, IndexError, TypeError):
             bad = 0
         if bad:
-            txt += (f"<br><span style='color:{theme.WARN};'>{bad} measured rows already violate "
-                    "this constraint — check that the constraint, and the values, are right.</span>")
+            txt += (f"<br><span style='color:{theme.WARN};'>"                       # i18n: skip
+                    + tr("{n} measured rows already violate this constraint — check that "
+                         "the constraint, and the values, are right.", n=bad)
+                    + "</span>")
         return txt
 
     def _update_candidates(self, inputs: list[VarSpec], constraint: SumConstraint | None) -> None:
@@ -471,13 +483,14 @@ class SetupTab(QWidget):
             return
         if n is not None and n <= budget:
             self.cand_hint.setStyleSheet(f"color:{theme.FAIL};")
-            self.cand_hint.setText(
-                f"{where} ≤ budget {budget} — <b>requirement ① unmet</b>: measuring everything "
-                "is better. A finer step or a wider range gives more candidates.")
+            self.cand_hint.setText(tr(
+                "{where} ≤ budget {budget} — <b>requirement ① unmet</b>: measuring everything "
+                "is better. A finer step or a wider range gives more candidates.",
+                where=where, budget=budget))
         else:
             self.cand_hint.setStyleSheet(theme.muted())
-            self.cand_hint.setText(f"{where} — more than the budget of {budget}, "
-                                   "so requirement ① passes.")
+            self.cand_hint.setText(tr("{where} — more than the budget of {budget}, "
+                                      "so requirement ① passes.", where=where, budget=budget))
 
     def _on_budget(self) -> None:
         # Changing the budget moves the initial size to its recommended value —
@@ -499,11 +512,11 @@ class SetupTab(QWidget):
         import numpy as np
         want = suggest_log_transform(np.array(vals, dtype=float))
         if want and not self.log.isChecked():
-            self.log_hint.setText(
+            self.log_hint.setText(tr(
                 "The response spans two or more orders of magnitude — "
-                "<b>turning on the log scale is the better choice</b> (Advanced).")
+                "<b>turning on the log scale is the better choice</b> (Advanced)."))
         elif self.log.isChecked():
-            self.log_hint.setText("Working in log10 scale. The report says so too.")
+            self.log_hint.setText(tr("Working in log10 scale. The report says so too."))
         else:
             self.log_hint.setText("")
 
@@ -512,30 +525,33 @@ class SetupTab(QWidget):
         if not self._loading and self.init_n.value() != rec:
             pass                       # the user set it in Advanced — respect that
         self.init_hint.setText(
-            f"The first batch draws <b>{self.init_n.value()} points</b> space-filling "
-            f"({rec} points — 25–30% of the budget — recommended).")
-        self.adv_budget.set_summary(f"initial design: {self.init_n.value()} points")
+            tr("The first batch draws <b>{n} points</b> space-filling "
+               "({rec} recommended — 25–30% of the budget).",
+               n=self.init_n.value(), rec=rec))
+        self.adv_budget.set_summary(tr("initial design: {n} points", n=self.init_n.value()))
 
     def _make_initial(self) -> None:
         inputs, errs = self.collect()
         if errs:
-            QMessageBox.warning(self, "Finish the variable definitions first", "\n".join(errs))
+            QMessageBox.warning(self, tr("Finish the variable definitions first"), "\n".join(errs))
             return
         constraint, cerr = self.collect_constraint(inputs)
         if cerr:
-            QMessageBox.warning(self, "Finish the sum constraint first", cerr)
+            QMessageBox.warning(self, tr("Finish the sum constraint first"), cerr)
             return
         k = self.init_n.value()
         X = initial_design(k, inputs, seed=0, constraint=constraint)
-        fn, _ = QFileDialog.getSaveFileName(self, "Export initial design",
-                                            "initial_design.csv", "CSV (*.csv)")
+        fn, _ = QFileDialog.getSaveFileName(self, tr("Export initial design"),
+                                            "initial_design.csv",      # i18n: skip — file name
+                                            tr("CSV (*.csv)"))
         if not fn:
             return
         with open(fn, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.writer(f)
             w.writerow([f"{v.name} ({v.unit})" if v.unit else v.name for v in inputs]
-                       + [self.obj_name.text() or "response"])
+                       + [self.obj_name.text() or "response"])          # i18n: skip — column names
             for row in X:
                 w.writerow([f"{x:g}" for x in row] + [""])
-        QMessageBox.information(self, "Exported",
-                                f"Saved {k} points.\nMeasure them, then fill in the values on the Data tab.")
+        QMessageBox.information(
+            self, tr("Exported"),
+            tr("Saved {n} points.\nMeasure them, then fill in the values on the Data tab.", n=k))
