@@ -7,6 +7,7 @@ the mistake this project made four times.
 """
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -120,6 +121,27 @@ def test_log_refuses_to_invent_sigma_w_without_replicates():
     log = calculation_log(ReportData.compute(p))
     assert "NOT COMPUTABLE" in log
     assert "No assumed value is substituted" in log
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Korean — both languages, always (i18n)
+# ══════════════════════════════════════════════════════════════════════
+def test_korean_pdf_and_log(korean, data, tmp_path):
+    """Switching the language must actually change the report: Hangul in the log,
+    no leftover English section headers, no un-filled {placeholder} from a bad
+    tr() call, and the PDF still builds (with the CJK font when one is available)."""
+    log = calculation_log(data)
+    assert any("가" <= ch <= "힣" for ch in log), "no Hangul in the Korean log"
+    for english in ("within-condition spread", "between-condition spread",
+                    "surface learnability", "terrain roughness", "gate verdict",
+                    "candidate count", "recommendation"):
+        assert english not in log, f"{english!r} leaked into the Korean log"
+    assert not re.search(r"\{[a-zA-Z_]\w*\}", log), "unformatted {placeholder} in the Korean log"
+
+    out = write_pdf(data, tmp_path / "ko.pdf")
+    raw = out.read_bytes()
+    assert raw.startswith(b"%PDF")
+    assert len(raw) > 50_000
 
 
 # ══════════════════════════════════════════════════════════════════════

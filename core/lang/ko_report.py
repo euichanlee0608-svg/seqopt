@@ -66,4 +66,24 @@ KO: dict[str, str] = {
     "available": "가능",
     "[caution] this report was force-generated with requirements unmet.":
         "[주의] 이 리포트는 요건 미달 상태에서 강제로 생성됐다.",
+
+    # --- reproduce_script (text baked into the generated .py file) ---
+    "{name} — reproduction script (auto-generated {ts})": "{name} — 재현 스크립트 (자동 생성 {ts})",
+    "This one file reproduces the report's numbers. Run it from any folder.\n"
+    "Requires: numpy · scipy · scikit-learn==1.8.0 and seqopt's core/ package.":
+        "이 파일 하나로 리포트와 같은 숫자가 나온다. 어느 폴더에 두고 실행해도 된다.\n"
+        "필요한 것 : numpy · scipy · scikit-learn==1.8.0 그리고 seqopt 의 core/ 패키지.",
+    "# The Windows console (cmd) defaults to a legacy encoding and can die printing\n"
+    "# non-ASCII characters (user-entered names included). Two lines prevent that.":
+        "# 윈도우 콘솔(cmd)은 기본 인코딩이 cp949 라 한글 print 에서 죽는다.\n"
+        "# 이 두 줄이 없으면 랩실 PC 에서 UnicodeEncodeError 가 난다.",
+    "# Where the seqopt that generated this script lives. Moved it? Edit this line only.":
+        "# 이 스크립트를 만든 seqopt 설치 위치. 옮겼다면 이 줄만 고치면 된다.",
+    "usable conditions {n} · {m} measurements · selectable conditions {c}":
+        "유효 조건 {n} · 측정 {m}회 · 고를 수 있는 조건 {c}",
+    "infinite": "무한",
+    "(report value {v})": "(리포트 값 {v})",
+    "nugget ratio = {v}": "너깃비   = {v}",
+    "nugget ratio = not computable (too few conditions)": "너깃비   = 계산 불가 (조건 부족)",
+    "recommendation": "추천",
 }

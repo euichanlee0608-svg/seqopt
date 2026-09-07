@@ -177,7 +177,7 @@ def reproduce_script(data: ReportData) -> str:
     """
     p, ds = data.project, data.dataset
     rows = ",\n    ".join(
-        f"dict(inputs={[float(v) for v in m['inputs']]}, value={float(m['value'])!r}, "
+        f"dict(inputs={[float(v) for v in m['inputs']]}, value={float(m['value'])!r}, "  # i18n: skip
         f"excluded={bool(m.get('excluded'))}, pending={bool(m.get('pending'))})"
         for m in p.measurements)
     inputs = ",\n    ".join(
@@ -188,24 +188,45 @@ def reproduce_script(data: ReportData) -> str:
            if p.constraint else "None")
     o = p.objective
     home = Path(__file__).resolve().parent.parent
-    return f'''# -*- coding: utf-8 -*-
-"""{p.name} — reproduction script (auto-generated {datetime.now().strftime("%Y-%m-%d %H:%M")})
 
-This one file reproduces the report's numbers. Run it from any folder.
-Requires: numpy · scipy · scikit-learn==1.8.0 and seqopt's core/ package.
+    # User-facing text inside the generated script (docstring, comments, print labels) is
+    # baked in the current language now; the numbers/identifiers stay Python.
+    title = tr("{name} — reproduction script (auto-generated {ts})",
+               name=p.name, ts=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    about = tr("This one file reproduces the report's numbers. Run it from any folder.\n"
+               "Requires: numpy · scipy · scikit-learn==1.8.0 and seqopt's core/ package.")
+    encoding_note = tr("# The Windows console (cmd) defaults to a legacy encoding and can die printing\n"
+                        "# non-ASCII characters (user-entered names included). Two lines prevent that.")
+    home_note = tr("# Where the seqopt that generated this script lives. Moved it? Edit this line only.")
+    infinite_word = tr("infinite")
+    usable_line = tr("usable conditions {n} · {m} measurements · selectable conditions {c}",
+                      n="{ds.n_conditions}", m="{ds.n_measurements}",
+                      c="{count_candidates(INPUTS, CONSTRAINT) or " + repr(infinite_word) + "}")
+    report_val_w = tr("(report value {v})",
+                       v=f"{data.disc.sigma_w if data.disc.sigma_w else float('nan'):.4f}")
+    report_val_b = tr("(report value {v})", v=f"{data.disc.sigma_b:.4f}")
+    nugget_line = tr("nugget ratio = {v}", v="{nug.ratio:.3f}")
+    nugget_na = tr("nugget ratio = not computable (too few conditions)")
+    locked_word = tr("LOCKED")
+    available_word = tr("available")
+    rec_label = tr("recommendation")
+
+    return f'''# -*- coding: utf-8 -*-
+"""{title}
+
+{about}
 """
 import sys
 from pathlib import Path
 
-# The Windows console (cmd) defaults to a legacy encoding and can die printing
-# non-ASCII characters (user-entered names included). Two lines prevent that.
+{encoding_note}
 for _stream in (sys.stdout, sys.stderr):
     try:
         _stream.reconfigure(encoding="utf-8")
     except (AttributeError, ValueError):
         pass
 
-# Where the seqopt that generated this script lives. Moved it? Edit this line only.
+{home_note}
 SEQOPT_HOME = Path(r"{home}")
 if SEQOPT_HOME.is_dir() and str(SEQOPT_HOME) not in sys.path:
     sys.path.insert(0, str(SEQOPT_HOME))
@@ -232,15 +253,14 @@ loo = loocv_r2(ds.XN, ds.y_mean)
 nug = nugget_ratio(ds.XN, ds.y_mean, sigma_w=disc.sigma_w)
 g = gate(count_candidates(INPUTS, CONSTRAINT), BUDGET, loo.r2, disc, ds.frac_with_reps)
 
-print(f"usable conditions {{ds.n_conditions}} · {{ds.n_measurements}} measurements · "
-      f"selectable conditions {{count_candidates(INPUTS, CONSTRAINT) or 'infinite'}}")
-print(f"sigma_w = {{disc.sigma_w:.4f}}   (report value {data.disc.sigma_w if data.disc.sigma_w else float('nan'):.4f})")
-print(f"sigma_b = {{disc.sigma_b:.4f}}   (report value {data.disc.sigma_b:.4f})")
+print(f"{usable_line}")
+print(f"sigma_w = {{disc.sigma_w:.4f}}   {report_val_w}")
+print(f"sigma_b = {{disc.sigma_b:.4f}}   {report_val_b}")
 print(f"D(n=1)  = {{disc.D[1]:.3f}}")
 print(f"R^2     = {{loo.r2:+.3f}}")
-print(f"nugget ratio = {{nug.ratio:.3f}}" if nug else "nugget ratio = not computable (too few conditions)")
-print(f"recommendation {{'LOCKED' if g.locked else 'available'}}")
-'''
+print(f"{nugget_line}" if nug else "{nugget_na}")
+print(f"{rec_label} {{{locked_word!r} if g.locked else {available_word!r}}}")
+'''  # i18n: skip -- the rest of this template is Python syntax; the prose above is tr()'d
 
 
 # ══════════════════════════════════════════════════════════════════════
