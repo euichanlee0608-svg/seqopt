@@ -16,6 +16,8 @@ import json
 from dataclasses import asdict, dataclass, field
 from typing import Literal
 
+from .i18n import tr
+
 Role = Literal["ignore", "input", "response"]
 
 
@@ -67,17 +69,18 @@ class ImportProfile:
         errs = []
         ins = self.input_columns
         if not ins:
-            errs.append("Assign at least one input variable")
+            errs.append(tr("Assign at least one input variable"))
         if len(ins) > 10:
-            errs.append(f"At most 10 input variables (currently {len(ins)})")
+            errs.append(tr("At most 10 input variables (currently {n})", n=len(ins)))
         if self.response_column is None:
-            errs.append("Assign exactly one response variable")
+            errs.append(tr("Assign exactly one response variable"))
         if sum(1 for c in self.columns if c.role == "response") > 1:
-            errs.append("Only one response variable can be assigned (multi-objective is out of scope)")
+            errs.append(tr("Only one response variable can be assigned "
+                           "(multi-objective is out of scope)"))
         labels = [c.label for c in self.columns if c.role != "ignore"]
         dup = {n for n in labels if labels.count(n) > 1}
         if dup:
-            errs.append(f"Duplicate names: {', '.join(sorted(dup))}")
+            errs.append(tr("Duplicate names: {names}", names=", ".join(sorted(dup))))
         return errs
 
     # ── save / load ────────────────────────────────────────────────

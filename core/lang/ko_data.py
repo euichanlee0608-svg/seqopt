@@ -2,4 +2,225 @@
 """Korean for ui/tab_setup.py · ui/tab_data.py · ui/import_wizard.py · core/importer.py · core/profile.py. Keys are the English strings as written in the code (core/i18n.py)."""
 
 KO: dict[str, str] = {
+    # --- ui/tab_setup.py — header, variable table ---
+    "Setup — what you can turn, and what should improve": "설정 — 무엇을 돌리고 무엇을 좋게 할 것인가",
+    "Everything defined here is the premise of every other screen. Invalid values never get in.":
+        "여기서 정한 것이 다른 모든 화면의 전제입니다. 틀린 값은 애초에 들어가지 않습니다.",
+    "Project name": "프로젝트 이름",
+    "Input variables — the knobs you can turn": "입력변수 — 내가 돌릴 수 있는 손잡이",
+    "Design variables only. Loads and ambient values a device merely experiences are not knobs.":
+        "설계변수만 넣습니다. 소자가 그저 겪는 부하·환경값은 손잡이가 아닙니다.",
+    "No variables yet.  Press <b>\"+ Add variable\"</b> to start.<br>e.g. — name <b>power</b> · unit <b>W</b> · type <b>continuous</b> · min <b>150</b> · max <b>200</b>":
+        "아직 변수가 없습니다.  <b>「+ 변수 추가」</b> 를 눌러 시작하세요.<br>예 — 이름 <b>power</b> · 단위 <b>W</b> · 형 <b>연속형</b> · 최소 <b>150</b> · 최대 <b>200</b>",
+    "continuous": "연속형",
+    "integer": "정수형",
+    "categorical": "범주형",
+    "name": "이름",
+    "unit": "단위",
+    "type": "형",
+    "min": "최소",
+    "max": "최대",
+    "step": "간격",
+    "Variable name. Tables, figures and reports use this name.": "변수 이름. 표·그림·리포트에 이 이름으로 나옵니다.",
+    "Unit. May be left empty.": "단위. 비워 둬도 됩니다.",
+    "continuous = any value · integer = 3, 4, 5… · categorical = a fixed set":
+        "연속형 = 아무 값이나 · 정수형 = 3, 4, 5… · 범주형 = 정해진 몇 가지",
+    "The smallest value this knob can be set to": "이 변수를 돌릴 수 있는 가장 작은 값",
+    "The largest value this knob can be set to": "이 변수를 돌릴 수 있는 가장 큰 값",
+    "The spacing the instrument can actually be set to (continuous only). e.g. 10 if the power supply only moves in 10 W steps.\nLeave it empty and any value can be chosen (infinitely many candidates).\nRequirement ① compares the candidate count on this grid with the budget.":
+        "장비가 실제로 맞출 수 있는 간격 (연속형만). 예: 전원이 10 W 단위로만 돌아가면 10.\n비우면 아무 값이나 고를 수 있는 것으로 봅니다 (후보 무한).\n요건 ① 은 이 간격으로 센 후보 수를 예산과 비교합니다.",
+    "+ Add variable": "+ 변수 추가",
+    "− Remove selected": "− 선택 삭제",
+    "Fill ranges": "범위 채우기",
+    "Fills min/max from the measurements you already entered.\nTyping them by hand is tedious, and a typo sends the\nrecommendation somewhere absurd.":
+        "이미 넣은 측정값의 최소·최대로 범위를 채웁니다.\n손으로 하나씩 적는 것은 성가시고, 잘못 적으면\n추천이 엉뚱한 곳으로 갑니다.",
+    # --- ui/tab_setup.py — sum constraint ---
+    "Sum constraint — variables with a fixed total (optional)": "합 제약 — 합이 정해진 변수 (선택)",
+    "Turn on when a few variables must add up to a fixed total, as a composition does. The initial design, the candidates and the recommendations all stay inside it.":
+        "조성처럼 몇 변수의 합이 정해져 있으면 켭니다. 초기 설계·후보·추천이 전부 그 안에서만 나옵니다.",
+    "Use a sum constraint": "합 제약 사용",
+    "e.g. A + B + C = 100 (%)  ·  additive1 + additive2 ≤ 5 (wt%)":
+        "예: A + B + C = 100 (%)  ·  첨가제1 + 첨가제2 ≤ 5 (wt%)",
+    "Variables in the sum (2 or more)": "합에 들어갈 변수 (2개 이상)",
+    "The constraint applies to the sum of the checked variables. Categorical variables cannot take part.":
+        "체크한 변수들의 합에 제약을 겁니다. 범주형은 걸 수 없습니다.",
+    "The sum is": "합이",
+    "= exactly": "= 정확히",
+    "≤ at most": "≤ 최대",
+    "The total. For a composition, 100 (%) or 1.": "합의 값. 조성이면 100 (%) 또는 1.",
+    "check at least 2 variables to put in the sum": "합에 들어갈 변수를 2개 이상 체크하세요",
+    "constraint: <b>{rule}</b>": "제약: <b>{rule}</b>",
+    "{n} measured rows already violate this constraint — check that the constraint, and the values, are right.":
+        "이미 잰 측정 {n}행이 이 제약을 어깁니다 — 제약이 맞는지, 값이 맞는지 확인하세요.",
+    # --- ui/tab_setup.py — response, budget ---
+    "Response — the value you want to improve": "출력변수 — 좋아지길 바라는 값",
+    "Exactly one. Improving several values at once is outside this tool.":
+        "하나만 정합니다. 여러 값을 동시에 좋게 하는 것은 이 도구 밖입니다.",
+    "Maximize — bigger is better": "최대화 — 클수록 좋다",
+    "Minimize — smaller is better": "최소화 — 작을수록 좋다",
+    "Work in log scale": "로그 변환해서 다루기",
+    "Turn on when the response spans orders of magnitude (say 1e-4 to 1e2).\nThe setting is saved with the project and written into the report — it changes the verdicts.":
+        "응답이 자릿수로 걸쳐 있을 때(예: 1e-4 ~ 1e2) 켭니다.\n설정은 프로젝트에 저장되고 리포트에도 적힙니다 — 판정이 달라지기 때문입니다.",
+    "Name": "이름",
+    "Unit": "단위",
+    "Goal": "목표",
+    "The response spans two or more orders of magnitude — <b>turning on the log scale is the better choice</b> (Advanced).":
+        "응답이 두 자릿수 이상 걸쳐 있습니다 — <b>로그 변환을 켜는 편이 낫습니다</b> (고급 설정).",
+    "Working in log10 scale. The report says so too.": "로그(log10) 변환해서 다룹니다. 리포트에도 적힙니다.",
+    "Budget — how many measurements in total": "예산 — 총 몇 번 잴 것인가",
+    "This count against the condition count decides whether optimization means anything at all.":
+        "이 횟수와 조건 수를 비교해 최적화가 뜻이 있는지부터 봅니다.",
+    "Total measurements": "총 측정 횟수",
+    "Initial design points": "초기 설계 점 수",
+    "Generate initial design → export CSV": "초기 설계 생성 → CSV 내보내기",
+    "Draws the first measurement points space-filling (maximin LHS).\nMeasured on a grid, curved terrain looks flat — and more replicates do not fix that.":
+        "공간을 고루 채우는 방식(maximin LHS)으로 첫 측정 지점을 뽑습니다.\n격자로 재면 굽은 지형이 평평해 보이고, 반복을 늘려도 해결되지 않습니다.",
+    "The first batch draws <b>{n} points</b> space-filling ({rec} recommended — 25–30% of the budget).":
+        "첫 배치는 <b>{n}점</b>을 공간을 고루 채우도록 뽑습니다 (예산의 25~30%인 {rec}점 권장).",
+    "initial design: {n} points": "초기 설계 {n}점",
+    "Export initial design": "초기 설계 내보내기",
+    "CSV (*.csv)": "CSV 파일 (*.csv)",
+    "Exported": "내보냈습니다",
+    "Saved {n} points.\nMeasure them, then fill in the values on the Data tab.":
+        "{n}점을 저장했습니다.\n측정한 뒤 데이터 탭에서 값을 채우세요.",
+    # --- ui/tab_setup.py — validation messages ---
+    "No measurements": "측정값이 없습니다",
+    "Enter values on the Data tab first, then the ranges can be filled.":
+        "데이터 탭에서 값을 먼저 넣으면 범위를 채울 수 있습니다.",
+    "row {row}: the name is empty": "{row}행: 이름이 비었습니다",
+    "{name}: categorical variables cannot be built on this screen yet — use continuous or integer":
+        "{name}: 범주형은 아직 이 화면에서 만들 수 없습니다 — 연속형이나 정수형을 쓰세요",
+    "{name}: min/max is not a number": "{name}: 최소·최대가 숫자가 아닙니다",
+    "{name}: min ({lo}) must be < max ({hi})": "{name}: 최소({lo}) < 최대({hi}) 여야 합니다",
+    "{name}: the step is not a number": "{name}: 간격이 숫자가 아닙니다",
+    "duplicate names: {names}": "이름이 겹칩니다: {names}",
+    "define at least one input variable": "입력변수를 최소 1개 정의하세요",
+    "at most 10 input variables (currently {n})": "입력변수는 10개까지입니다 (현재 {n}개)",
+    "Finish the variable definitions first": "변수 정의를 마저 해 주세요",
+    "Finish the sum constraint first": "합 제약을 마저 정해 주세요",
+    "{where} ≤ budget {budget} — <b>requirement ① unmet</b>: measuring everything is better. A finer step or a wider range gives more candidates.":
+        "{where} ≤ 예산 {budget}회 — <b>요건 ① 미달</b>: 전수 측정이 더 낫습니다. 간격을 촘촘히 하거나 범위를 넓히면 후보가 늘어납니다.",
+    "{where} — more than the budget of {budget}, so requirement ① passes.":
+        "{where} — 예산 {budget}회보다 많아 요건 ① 은 통과합니다.",
+    # --- ui/tab_data.py — toolbar, table ---
+    "Data — enter what you measured": "데이터 — 잰 값을 넣습니다",
+    "One row is one measurement. The same condition on several rows counts automatically as replicates.":
+        "한 행이 측정 한 번입니다. 같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다.",
+    "Import file…": "파일에서 가져오기…",
+    "Opens an Excel/CSV file and lets you assign what each column means.\nThe assignment is saved with the project, so the next file reads in one step.":
+        "엑셀·CSV 를 열고 어떤 열이 무엇인지 지정합니다.\n지정한 규칙은 프로젝트에 저장돼 다음에는 한 번에 읽힙니다.",
+    "+ Add row": "+ 행 추가",
+    "Paste (Ctrl+V)": "붙여넣기 (Ctrl+V)",
+    "Copy a range in Excel, then press this. Tab- or comma-separated tables come in as they are.":
+        "엑셀에서 범위를 복사한 뒤 누르세요. 탭·쉼표로 나뉜 표를 그대로 받습니다.",
+    "Export CSV": "CSV 내보내기",
+    "Hide excluded": "제외한 행 숨기기",
+    "exclude": "제외",
+    "excluded": "제외함",
+    "note": "메모",
+    "  ·  range {lo} ~ {hi}": "  ·  범위 {lo} ~ {hi}",
+    "input variable · {type}{range}\nA knob you turn.": "입력변수 · {type}{range}\n내가 돌리는 손잡이입니다.",
+    "bigger is better": "클수록 좋음",
+    "smaller is better": "작을수록 좋음",
+    "  ·  log10 transform": "  ·  log10 변환",
+    "response · {goal}{log}\nThe value you get by measuring.": "출력변수 · {goal}{log}\n측정해서 얻는 값입니다.",
+    "Checked rows leave the calculation. They are removed from the math, not deleted — the raw data stays.":
+        "체크하면 계산에서 뺍니다. 지우는 것이 아니라 빼는 것이라 원자료는 남습니다.",
+    "Free-form note. Rows inserted from a recommendation carry their evidence automatically.":
+        "자유 메모. 추천으로 넣은 행에는 근거가 자동으로 적힙니다.",
+    "Pre-filled from a recommendation. It becomes real when you enter the measured value.":
+        "추천으로 미리 넣은 행입니다. 측정값을 채우면 확정됩니다.",
+    "The response is 0. If the sample was destroyed, exclude it.": "응답이 0 입니다. 시료 소실이면 제외하세요.",
+    # --- ui/tab_data.py — editing, paste, import, export ---
+    "Numbers only": "숫자를 넣어 주세요",
+    "'{value}' is not a number.": "'{value}' 는 숫자가 아닙니다.",
+    "Define variables first": "먼저 변수를 정의하세요",
+    "Define your input variables on the Setup tab.": "설정 탭에서 입력변수를 정의해 주세요.",
+    "No numbers to paste": "붙여넣을 숫자가 없습니다",
+    "Each line needs {need} numbers ({d} inputs + 1 response).": "각 줄에 숫자 {need}개(입력 {d} + 응답 1)가 필요합니다.",
+    "Inserted {n} rows.": "{n}행을 넣었습니다.",
+    "\nSkipped {n} non-numeric lines (possibly a header row).": "\n숫자가 아니어서 건너뛴 줄 {n}개 (헤더 행일 수 있습니다).",
+    "Paste finished": "붙여넣기 완료",
+    "There is existing data": "기존 데이터가 있습니다",
+    "There are already {n} rows.\n\n[Yes] replace them with the import\n[No] append after them":
+        "이미 {n}행이 있습니다.\n\n[Yes] 기존 것을 지우고 새로 가져오기\n[No] 뒤에 이어 붙이기",
+    "Export measurement table": "측정표 내보내기",
+    # --- ui/tab_data.py — summary line ---
+    "No measurements yet. Start with import, paste, or add-row.": "측정값이 없습니다. 가져오기·붙여넣기·행 추가 중 하나로 시작하세요.",
+    "<b>{n} usable conditions</b>": "<b>유효 조건 {n}개</b>",
+    "({total} total · {n} exclusion candidates)": "(전체 {total}개 · 제외 후보 {n}개)",
+    "{n} measurements": "측정 {n}회",
+    "conditions with replicates {reps}/{n} ({pct}%)": "반복 있는 조건 {reps}/{n} ({pct}%)",
+    "{n} rows excluded by hand": "손으로 제외한 행 {n}개",
+    "{n} all-zero conditions": "응답 0 인 조건 {n}개",
+    "{n} rows awaiting measurement": "측정 대기 {n}행",
+    "The same condition on several rows counts automatically as replicates. Ctrl+Z undoes.":
+        "같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다. Ctrl+Z 로 되돌릴 수 있습니다.",
+    # --- ui/import_wizard.py — dialog frame ---
+    "Import data — structure setup": "데이터 가져오기 — 구조 세팅",
+    "File": "파일",
+    "Choose an Excel (.xlsx) or CSV file": "엑셀(.xlsx) 또는 CSV 파일을 고르세요",
+    "Browse…": "찾아보기…",
+    "Sheet": "시트",
+    "Header row": "헤더 행",
+    "0 means there is no header. Rows up to this one are not read as data.":
+        "0 이면 헤더가 없다는 뜻입니다. 이 행까지는 데이터로 읽지 않습니다.",
+    "<b>Original preview</b>  <span style='color:{c}'>— exactly as it is in the file</span>":
+        "<b>원본 미리보기</b>  <span style='color:{c}'>— 파일에 있는 그대로입니다</span>",
+    "<b>Assign column meanings</b>  <span style='color:{c}'>— the roles are a <b>guess</b>. Check that the condition count below matches what you expect</span>":
+        "<b>열의 뜻 정하기</b>  <span style='color:{c}'>— 역할은 <b>추측</b>입니다. 아래 조건 수가 예상과 맞는지 확인하세요</span>",
+    "column": "열",
+    "sample values": "예시 값",
+    "role": "역할",
+    "input": "입력변수",
+    "response": "응답",
+    "ignore": "무시",
+    "Reading rules": "읽기 규칙",
+    "Blank cells inherit the condition above": "빈 칸은 위의 조건을 이어받기",
+    "For tables where the condition is written only on the first row of its\nblock (merged-cell style). A non-numeric value breaks the inheritance.":
+        "조건이 첫 행에만 적히고 아래는 비어 있는 표(병합 셀 형식)에 씁니다.\n숫자가 아닌 값이 나오면 이어받기를 끊습니다.",
+    "Mark all-zero-response conditions as exclusion candidates": "응답이 0 인 조건은 '제외 후보'로 표시",
+    "For cases where nothing was really measured — a destroyed sample, say.\nThey are marked, not deleted, and reviewable one by one on the Data tab.":
+        "시료 소실처럼 측정이 안 된 경우입니다. 지우지 않고 표시만 하며,\n데이터 탭에서 하나씩 확인할 수 있습니다.",
+    "Choose a file and the outcome is previewed here.": "파일을 고르면 결과를 미리 알려 드립니다.",
+    "Load preset…": "프리셋 불러오기…",
+    "Loads a saved column mapping — reuse it on other files from the same instrument.":
+        "전에 저장해 둔 열 매핑을 불러옵니다. 같은 장비의 다른 파일에 그대로 씁니다.",
+    "Save preset…": "프리셋 저장…",
+    "Import": "가져오기",
+    "Cancel": "취소",
+    # --- ui/import_wizard.py — preview outcome and messages ---
+    "Choose a data file": "데이터 파일 고르기",
+    "Tables (*.xlsx *.csv);;Excel (*.xlsx);;CSV (*.csv)": "표 파일 (*.xlsx *.csv);;엑셀 (*.xlsx);;CSV (*.csv)",
+    "Could not read the file": "파일을 읽지 못했습니다",
+    "note: the preview counts only the first {n} rows. Importing reads everything.":
+        "※ 미리보기는 앞 {n}행만 셉니다. 가져오면 전체를 읽습니다.",
+    "{n} non-numeric responses are skipped (#DIV/0!, blanks and the like).":
+        "숫자가 아닌 응답 {n}건은 건너뜁니다(#DIV/0! · 공백 등).",
+    "{n} rows with no identifiable condition are skipped": "조건을 알 수 없는 행 {n}건을 건너뜁니다",
+    " — try turning on blank-cell inheritance.": " — 빈 칸 이어받기를 켜 보세요.",
+    "{n} all-zero-response conditions will be marked as exclusion candidates.":
+        "응답 0 인 조건 {n}개는 제외 후보로 표시합니다.",
+    "<b>{n} conditions</b> · {meas} measurements · {reps} conditions with replicates":
+        "<b>조건 {n}개</b> · 측정 {meas}회 · 반복 있는 조건 {reps}개",
+    "Load preset": "프리셋 불러오기",
+    "Mapping presets (*.seqmap)": "매핑 프리셋 (*.seqmap)",
+    "Could not read the preset": "프리셋을 읽지 못했습니다",
+    "Columns do not match": "열이 맞지 않습니다",
+    "Columns this preset expects are missing from the file: {names}\nCheck whether column names or positions changed.":
+        "이 프리셋이 찾는 열이 파일에 없습니다: {names}\n열 이름·위치가 바뀌었는지 확인하세요.",
+    "Not ready to save yet": "아직 저장할 수 없습니다",
+    "Save preset": "프리셋 저장",
+    "Finish the setup first": "설정을 마저 해 주세요",
+    "Import failed": "가져오기 실패",
+    "Nothing to import": "가져올 값이 없습니다",
+    "Check the column roles and reading rules.": "열 역할과 읽기 규칙을 확인하세요.",
+    # --- core/importer.py · core/profile.py — messages the wizard shows ---
+    "Assign the input and response columns first": "입력변수와 출력변수를 먼저 지정하세요",
+    "Assign at least one input variable": "입력변수를 최소 1개 지정해야 합니다",
+    "At most 10 input variables (currently {n})": "입력변수는 10개까지입니다 (현재 {n}개)",
+    "Assign exactly one response variable": "출력변수(응답)를 1개 지정해야 합니다",
+    "Only one response variable can be assigned (multi-objective is out of scope)":
+        "출력변수는 1개만 지정할 수 있습니다 (다목적 최적화는 범위 밖)",
+    "Duplicate names: {names}": "이름이 겹칩니다: {names}",
 }

@@ -17,6 +17,8 @@ import re
 import xml.etree.ElementTree as ET
 import zipfile
 
+from .i18n import tr
+
 NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 
 
@@ -98,7 +100,7 @@ def apply_profile(rows: list[dict], profile) -> tuple[list[dict], dict]:
     ins = profile.input_columns
     resp = profile.response_column
     if not ins or resp is None:
-        raise ValueError("Assign the input and response columns first")
+        raise ValueError(tr("Assign the input and response columns first"))
 
     body = rows[profile.header_row:] if profile.header_row > 0 else rows
     out: list[dict] = []

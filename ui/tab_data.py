@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QFile
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.dataset import group_measurements
+from core.i18n import tr
 from . import theme
 from .widgets.section import PageHeader
 from .import_wizard import ImportWizard
@@ -51,37 +52,42 @@ class DataTab(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(12)
 
-        head = PageHeader("Data — enter what you measured",
-                          "One row is one measurement. The same condition on several rows "
-                          "counts automatically as replicates.")
+        head = PageHeader(tr("Data — enter what you measured"),
+                          tr("One row is one measurement. The same condition on several rows "
+                             "counts automatically as replicates."))
         root.addWidget(head)
 
         bar = QHBoxLayout()
-        imp = QPushButton("Import from file…")
+        imp = QPushButton(tr("Import file…"))
         imp.setProperty("primary", True)
-        imp.setToolTip("Opens an Excel/CSV file and lets you assign what each column means.\n"
-                       "The assignment is saved with the project, so the next file reads in one step.")
+        imp.setToolTip(tr("Opens an Excel/CSV file and lets you assign what each column means.\n"
+                          "The assignment is saved with the project, so the next file reads in one step."))
         imp.clicked.connect(self.import_file)
-        add = QPushButton("+ Add row")
+        add = QPushButton(tr("+ Add row"))
         add.clicked.connect(self._add_row)
-        dele = QPushButton("− Remove selected")
+        dele = QPushButton(tr("− Remove selected"))
         dele.clicked.connect(self._del_rows)
-        paste = QPushButton("Paste (Ctrl+V)")
-        paste.setToolTip("Copy a range in Excel, then press this. Tab- or comma-separated tables come in as they are.")
+        paste = QPushButton(tr("Paste (Ctrl+V)"))
+        paste.setToolTip(tr("Copy a range in Excel, then press this. Tab- or comma-separated "
+                            "tables come in as they are."))
         paste.clicked.connect(self.paste_clipboard)
-        exp = QPushButton("Export CSV")
+        exp = QPushButton(tr("Export CSV"))
         exp.clicked.connect(self._export)
         for w in (imp, add, dele, paste, exp):
             bar.addWidget(w)
 
         bar.addSpacing(16)
-        self.hide_excluded = QCheckBox("Hide excluded rows")
+        self.hide_excluded = QCheckBox(tr("Hide excluded"))
         self.hide_excluded.stateChanged.connect(self.reload)
         bar.addWidget(self.hide_excluded)
         bar.addStretch(1)
         root.addLayout(bar)
 
         self.table = QTableWidget(0, 0, alternatingRowColors=True)
+        # One column per variable plus response, exclude and note: with five or more variables
+        # the grid is meant to scroll sideways rather than squeeze the numbers. The column
+        # headers are still measured — only the table's own width is exempt.
+        self.table.setProperty("clip_ok", True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.itemChanged.connect(self._on_edit)
         self.table.verticalHeader().setDefaultSectionSize(theme.ROW_HEIGHT)
@@ -125,23 +131,26 @@ class DataTab(QWidget):
         cols = [f"{v.name} ({v.unit})" if v.unit else v.name for v in p.inputs]
         obj = p.objective
         cols.append(f"{obj.name} ({obj.unit})" if obj.unit else obj.name)
-        return cols + ["exclude", "note"]
+        return cols + [tr("exclude"), tr("note")]
 
     def _header_tip(self, col: int) -> str:
         d = len(self.project.inputs)
         if col < d:
             v = self.project.inputs[col]
-            rng = f"  ·  range {v.lo:g} ~ {v.hi:g}" if v.lo is not None else ""
-            return f"input variable · {v.type}{rng}\nA knob you turn."
+            rng = (tr("  ·  range {lo} ~ {hi}", lo=f"{v.lo:g}", hi=f"{v.hi:g}")
+                   if v.lo is not None else "")
+            return tr("input variable · {type}{range}\nA knob you turn.",
+                      type=tr(v.type), range=rng)
         if col == d:
             o = self.project.objective
-            goal = "bigger is better" if o.goal == "max" else "smaller is better"
-            log = "  ·  log10 transform" if o.log else ""
-            return f"response · {goal}{log}\nThe value you get by measuring."
+            goal = tr("bigger is better") if o.goal == "max" else tr("smaller is better")
+            log = tr("  ·  log10 transform") if o.log else ""
+            return tr("response · {goal}{log}\nThe value you get by measuring.", goal=goal, log=log)
         if col == d + 1:
-            return ("Checked rows leave the calculation. They are removed from the math, "
-                    "not deleted — the raw data stays.")
-        return "Free-form note. Rows inserted from a recommendation carry their evidence automatically."
+            return tr("Checked rows leave the calculation. They are removed from the math, "
+                      "not deleted — the raw data stays.")
+        return tr("Free-form note. Rows inserted from a recommendation carry their evidence "
+                  "automatically.")
 
     def visible_rows(self) -> list[int]:
         ms = self.project.measurements
@@ -177,7 +186,8 @@ class DataTab(QWidget):
                     it.setBackground(QBrush(EXCLUDED_BG))
                 elif pending:
                     it.setBackground(QBrush(PENDING_BG))
-                    it.setToolTip("Pre-filled from a recommendation. It becomes real when you enter the measured value.")
+                    it.setToolTip(tr("Pre-filled from a recommendation. It becomes real "
+                                     "when you enter the measured value."))
                 elif zeroish and c == d:
                     it.setBackground(QBrush(ZERO_BG))
                 self.table.setItem(r, c, it)
@@ -190,7 +200,7 @@ class DataTab(QWidget):
             elif pending:
                 chk.setBackground(QBrush(PENDING_BG))
             if zeroish and not excluded:
-                chk.setToolTip("The response is 0. If the sample was destroyed, exclude it.")
+                chk.setToolTip(tr("The response is 0. If the sample was destroyed, exclude it."))
             self.table.setItem(r, d + 1, chk)
             note_it = QTableWidgetItem(m.get("note", ""))
             note_it.setForeground(QBrush(TEXT_FG))
@@ -233,7 +243,8 @@ class DataTab(QWidget):
             try:
                 v = float(item.text())
             except ValueError:
-                QMessageBox.warning(self, "Numbers only", f"'{item.text()}' is not a number.")
+                QMessageBox.warning(self, tr("Numbers only"),
+                                    tr("'{value}' is not a number.", value=item.text()))
                 self._undo.pop()
                 self.reload()
                 return
@@ -272,7 +283,8 @@ class DataTab(QWidget):
     def _add_row(self) -> None:
         p = self.project
         if not p.inputs:
-            QMessageBox.warning(self, "Define variables first", "Define your input variables on the Setup tab.")
+            QMessageBox.warning(self, tr("Define variables first"),
+                                tr("Define your input variables on the Setup tab."))
             return
         self._snapshot()
         seed = p.measurements[-1]["inputs"] if p.measurements else [
@@ -317,7 +329,8 @@ class DataTab(QWidget):
         """Accepts a range copied from Excel as-is. A header row is skipped automatically."""
         p = self.project
         if not p.inputs:
-            QMessageBox.warning(self, "Define variables first", "Define your input variables on the Setup tab.")
+            QMessageBox.warning(self, tr("Define variables first"),
+                                tr("Define your input variables on the Setup tab."))
             return
         text = QApplication.clipboard().text()
         if not text.strip():
@@ -340,8 +353,9 @@ class DataTab(QWidget):
             rows_to_add.append(nums)
 
         if not rows_to_add:
-            QMessageBox.warning(self, "No numbers to paste",
-                                f"Each line needs {need} numbers ({len(p.inputs)} inputs + 1 response).")
+            QMessageBox.warning(self, tr("No numbers to paste"),
+                                tr("Each line needs {need} numbers ({d} inputs + 1 response).",
+                                   need=need, d=len(p.inputs)))
             return
         self._snapshot()
         for nums in rows_to_add:
@@ -349,10 +363,10 @@ class DataTab(QWidget):
             added += 1
         self.reload()
         self.changed.emit()
-        msg = f"Inserted {added} rows."
+        msg = tr("Inserted {n} rows.", n=added)
         if skipped:
-            msg += f"\nSkipped {skipped} non-numeric lines (possibly a header row)."
-        QMessageBox.information(self, "Paste finished", msg)
+            msg += tr("\nSkipped {n} non-numeric lines (possibly a header row).", n=skipped)
+        QMessageBox.information(self, tr("Paste finished"), msg)
 
     # ── import · export ────────────────────────────────────────────
     def import_file(self) -> None:
@@ -365,9 +379,10 @@ class DataTab(QWidget):
 
         if p.measurements:
             ans = QMessageBox.question(
-                self, "There is existing data",
-                f"There are already {len(p.measurements)} rows.\n\n"
-                "[Yes] replace them with the import\n[No] append after them",
+                self, tr("There is existing data"),
+                tr("There are already {n} rows.\n\n"
+                   "[Yes] replace them with the import\n[No] append after them",
+                   n=len(p.measurements)),
                 QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
             if ans == QMessageBox.Cancel:
                 return
@@ -398,23 +413,26 @@ class DataTab(QWidget):
             new_inputs.append(VarSpec(c.label, c.unit, c.type, lo, hi))
         p.inputs = new_inputs
         rc = prof.response_column
-        p.objective = ObjSpec(rc.label or "response", rc.unit, p.objective.goal, p.objective.log)
+        p.objective = ObjSpec(rc.label or "response",              # i18n: skip — data
+                              rc.unit, p.objective.goal, p.objective.log)
 
         self.reload()
         self.changed.emit()
 
     def _export(self) -> None:
         p = self.project
-        fn, _ = QFileDialog.getSaveFileName(self, "Export measurement table",
-                                            "measurements.csv", "CSV (*.csv)")
+        fn, _ = QFileDialog.getSaveFileName(self, tr("Export measurement table"),
+                                            "measurements.csv",     # i18n: skip — file name
+                                            tr("CSV (*.csv)"))
         if not fn:
             return
         with open(fn, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.writer(f)
             w.writerow(self._headers())
             for m in p.measurements:
-                w.writerow([f"{x:g}" for x in m["inputs"]] + [f"{m['value']:g}",
-                           "excluded" if m.get("excluded") else "", m.get("note", "")])
+                w.writerow([f"{x:g}" for x in m["inputs"]]
+                           + [f"{m['value']:g}", tr("excluded") if m.get("excluded") else "",
+                              m.get("note", "")])
 
     # ── summary ────────────────────────────────────────────────────
     def _update_summary(self) -> None:
@@ -423,7 +441,7 @@ class DataTab(QWidget):
         ms = [m for m in p.measurements
               if not m.get("excluded") and not m.get("pending")]
         if not ms:
-            self.summary.setText("No measurements yet. Start with import, paste, or add-row.")
+            self.summary.setText(tr("No measurements yet. Start with import, paste, or add-row."))
             return
         groups = group_measurements(p.measurements)
         zeros = [k for k, v in groups.items() if max(v) <= 0] if p.exclude_zero else []
@@ -433,19 +451,24 @@ class DataTab(QWidget):
 
         # Same yardstick as the Diagnose tab — two screens with different
         # condition counts leave the user not knowing which to believe
-        head = f"<b>{len(live)} usable conditions</b>"
+        head = tr("<b>{n} usable conditions</b>", n=len(live))
         if zeros:
-            head += (f" <span style='color:{theme.TEXT_FAINT}'>"
-                     f"({len(groups)} total · {len(zeros)} exclusion candidates)</span>")
-        parts = [head, f"{len(ms)} measurements"]
+            head += (f" <span style='color:{theme.TEXT_FAINT}'>"                    # i18n: skip
+                     + tr("({total} total · {n} exclusion candidates)",
+                          total=len(groups), n=len(zeros)) + "</span>")
+        parts = [head, tr("{n} measurements", n=len(ms))]
         if live:
-            parts.append(f"conditions with replicates {reps}/{len(live)} ({reps / len(live) * 100:.0f}%)")
+            parts.append(tr("conditions with replicates {reps}/{n} ({pct}%)", reps=reps,
+                            n=len(live), pct=f"{reps / len(live) * 100:.0f}"))
         if excluded:
-            parts.append(f"{excluded} rows excluded by hand")
+            parts.append(tr("{n} rows excluded by hand", n=excluded))
         if zeros:
-            parts.append(f"<span style='color:{theme.WARN}'>{len(zeros)} all-zero conditions</span>")
+            parts.append(f"<span style='color:{theme.WARN}'>"                       # i18n: skip
+                         + tr("{n} all-zero conditions", n=len(zeros)) + "</span>")
         if pending:
-            parts.append(f"<span style='color:{theme.ACCENT}'>{len(pending)} rows awaiting measurement</span>")
-        self.summary.setText("  ·  ".join(parts)
-                             + f"<br><span style='color:{theme.TEXT_MUTED}'>The same condition on several "
-                               "rows counts automatically as replicates. Ctrl+Z undoes.</span>")
+            parts.append(f"<span style='color:{theme.ACCENT}'>"                     # i18n: skip
+                         + tr("{n} rows awaiting measurement", n=len(pending)) + "</span>")
+        tail = (f"<br><span style='color:{theme.TEXT_MUTED}'>"                      # i18n: skip
+                + tr("The same condition on several rows counts automatically as "
+                     "replicates. Ctrl+Z undoes.") + "</span>")
+        self.summary.setText("  ·  ".join(parts) + tail)
