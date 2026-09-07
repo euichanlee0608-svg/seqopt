@@ -22,7 +22,7 @@ import numpy as np
 from .acquisition import make_acquisition
 from .diagnostics import (D_THRESHOLD, NUGGET_THRESHOLD, DiscResult, Gate, LoocvResult,
                           NuggetResult, discriminability, loocv_r2, nugget_ratio)
-from .fonts import register_pdf_font
+from .fonts import has_cjk, register_pdf_font
 from .i18n import tr
 from .plotstyle import (C_AXIS, C_BAND, C_BEST, C_MEAN, C_POINT, C_RAW, CMAP_EI,
                         CMAP_MU, CMAP_SD, apply_style)
@@ -381,6 +381,7 @@ def write_pdf(data: ReportData, path: str | Path) -> Path:
     font = register_pdf_font()
     path = Path(path)
     ss = getSampleStyleSheet()
+    log_text = calculation_log(data)
 
     def style(name, size, leading, color="#212121", bold=False, space=4):
         return ParagraphStyle(name, parent=ss["Normal"], fontName=font, fontSize=size,
@@ -391,8 +392,10 @@ def write_pdf(data: ReportData, path: str | Path) -> Path:
     H2 = style("H2", 12, 17, "#37474f", space=6)
     BODY = style("BODY", 9, 13)
     SMALL = style("SMALL", 7.5, 10.5, "#666666")
-    MONO = ParagraphStyle("MONO", parent=ss["Normal"], fontName="Courier", fontSize=6.6,
-                          leading=8.4, textColor=colors.HexColor("#333333"))
+    # Courier has no Hangul — fall back to the CJK-capable font when the log actually needs one
+    # (Korean UI, or a Korean project/condition name), so it does not render as boxes (□).
+    MONO = ParagraphStyle("MONO", parent=ss["Normal"], fontName=font if has_cjk(log_text) else "Courier",
+                          fontSize=6.6, leading=8.4, textColor=colors.HexColor("#333333"))
 
     p, ds, g, d = data.project, data.dataset, data.gate, data.disc
     flow = []
@@ -491,7 +494,7 @@ def write_pdf(data: ReportData, path: str | Path) -> Path:
         tr("Where every number on screen came from, written out. It must be followable by hand."),
         SMALL))
     flow.append(Spacer(1, 2 * mm))
-    for line in calculation_log(data).splitlines():
+    for line in log_text.splitlines():
         flow.append(Paragraph(line.replace(" ", "&nbsp;").replace("<", "&lt;") or "&nbsp;",  # i18n: skip
                               MONO))
 
