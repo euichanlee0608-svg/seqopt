@@ -156,4 +156,63 @@ KO: dict[str, str] = {
     "{n} rows awaiting measurement": "측정 대기 {n}행",
     "The same condition on several rows counts automatically as replicates. Ctrl+Z undoes.":
         "같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다. Ctrl+Z 로 되돌릴 수 있습니다.",
+    # --- ui/import_wizard.py — dialog frame ---
+    "Import data — structure setup": "데이터 가져오기 — 구조 세팅",
+    "File": "파일",
+    "Choose an Excel (.xlsx) or CSV file": "엑셀(.xlsx) 또는 CSV 파일을 고르세요",
+    "Browse…": "찾아보기…",
+    "Sheet": "시트",
+    "Header row": "헤더 행",
+    "0 means there is no header. Rows up to this one are not read as data.":
+        "0 이면 헤더가 없다는 뜻입니다. 이 행까지는 데이터로 읽지 않습니다.",
+    "<b>Original preview</b>  <span style='color:{c}'>— exactly as it is in the file</span>":
+        "<b>원본 미리보기</b>  <span style='color:{c}'>— 파일에 있는 그대로입니다</span>",
+    "<b>Assign column meanings</b>  <span style='color:{c}'>— the roles are a <b>guess</b>. Check that the condition count below matches what you expect</span>":
+        "<b>열의 뜻 정하기</b>  <span style='color:{c}'>— 역할은 <b>추측</b>입니다. 아래 조건 수가 예상과 맞는지 확인하세요</span>",
+    "column": "열",
+    "sample values": "예시 값",
+    "role": "역할",
+    "input": "입력변수",
+    "response": "응답",
+    "ignore": "무시",
+    "Reading rules": "읽기 규칙",
+    "Blank cells inherit the condition above": "빈 칸은 위의 조건을 이어받기",
+    "For tables where the condition is written only on the first row of its\nblock (merged-cell style). A non-numeric value breaks the inheritance.":
+        "조건이 첫 행에만 적히고 아래는 비어 있는 표(병합 셀 형식)에 씁니다.\n숫자가 아닌 값이 나오면 이어받기를 끊습니다.",
+    "Mark all-zero-response conditions as exclusion candidates": "응답이 0 인 조건은 '제외 후보'로 표시",
+    "For cases where nothing was really measured — a destroyed sample, say.\nThey are marked, not deleted, and reviewable one by one on the Data tab.":
+        "시료 소실처럼 측정이 안 된 경우입니다. 지우지 않고 표시만 하며,\n데이터 탭에서 하나씩 확인할 수 있습니다.",
+    "Choose a file and the outcome is previewed here.": "파일을 고르면 결과를 미리 알려 드립니다.",
+    "Load preset…": "프리셋 불러오기…",
+    "Loads a saved column mapping — reuse it on other files from the same instrument.":
+        "전에 저장해 둔 열 매핑을 불러옵니다. 같은 장비의 다른 파일에 그대로 씁니다.",
+    "Save preset…": "프리셋 저장…",
+    "Import": "가져오기",
+    "Cancel": "취소",
+    # --- ui/import_wizard.py — preview outcome and messages ---
+    "Choose a data file": "데이터 파일 고르기",
+    "Tables (*.xlsx *.csv);;Excel (*.xlsx);;CSV (*.csv)": "표 파일 (*.xlsx *.csv);;엑셀 (*.xlsx);;CSV (*.csv)",
+    "Could not read the file": "파일을 읽지 못했습니다",
+    "note: the preview counts only the first {n} rows. Importing reads everything.":
+        "※ 미리보기는 앞 {n}행만 셉니다. 가져오면 전체를 읽습니다.",
+    "{n} non-numeric responses are skipped (#DIV/0!, blanks and the like).":
+        "숫자가 아닌 응답 {n}건은 건너뜁니다(#DIV/0! · 공백 등).",
+    "{n} rows with no identifiable condition are skipped": "조건을 알 수 없는 행 {n}건을 건너뜁니다",
+    " — try turning on blank-cell inheritance.": " — 빈 칸 이어받기를 켜 보세요.",
+    "{n} all-zero-response conditions will be marked as exclusion candidates.":
+        "응답 0 인 조건 {n}개는 제외 후보로 표시합니다.",
+    "<b>{n} conditions</b> · {meas} measurements · {reps} conditions with replicates":
+        "<b>조건 {n}개</b> · 측정 {meas}회 · 반복 있는 조건 {reps}개",
+    "Load preset": "프리셋 불러오기",
+    "Mapping presets (*.seqmap)": "매핑 프리셋 (*.seqmap)",
+    "Could not read the preset": "프리셋을 읽지 못했습니다",
+    "Columns do not match": "열이 맞지 않습니다",
+    "Columns this preset expects are missing from the file: {names}\nCheck whether column names or positions changed.":
+        "이 프리셋이 찾는 열이 파일에 없습니다: {names}\n열 이름·위치가 바뀌었는지 확인하세요.",
+    "Not ready to save yet": "아직 저장할 수 없습니다",
+    "Save preset": "프리셋 저장",
+    "Finish the setup first": "설정을 마저 해 주세요",
+    "Import failed": "가져오기 실패",
+    "Nothing to import": "가져올 값이 없습니다",
+    "Check the column roles and reading rules.": "열 역할과 읽기 규칙을 확인하세요.",
 }
