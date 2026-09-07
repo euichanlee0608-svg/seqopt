@@ -11,6 +11,8 @@ from typing import Literal
 
 import numpy as np
 
+from .i18n import tr
+
 VarType = Literal["continuous", "integer", "categorical"]
 CANDIDATE_CAP = 10_000_000       # candidates are not counted beyond this — enough to compare with a budget
 
@@ -30,19 +32,21 @@ class VarSpec:
     def __post_init__(self):
         if self.type == "categorical":
             if not self.levels:
-                raise ValueError(f"{self.name}: a categorical variable needs levels")
+                raise ValueError(tr("{name}: a categorical variable needs levels", name=self.name))
         else:
             if self.lo is None or self.hi is None:
-                raise ValueError(f"{self.name}: min and max are required")
+                raise ValueError(tr("{name}: min and max are required", name=self.name))
             if not self.lo < self.hi:
-                raise ValueError(f"{self.name}: min ({self.lo}) must be < max ({self.hi})")
+                raise ValueError(tr("{name}: min ({lo}) must be < max ({hi})",
+                                    name=self.name, lo=self.lo, hi=self.hi))
         if self.step is not None:
             if self.type != "continuous":
-                raise ValueError(f"{self.name}: a step is only for continuous variables")
+                raise ValueError(tr("{name}: a step is only for continuous variables", name=self.name))
             if not self.step > 0:
-                raise ValueError(f"{self.name}: the step must be > 0")
+                raise ValueError(tr("{name}: the step must be > 0", name=self.name))
             if self.step > self.hi - self.lo:
-                raise ValueError(f"{self.name}: step ({self.step:g}) is larger than the range ({self.hi - self.lo:g})")
+                raise ValueError(tr("{name}: step ({step}) is larger than the range ({span})",
+                                    name=self.name, step=f"{self.step:g}", span=f"{self.hi - self.lo:g}"))
 
     def n_levels(self) -> int | None:
         """Number of values that can actually be chosen. None (infinite) for a continuous variable without a step.
@@ -83,11 +87,11 @@ class SumConstraint:
 
     def __post_init__(self):
         if len(self.names) < 2:
-            raise ValueError("A sum constraint needs at least 2 variables")
+            raise ValueError(tr("A sum constraint needs at least 2 variables"))
         if len(set(self.names)) != len(self.names):
-            raise ValueError("The same variable appears twice in the sum constraint")
+            raise ValueError(tr("The same variable appears twice in the sum constraint"))
         if self.kind not in ("eq", "le"):
-            raise ValueError(f"Unknown constraint kind: {self.kind}")
+            raise ValueError(f"Unknown constraint kind: {self.kind}")   # i18n: skip (a programming mistake)
 
     @property
     def symbol(self) -> str:
@@ -100,7 +104,8 @@ class SumConstraint:
         by_name = {v.name: k for k, v in enumerate(inputs)}
         missing = [n for n in self.names if n not in by_name]
         if missing:
-            raise ValueError(f"The constraint names variables that do not exist: {', '.join(missing)}")
+            raise ValueError(tr("The constraint names variables that do not exist: {names}",
+                                names=", ".join(missing)))
         return [by_name[n] for n in self.names]
 
     def satisfied(self, x_real: np.ndarray, inputs: list["VarSpec"],
@@ -115,22 +120,26 @@ class SumConstraint:
         vs = [inputs[k] for k in idx]
         bad = [v.name for v in vs if v.type == "categorical"]
         if bad:
-            raise ValueError(f"A sum constraint cannot include categorical variables: {', '.join(bad)}")
+            raise ValueError(tr("A sum constraint cannot include categorical variables: {names}",
+                                names=", ".join(bad)))
         lo_sum, hi_sum = sum(v.lo for v in vs), sum(v.hi for v in vs)
         if self.kind == "eq" and not (lo_sum - 1e-9 <= self.total <= hi_sum + 1e-9):
-            raise ValueError(f"A sum of {self.total:g} cannot be made from these ranges "
-                             f"(minimum sum {lo_sum:g} ~ maximum sum {hi_sum:g})")
+            raise ValueError(tr("A sum of {total} cannot be made from these ranges "
+                                "(minimum sum {lo} ~ maximum sum {hi})",
+                                total=f"{self.total:g}", lo=f"{lo_sum:g}", hi=f"{hi_sum:g}"))
         if self.kind == "le" and self.total < lo_sum - 1e-9:
-            raise ValueError(f"Sum ≤ {self.total:g} cannot be made from these ranges (minimum sum {lo_sum:g})")
+            raise ValueError(tr("Sum ≤ {total} cannot be made from these ranges (minimum sum {lo})",
+                                total=f"{self.total:g}", lo=f"{lo_sum:g}"))
         steps = {v.step if v.type == "continuous" else 1.0 for v in vs}
         if self.kind == "eq" and None not in steps:
             if len(steps) > 1:
-                raise ValueError("The variables of a sum = constraint must share the same step")
+                raise ValueError(tr("The variables of a sum = constraint must share the same step"))
             h = next(iter(steps))
             k = (self.total - lo_sum) / h
             if abs(k - round(k)) > 1e-6:
-                raise ValueError(f"A sum of {self.total:g} cannot be made with step {h:g} "
-                                 f"(it must be a whole number of steps above the minimum sum {lo_sum:g})")
+                raise ValueError(tr("A sum of {total} cannot be made with step {step} "
+                                    "(it must be a whole number of steps above the minimum sum {lo})",
+                                    total=f"{self.total:g}", step=f"{h:g}", lo=f"{lo_sum:g}"))
 
 
 def count_candidates(inputs: list[VarSpec], constraint: SumConstraint | None = None
@@ -283,11 +292,13 @@ def candidate_summary(inputs: list[VarSpec], constraint: SumConstraint | None = 
         parts.append(f"{v.name} {k}" if k is not None else f"{v.name} ∞")
     if n is None:
         free = [v.name for v in inputs if v.n_levels() is None]
-        return (f"infinitely many candidates — continuous variable(s) {', '.join(free)} have no step"
-                + (f" (constraint {constraint.describe()})" if constraint else ""))
+        return (tr("infinitely many candidates — continuous variable(s) {names} have no step",
+                   names=", ".join(free))
+                + (tr(" (constraint {what})", what=constraint.describe()) if constraint else ""))
     if n >= CANDIDATE_CAP:
-        return f"{CANDIDATE_CAP:,} candidate conditions or more ({' × '.join(parts)})"
+        return tr("{cap} candidate conditions or more ({parts})",
+                  cap=f"{CANDIDATE_CAP:,}", parts=" × ".join(parts))
     body = " × ".join(parts)
     if constraint is not None:
-        body += f", within constraint {constraint.describe()}"
-    return f"{n} candidate conditions ({body})"
+        body += tr(", within constraint {what}", what=constraint.describe())
+    return tr("{n} candidate conditions ({parts})", n=n, parts=body)

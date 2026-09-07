@@ -2,4 +2,150 @@
 """Korean for core/report.py · core/plotstyle.py · core/fonts.py. Keys are the English strings as written in the code (core/i18n.py)."""
 
 KO: dict[str, str] = {
+    # --- calculation_log ---
+    "{name} — full calculation disclosure": "{name} — 계산 과정 전체 공개",
+    "generated {ts}": "생성 {ts}",
+    "  conditions {all} total · {usable} usable (excluded {excl}) · {meas} measurements":
+        "  전체 조건 {all}개 · 유효 {usable}개 (제외 {excl}개) · 측정 {meas}회",
+    "  replicate distribution : {dist}": "  반복 분포 : {dist}",
+    "  objective : {name} {goal}{log}": "  목표 : {name} {goal}{log}",
+    "maximize": "최대화",
+    "minimize": "최소화",
+    " · log10 transform": " · log10 변환",
+    "[step 1] within-condition spread sigma_w — NOT COMPUTABLE (no replicate measurements)":
+        "[1단계] 조건내 산포 sigma_w — 계산 불가 (반복 측정이 없다)",
+    "No assumed value is substituted. Measure the same condition at least twice.":
+        "가정값을 넣지 않는다. 같은 조건을 두 번 이상 재야 한다.",
+    "[step 1] within-condition spread sigma_w — the wobble from re-measuring the same condition":
+        "[1단계] 조건내 산포 sigma_w — 같은 조건을 다시 재서 생기는 흔들림",
+    "condition": "조건",
+    "mean": "평균",
+    "sample SD": "표본SD",
+    "total": "합계",
+    "(dof {n})": "(자유도 {n})",
+    "[step 2] between-condition spread sigma_b — the difference that changing the condition makes":
+        "[2단계] 조건간 산포 sigma_b — 조건을 바꿔서 생기는 차이",
+    "sample SD of the {n} condition means": "조건 평균 {n}개의 표본표준편차",
+    "sigma_b = {b}   (grand mean {g})": "sigma_b = {b}   (전체 평균 {g})",
+    "[step 3] discriminability D = sigma_b / (sigma_w / sqrt(n))":
+        "[3단계] 판별력 D = sigma_b / (sigma_w / sqrt(n))",
+    "<- current (single-replicate basis)": "<- 현재 (반복 1회 기준)",
+    "note: values for larger n are projections — they hold only if sigma_w stays the same.":
+        "※ n 을 늘렸을 때의 값은 '예상값'이다. sigma_w 가 그대로라는 가정 위에서만 성립한다.",
+    "[step 3-1] how solid is this estimate": "[3-1] 이 추정은 얼마나 단단한가",
+    "condition bootstrap, 4000 draws : D(n=1) 95% interval = [{lo}, {hi}]":
+        "조건 부트스트랩 4000회 : D(n=1) 95% 구간 = [{lo}, {hi}]",
+    "clears the threshold": "임계를 넘는다",
+    "falls short of the threshold": "임계에 못 미친다",
+    "the threshold sits inside the interval — cannot be settled": "임계가 구간 안에 있다 — 단정할 수 없다",
+    "against threshold {t} : {v}": "임계 {t} 기준 : {v}",
+    "{pct}% of the within-condition variance comes from one condition ({top}).":
+        "조건내 분산의 {pct}% 가 조건 하나({top})에서 나온다.",
+    "dropping it gives sigma_w={a} · D(n=1)={b}": "그 조건을 빼면 sigma_w={a} · D(n=1)={b}",
+    "[step 4] surface learnability — LOOCV prediction of the condition means":
+        "[4단계] 응답면 학습가능성 — 조건 평균을 LOOCV 로 예측",
+    "leave one condition out, fit on the rest ({n} conditions)":
+        "조건을 하나씩 빼고 나머지로 학습 (조건 {n}개)",
+    "R^2 <= 0 means worse than always answering the overall mean.":
+        "R^2 <= 0 은 '전체 평균만 답하기'보다 나쁘다는 뜻이다.",
+    "note: fewer than 8 conditions — low-sample warning": "※ 조건 8개 미만 — 표본 부족 경고",
+    "[step 5] terrain roughness — semivariogram": "[5단계] 지형 거칠기 — 반변이도",
+    "nugget {a} / sill {b} = nugget ratio {c}": "너깃 {a} / 문턱값(sill) {b} = 너깃비 {c}",
+    "rough surface": "거친 응답면",
+    "smooth surface": "매끄러운 응답면",
+    "{pct}% of the visible variation is measurement wobble.": "보이는 차이의 {pct}% 가 측정 흔들림이다.",
+    "[gate verdict]": "[요건 판정]",
+    "① evidence : {ev} vs budget {b} runs": "① 근거 : {ev} vs 예산 {b}회",
+    "constraint : {c}": "제약 : {c}",
+    "① candidate count": "① 후보 수",
+    "② learnability": "② 학습가능성",
+    "③ discriminability": "③ 판별력",
+    "④ replicates": "④ 반복 측정",
+    "→ recommendation {r}": "→ 추천 {r}",
+    "LOCKED": "잠김",
+    "available": "가능",
+    "[caution] this report was force-generated with requirements unmet.":
+        "[주의] 이 리포트는 요건 미달 상태에서 강제로 생성됐다.",
+
+    # --- reproduce_script (text baked into the generated .py file) ---
+    "{name} — reproduction script (auto-generated {ts})": "{name} — 재현 스크립트 (자동 생성 {ts})",
+    "This one file reproduces the report's numbers. Run it from any folder.\n"
+    "Requires: numpy · scipy · scikit-learn==1.8.0 and seqopt's core/ package.":
+        "이 파일 하나로 리포트와 같은 숫자가 나온다. 어느 폴더에 두고 실행해도 된다.\n"
+        "필요한 것 : numpy · scipy · scikit-learn==1.8.0 그리고 seqopt 의 core/ 패키지.",
+    "# The Windows console (cmd) defaults to a legacy encoding and can die printing\n"
+    "# non-ASCII characters (user-entered names included). Two lines prevent that.":
+        "# 윈도우 콘솔(cmd)은 기본 인코딩이 cp949 라 한글 print 에서 죽는다.\n"
+        "# 이 두 줄이 없으면 랩실 PC 에서 UnicodeEncodeError 가 난다.",
+    "# Where the seqopt that generated this script lives. Moved it? Edit this line only.":
+        "# 이 스크립트를 만든 seqopt 설치 위치. 옮겼다면 이 줄만 고치면 된다.",
+    "usable conditions {n} · {m} measurements · selectable conditions {c}":
+        "유효 조건 {n} · 측정 {m}회 · 고를 수 있는 조건 {c}",
+    "infinite": "무한",
+    "(report value {v})": "(리포트 값 {v})",
+    "nugget ratio = {v}": "너깃비   = {v}",
+    "nugget ratio = not computable (too few conditions)": "너깃비   = 계산 불가 (조건 부족)",
+    "recommendation": "추천",
+
+    # --- report_figures ---
+    "condition mean": "조건 평균",
+    "condition (sorted by mean)": "조건 (평균 오름차순)",
+    "Replicate scatter — how much re-measuring the same condition wobbles":
+        "반복 산포 — 같은 조건을 다시 재면 얼마나 흔들리나",
+    "Replicate scatter": "반복 산포",
+    "perfect prediction": "완벽한 예측",
+    "always answer the mean": "전체 평균만 답하기",
+    "measured (condition mean)": "실측 (조건 평균)",
+    "LOOCV prediction": "LOOCV 예측",
+    "Learnability R² = {r2}": "학습가능성 R² = {r2}",
+    "Learnability": "학습가능성",
+    "sill {v}": "문턱값 {v}",
+    "nugget {v}": "너깃 {v}",
+    "distance between conditions (normalized)": "조건 사이 거리 (정규화)",
+    "semivariance γ": "반변이도 γ",
+    "Terrain roughness — nugget ratio {v}": "지형 거칠기 — 너깃비 {v}",
+    "Terrain": "지형",
+    "predicted mean": "예측 평균",
+    "Response surface": "응답면",
+    "predicted mean μ": "예측 평균 μ",
+    "uncertainty σ": "불확실성 σ",
+    "EI — where to measure next": "EI — 다음에 잴 곳",
+    "measurements (cumulative)": "측정 횟수 (누적)",
+    "Trajectory — best measured value so far": "궤적 — 지금까지의 최선 측정값",
+    "Trajectory": "궤적",
+
+    # --- write_pdf ---
+    "Sequential-optimization diagnostic report · generated {ts}": "순차 최적화 진단 리포트 · 생성 {ts}",
+    "CAUTION — generated with requirements unmet. "
+    "The recommendations in this report lack supporting evidence.":
+        "주의 — 요건 미달 상태에서 생성됨. 이 리포트의 추천은 근거가 부족합니다.",
+    "Gate verdict": "요건 판정",
+    "requirement": "요건",
+    "verdict": "판정",
+    "evidence": "근거",
+    "not computed": "계산 안 됨",
+    "candidate count": "후보 수",
+    "{a} vs budget {b}": "{a} vs 예산 {b}",
+    "surface learnability": "응답면 학습가능성",
+    "discriminability": "판별력",
+    "no replicates — not computable": "반복이 없어 계산 불가",
+    "replicates": "반복 측정",
+    "conditions with replicates {a}/{b}": "반복 있는 조건 {a}/{b}",
+    "<b>Recommendation LOCKED</b> — ": "<b>추천 잠김</b> — ",
+    "<b>Requirements met</b> — next-candidate recommendation is available.":
+        "<b>요건 통과</b> — 다음 후보 추천을 쓸 수 있습니다.",
+    "Raw data": "원자료",
+    "conditions (usable / total)": "조건 수 (유효 / 전체)",
+    "measurements": "측정 횟수",
+    "replicate distribution": "반복 분포",
+    "objective": "목표",
+    " · step ": " · 간격 ",
+    "inputs": "입력 변수",
+    "constraint": "제약",
+    "Figures": "그림",
+    "Calculation log": "계산 과정",
+    "Where every number on screen came from, written out. It must be followable by hand.":
+        "화면의 모든 숫자가 어디서 나왔는지 그대로 적는다. 손으로 따라갈 수 있어야 한다.",
+    "REQUIREMENTS UNMET": "요건 미달",
+    "{name} — diagnostic report": "{name} — 진단 리포트",
 }

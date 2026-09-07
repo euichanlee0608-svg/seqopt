@@ -19,6 +19,7 @@ import os
 import numpy as np
 import pytest
 
+from core.i18n import tr
 from core.diagnostics import (D_COMFORTABLE, D_LEVELS, D_RECOMMENDED, D_THRESHOLD,
                               NUGGET_CLASSES, NUGGET_THRESHOLD, discriminability, gate,
                               loocv_r2, nugget_ratio, replicate_plan, required_reps)
@@ -304,3 +305,18 @@ def test_discriminability_uncomputable_without_replicates():
     assert d.verdict == "UNCOMPUTABLE"
     g = gate(100, budget=40, r2=0.5, disc=d, frac_with_reps=0.0)
     assert g.locked
+
+
+def test_gate_reasons_are_korean_when_the_language_is(korean, syn):
+    """The verdict sentences are text, not codes — so they have to change language too."""
+    d = discriminability(syn.reps)
+    g = gate(25, budget=40, r2=-0.3, disc=d, frac_with_reps=1.0)
+    assert g.locked
+    joined = " ".join(g.reasons)
+    assert "전수 측정이 더 낫습니다" in joined          # ① candidate count
+    assert "전체 평균만 답하기보다 나쁩니다" in joined    # ② learnability
+    assert not any("measuring everything" in r for r in g.reasons)
+    # the D marks the screen draws are keys, looked up when they are drawn
+    assert tr(D_LEVELS[1][1]) == "권장"
+    assert "표준오차" in tr(D_LEVELS[1][3])
+    assert tr(NUGGET_CLASSES[0][1]) == "강한 구조"

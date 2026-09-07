@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from .i18n import tr
 from .spec import SumConstraint, VarSpec
 
 INITIAL_FRACTION = (0.25, 0.30)      # recommended initial fraction of the budget (F-22)
@@ -28,7 +29,7 @@ def maximin_lhs(k: int, dim: int, seed: int = 0, tries: int = 200) -> np.ndarray
     distance (maximin).
     """
     if k < 1:
-        raise ValueError("k must be ≥ 1")
+        raise ValueError("k must be ≥ 1")                        # i18n: skip (a programming mistake)
     rng = np.random.default_rng(seed)
     best, best_score = None, -np.inf
     for _ in range(tries):
@@ -179,7 +180,8 @@ def feasible_unit(n: int, inputs: list[VarSpec], constraint: SumConstraint,
         if got >= n:
             break
     if not out:
-        raise ValueError(f"No point satisfying constraint {constraint.describe()} could be found")
+        raise ValueError(tr("No point satisfying the constraint {what} could be found",
+                            what=constraint.describe()))
     allu = np.vstack(out)
     return allu[rng.permutation(len(allu))[:n]] if len(allu) >= n else allu
 
