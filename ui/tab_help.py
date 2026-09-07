@@ -123,78 +123,80 @@ def topics() -> list[Topic]:
           code=["ui/main_window.py: recompute()"]),  # i18n: skip
 
     # ── the requirements ───────────────────────────────────────────
-    Topic("gate", "The four requirements — what and why", tags="gate requirements verdict locked",
-          body=_p("All four must pass before recommendations open. "
-                  "A single <b>×</b> locks them.") +
-          _table(["", "requirement", "what it checks", "when it fails"], [
-              ["①", "candidate count", "are there more <b>conditions to choose from</b> in the design space than budget",
-               "measuring everything is better (the gain from optimizing is zero in principle). "
-               "A finer step or a wider range gives more candidates"],
-              ["②", "surface learnability", "is the model learning the terrain (LOOCV R² > 0)",
-               "changing the model will not help. The data is the problem"],
-              ["③", "discriminability", "do condition differences exceed the measurement wobble",
-               "raise the replicate count"],
-              ["④", "replicates", "has the same condition ever been re-measured",
-               "the wobble's size is unknowable (a warning — it does not lock)"]]) +
-          _p("<b>Any of ①②③ failing locks the gate.</b> ④ is a warning.",
-             "① counts <b>not the conditions already measured</b> but the Setup tab's ranges · "
-             "steps · sum constraint — integer, categorical and stepped variables multiply their "
-             "level counts, and a single continuous variable without a step makes the count "
-             "infinite, which passes. The count is always shown under the variable table on the Setup tab.",
-             "Learnability R² is slow, so it runs in the background. "
-             "<b>The lock holds while it computes</b> — the unknown is never counted as a pass."),
+    Topic("gate", tr("The four requirements — what and why"), tags=tr("gate requirements verdict locked"),  # i18n: skip
+          body=_p(tr("All four must pass before recommendations open. "
+                     "A single <b>×</b> locks them.")) +
+          _table(["", tr("requirement"), tr("what it checks"), tr("when it fails")], [
+              ["①", tr("candidate count"), tr("are there more <b>conditions to choose from</b> in the design space than budget"),
+               tr("measuring everything is better (the gain from optimizing is zero in principle). "
+                  "A finer step or a wider range gives more candidates")],
+              ["②", tr("surface learnability"), tr("is the model learning the terrain (LOOCV R² > 0)"),
+               tr("changing the model will not help. The data is the problem")],
+              ["③", tr("discriminability"), tr("do condition differences exceed the measurement wobble"),
+               tr("raise the replicate count")],
+              ["④", tr("replicates"), tr("has the same condition ever been re-measured"),
+               tr("the wobble's size is unknowable (a warning — it does not lock)")]]) +
+          _p(tr("<b>Any of ①②③ failing locks the gate.</b> ④ is a warning."),
+             tr("① counts <b>not the conditions already measured</b> but the Setup tab's ranges · "
+                "steps · sum constraint — integer, categorical and stepped variables multiply their "
+                "level counts, and a single continuous variable without a step makes the count "
+                "infinite, which passes. The count is always shown under the variable table on the Setup tab."),
+             tr("Learnability R² is slow, so it runs in the background. "
+                "<b>The lock holds while it computes</b> — the unknown is never counted as a pass.")),
           code=["core/diagnostics.py: gate()", "core/spec.py: count_candidates()",
-                "core/recommend.py: recommend()"]),
+                "core/recommend.py: recommend()"]),  # i18n: skip
 
-    Topic("d", "What is discriminability (D)", tags="discriminability D sigma noise wobble replicates bootstrap",
-          body=_p("<b>The difference that changing the condition makes</b>, divided by "
-                  "<b>the wobble of re-measuring the same condition.</b> Above 1 means "
-                  "\"neighboring conditions can be told apart\".") +
-          "<pre>σw = √( Σ(n−1)·var(replicates per condition) / Σ(n−1) )   ← conditions with ≥2 replicates only\n"
-          "σb = std( condition means , ddof=1 )\n"
-          "D(n) = σb / (σw / √n)</pre>" +
-          _p("<b>An analogy</b> — telling apart two people who differ by 1 kg, on a "
-             "scale that jumps ±2 kg per reading. No amount of cleverness helps. "
-             "It is the scale's fault.") +
-          "<h3>Why the point estimate is not enough</h3>" +
-          _p("Conditions are resampled with replacement and D is recomputed "
-             "<b>4000 times</b> for a 95% interval. When that interval straddles "
-             "the threshold of 1.0, the screen says <b>\"undecided\"</b>.",
-             "The validation study hit exactly this case — D = 1.03 looked passed, "
-             "but the interval was [0.49, 1.80], so <b>neither passed nor failed "
-             "could honestly be claimed.</b>"),
-          code=["core/diagnostics.py: discriminability()", "tests/test_diagnostics.py"]),
+    Topic("d", tr("What is discriminability (D)"),  # i18n: skip
+          tags=tr("discriminability D sigma noise wobble replicates bootstrap"),
+          body=_p(tr("<b>The difference that changing the condition makes</b>, divided by "
+                     "<b>the wobble of re-measuring the same condition.</b> Above 1 means "
+                     "\"neighboring conditions can be told apart\".")) +
+          tr("<pre>σw = √( Σ(n−1)·var(replicates per condition) / Σ(n−1) )   ← conditions with ≥2 replicates only\n"
+             "σb = std( condition means , ddof=1 )\n"
+             "D(n) = σb / (σw / √n)</pre>") +
+          _p(tr("<b>An analogy</b> — telling apart two people who differ by 1 kg, on a "
+                "scale that jumps ±2 kg per reading. No amount of cleverness helps. "
+                "It is the scale's fault.")) +
+          tr("<h3>Why the point estimate is not enough</h3>") +
+          _p(tr("Conditions are resampled with replacement and D is recomputed "
+                "<b>4000 times</b> for a 95% interval. When that interval straddles "
+                "the threshold of 1.0, the screen says <b>\"undecided\"</b>."),
+             tr("The validation study hit exactly this case — D = 1.03 looked passed, "
+                "but the interval was [0.49, 1.80], so <b>neither passed nor failed "
+                "could honestly be claimed.</b>")),
+          code=["core/diagnostics.py: discriminability()", "tests/test_diagnostics.py"]),  # i18n: skip
 
-    Topic("levels", "Where do the thresholds 1 · 2 · 3.5 come from", tags="threshold recommended basis prescription replicates how many",
-          body=_p("The discriminability gauge carries three marks. <b>The gate is 1, "
-                  "alone</b>; the other two are marks for reading \"how comfortable\". "
-                  "None of them is arbitrary.") +
-          _table(["mark", "name", "meaning", "basis"], [
-              ["D ≥ 1", "gate (minimum)", "difference = wobble",
-               "Follows from the definition. With σb &lt; σw, the difference made by "
-               "changing conditions is smaller than the wobble of re-measuring — "
-               "rankings may be noise."],
-              ["D ≥ 2", "recommended", "difference ≈ wobble × 2",
-               "Two means about two standard errors apart — the usual statistical "
-               "boundary for \"different\" (95%, z ≈ 1.96)."],
-              ["D ≥ 3.5", "comfortable", "difference ≈ wobble × 3.5",
-               "Matches measurement-system analysis (AIAG MSA), where a usable "
-               "instrument needs ndc = 1.41·σb/σw ≥ 5 distinct categories."]]) +
-          "<h3>How the prescription table is computed</h3>" +
-          _p("With n replicates per condition the mean's wobble shrinks to σw/√n, "
-             "so D(n) = σb/(σw/√n). Solving for n gives <b>n = ⌈(target D · σw / σb)²⌉</b>. "
-             "\"Extra runs\" sums, per condition, the gap between its current "
-             "replicates and n.",
-             "<b>Caution</b> — the calculation assumes <b>σw stays what it is now.</b> "
-             "More replicates change the σw estimate itself, so measure up to the "
-             "recommended row and <b>diagnose again</b>.") +
-          "<h3>And the nugget-ratio threshold of 0.3?</h3>" +
-          _p("This tool calls a surface rough above a nugget ratio of 0.3. The widely "
-             "used geostatistics scale (Cambardella 1994) — &lt;0.25 strong spatial "
-             "structure · 0.25–0.75 moderate · &gt;0.75 weak — is shown alongside "
-             "on the Diagnose tab."),
+    Topic("levels", tr("Where do the thresholds 1 · 2 · 3.5 come from"),  # i18n: skip
+          tags=tr("threshold recommended basis prescription replicates how many"),
+          body=_p(tr("The discriminability gauge carries three marks. <b>The gate is 1, "
+                     "alone</b>; the other two are marks for reading \"how comfortable\". "
+                     "None of them is arbitrary.")) +
+          _table([tr("mark"), tr("name"), tr("meaning"), tr("basis")], [
+              ["D ≥ 1", tr("gate (minimum)"), tr("difference = wobble"),
+               tr("Follows from the definition. With σb &lt; σw, the difference made by "
+                  "changing conditions is smaller than the wobble of re-measuring — "
+                  "rankings may be noise.")],
+              ["D ≥ 2", tr("recommended"), tr("difference ≈ wobble × 2"),
+               tr("Two means about two standard errors apart — the usual statistical "
+                  "boundary for \"different\" (95%, z ≈ 1.96).")],
+              ["D ≥ 3.5", tr("comfortable"), tr("difference ≈ wobble × 3.5"),
+               tr("Matches measurement-system analysis (AIAG MSA), where a usable "
+                  "instrument needs ndc = 1.41·σb/σw ≥ 5 distinct categories.")]]) +
+          tr("<h3>How the prescription table is computed</h3>") +
+          _p(tr("With n replicates per condition the mean's wobble shrinks to σw/√n, "
+                "so D(n) = σb/(σw/√n). Solving for n gives <b>n = ⌈(target D · σw / σb)²⌉</b>. "
+                "\"Extra runs\" sums, per condition, the gap between its current "
+                "replicates and n."),
+             tr("<b>Caution</b> — the calculation assumes <b>σw stays what it is now.</b> "
+                "More replicates change the σw estimate itself, so measure up to the "
+                "recommended row and <b>diagnose again</b>.")) +
+          tr("<h3>And the nugget-ratio threshold of 0.3?</h3>") +
+          _p(tr("This tool calls a surface rough above a nugget ratio of 0.3. The widely "
+                "used geostatistics scale (Cambardella 1994) — &lt;0.25 strong spatial "
+                "structure · 0.25–0.75 moderate · &gt;0.75 weak — is shown alongside "
+                "on the Diagnose tab.")),
           code=["core/diagnostics.py: D_LEVELS · replicate_plan() · NUGGET_CLASSES",
-                "tests/test_diagnostics.py"]),
+                "tests/test_diagnostics.py"]),  # i18n: skip
 
     Topic("r2", "What does a negative learnability R² mean", tags="R2 learnability LOOCV negative surface",
           body=_p("Each condition is left out in turn, the model is fitted on the rest, "
