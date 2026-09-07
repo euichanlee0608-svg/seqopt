@@ -142,3 +142,35 @@ def test_unsaved_work_is_not_asked_about_twice(qapp, window):
     qapp.processEvents()
     assert qapp._seqopt_window._dirty is True
     assert window._dirty is False
+
+
+# ══════════════════════════════════════════════════════════════════════
+# the header, in whichever language, however long the name
+# ══════════════════════════════════════════════════════════════════════
+@pytest.mark.parametrize("lang", ("en", "ko"))
+def test_a_long_project_name_is_elided_not_cut(qapp, settings, lang):
+    """The bundled examples have short names, so the layout gate never sees this one.
+
+    Korean is wider per character than English, so the header has to survive both.
+    """
+    from tests.clipcheck import clipped_texts
+    from ui.main_window import MainWindow
+
+    i18n.set_language(lang)
+    p = Project(inputs=[VarSpec("x", "", "continuous", 0, 10)], objective=ObjSpec("y"))
+    p.name = "Annealing temperature and dwell time versus crystallinity, third round, June 2026"
+    p.path = "/a/deep/folder/" + "n" * 40 + ".seqopt"
+    win = MainWindow(p)
+    win.resize(1024, 660)
+    win.shell.setCurrentIndex(1)
+    win.show()
+    qapp.processEvents()
+    try:
+        assert win.title.text().endswith("…") and win.title.text() != p.name
+        assert win.title.toolTip() == p.name              # the whole name is still readable
+        assert not [f for f in clipped_texts(win) if "_Elided" in f]
+    finally:
+        win.runner.cancel()
+        win._dirty = False
+        win.close()
+        qapp.processEvents()

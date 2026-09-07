@@ -77,7 +77,12 @@ class _Elided(QLabel):
         self._elide()
 
     def _elide(self) -> None:
-        shown = self.fontMetrics().elidedText(self._full, Qt.ElideRight, max(0, self.width()))
+        # Font metrics measure the text; the widget also pays for its style sheet's padding and
+        # border (the file pill has both). Measure that overhead instead of guessing it —
+        # sizeHint minus the width of the text it is currently showing.
+        fm = self.fontMetrics()
+        chrome = max(0, super().sizeHint().width() - fm.horizontalAdvance(super().text()))
+        shown = fm.elidedText(self._full, Qt.ElideRight, max(0, self.width() - chrome))
         if shown != super().text():
             super().setText(shown)
 
