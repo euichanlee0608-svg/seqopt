@@ -188,8 +188,8 @@ class DiagTab(QWidget):
         left.setSpacing(12)
         right = QVBoxLayout()
         right.setSpacing(12)
-        cols.addLayout(left, 5)
-        cols.addLayout(right, 4)
+        cols.addLayout(left, 1)
+        cols.addLayout(right, 1)
         bv.addLayout(cols)
 
         # ── left: the D gauge ──────────────────────────────────────

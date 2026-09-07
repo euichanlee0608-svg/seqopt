@@ -28,7 +28,7 @@ KO: dict[str, str] = {
     "A sum of {total} cannot be made with step {step} (it must be a whole number of steps above the minimum sum {lo})":
         "합 {total} 은 간격 {step} 으로 만들 수 없습니다 (최소 합 {lo} 에서 간격의 정수배여야 합니다)",
     "infinitely many candidates — continuous variable(s) {names} have no step":
-        "후보 무한 — 연속 변수 {names} 에 간격이 없습니다",
+        "후보 무한 — 연속 변수 {names} 에 간격 없음",
     " (constraint {what})": " (제약 {what})",
     "{cap} candidate conditions or more ({parts})": "후보 조건 {cap}개 이상 ({parts})",
     ", within constraint {what}": ", 제약 {what} 안",
