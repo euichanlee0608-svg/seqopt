@@ -120,6 +120,8 @@ newest request survives (`DiagnosticsRunner`).
 | repaint hidden tabs / whole tables per keystroke | 972 ms per edited cell before the fix, 1 ms after |
 | auto-update a regression expectation | that is how regressions get through — say what changed first |
 | print an internal response value (log10, negated for a min goal) on a screen or figure | the model works in internal coordinates; the user reads S/cm. `fmt_response` / `fmt_prediction` (`core/surface.py`) and `ObjSpec.to_plot` + `plot_label()` are the only way out — "best measured so far 2.931" beside a data table reading 853 S/cm was a shipped defect |
+| trust a text measurement from Qt's offscreen platform on Windows | it loads no fonts at all — every glyph is a placeholder box 2–3× too wide (130 findings that did not exist, 2026-09-07). The layout gate runs on the runner's real display there and refuses a skip |
+| judge a 1024 px layout by the mac font alone | Malgun Gothic is ~6 % wider in English and ~17 % in Korean; the toolbar, the setup page, the status bar and the model side panel all fit on the mac and clipped on Windows. Leave slack, or emulate with a wider face (AppleGothic) before pushing |
 
 ## 6. Two languages — English is the key, Korean is the catalog
 

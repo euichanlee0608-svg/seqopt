@@ -35,6 +35,9 @@ jobs:
         # user sees (2026-09-07: 130 findings, all bogus). So tests/test_layout.py skips itself
         # where Qt has no fonts, and this step runs it on the runner's real display — where
         # Malgun Gothic is measured exactly as on the user's PC — and refuses a skip.
+        # (tests/conftest.py defaults QT_QPA_PLATFORM to offscreen; naming the platform overrides it.)
+        env:
+          QT_QPA_PLATFORM: windows
         run: |
           python -m pytest tests/test_layout.py -q -p no:cacheprovider -rs | Tee-Object -FilePath layout_gate.txt
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
