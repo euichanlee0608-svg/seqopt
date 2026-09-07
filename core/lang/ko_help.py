@@ -317,4 +317,122 @@ KO: dict[str, str] = {
         "<b>EI (획득함수)</b> — 따뜻한 색. 유일하게 ‘행동을 부르는’ 색",
     "No rainbow (jet) — it invents boundaries that do not exist":
         "무지개색(jet)은 쓰지 않습니다 — 없는 경계선을 만들어 냅니다",
+    "It is locked — can I not just use it anyway": "추천이 잠겼는데 그냥 쓰면 안 되나요",
+    "locked force override bypass unmet": "잠김 강행 무시 우회 미달",
+    "You can. Turn on <b>\"Force a recommendation despite unmet "
+    "requirements\"</b> on the Recommend tab.":
+        "쓸 수는 있습니다. 추천 탭의 <b>‘요건 미달이어도 강제로 추천받기’</b>를 켜면 됩니다.",
+    "But <b>it leaves a mark</b> — on the result screen, in the "
+    "instruction-sheet CSV, and as a <b>\"REQUIREMENTS UNMET\" stamp on "
+    "every page of the PDF report.</b> Screenshot a single page into a "
+    "slide and the warning travels with it.":
+        "다만 <b>자국이 남습니다</b> — 결과 화면과 지시서 CSV, 그리고 PDF 리포트의 "
+        "<b>모든 쪽에 ‘요건 미달’ 도장</b>이 찍힙니다. 한 장만 캡처해 슬라이드에 붙여도 경고가 함께 따라갑니다.",
+    "<h3>Try these first</h3>": "<h3>그 전에 해 볼 것</h3>",
+    "Put a target discriminability into the <b>prescription</b> on the "
+    "Diagnose tab — it back-computes how many more replicates you need":
+        "진단 탭의 <b>처방</b>에 목표 판별력을 넣어 보세요 — 몇 번 더 재야 하는지 역산해 줍니다",
+    "If the <b>warning</b> box says one condition carries N% of the "
+    "variance, re-measuring that condition is the cheapest check":
+        "<b>경고</b> 상자에 ‘조건 하나가 분산의 N%를 차지한다’고 뜨면, "
+        "그 조건을 다시 재 보는 것이 가장 값싼 확인입니다",
+    "If requirement ① is the problem, make the step finer or the range wider on the "
+    "Setup tab. If the candidates are still fewer than the budget, <b>measuring everything "
+    "is right</b> — this program is not needed in that case":
+        "요건 ① 이 문제라면 설정 탭에서 간격을 촘촘히 하거나 범위를 넓히세요. "
+        "그래도 후보가 예산보다 적다면 <b>전수 측정이 맞습니다</b> — 이 프로그램이 필요 없는 경우입니다",
+    "Which of the three methods should I use": "고르는 방식 셋 중 뭘 써야 하나요",
+    "acquisition EI UCB Thompson beta explore method global local benchmark":
+        "획득함수 EI UCB Thompson 베타 탐색 방법 전역 지역 벤치마크",
+    "Chosen at the <b>top of the Recommend tab</b>. Without a specific "
+    "reason, keep the default.":
+        "<b>추천 탭 위쪽</b>에서 고릅니다. 특별한 이유가 없으면 기본값을 그대로 두세요.",
+    "what": "무엇",
+    "when": "언제",
+    "<b>Default (EI)</b>": "<b>기본값 (EI)</b>",
+    "Expected improvement — how much a candidate should beat the best so far":
+        "기대개선량(EI) — 후보가 지금까지의 최고값을 얼마나 넘어설지의 기댓값",
+    "Almost always. On 8 standard test functions it reached the neighbourhood of the "
+    "global optimum within a 40-run budget — "
+    "multimodal average {multi} · unimodal average {uni} (table below)":
+        "거의 항상 적합합니다. 표준 시험함수 8개에서 40회 예산 안에 전역 최적점 근방에 도달했습니다 — "
+        "다봉 함수 평균 {multi} · 단봉 함수 평균 {uni} (아래 표)",
+    "<b>Explore wider (UCB)</b>": "<b>더 넓게 탐색 (UCB)</b>",
+    "μ + b·σ. A larger b pushes into uncertainty": "μ + b·σ. b 를 키울수록 불확실한 쪽으로 더 밀고 들어갑니다",
+    "When the terrain is still unknown. Mind the caution below": "지형을 아직 잘 모를 때. 아래 주의사항을 참고하세요",
+    "<b>Diversify (Thompson)</b>": "<b>다양화 (Thompson)</b>",
+    "draw one function from the posterior, take its maximum": "사후분포에서 함수 하나를 뽑아 그 최댓값을 취합니다",
+    "When receiving several at once — candidates do not pile up in one spot":
+        "한 번에 여러 개를 받을 때 — 후보가 한곳에 몰리지 않습니다",
+    "<h3>Does it get stuck in a local optimum</h3>": "<h3>국소 최적에 빠지지 않나요</h3>",
+    "Two layers guard against it. ① The initial design is space-filling (maximin LHS), so "
+    "the whole range is swept from the start, and ② the acquisition maximisation is "
+    "<b>multi-start</b> (L-BFGS-B from the best 20 of 2000 space-filling points), so it does "
+    "not settle on the nearest peak — at all 72 check points it found a value at least as "
+    "good as differential evolution (a global optimiser).":
+        "두 겹으로 막습니다. ① 초기 설계가 공간충진(maximin LHS)이라 처음부터 범위 전체를 훑고, "
+        "② 획득함수 최대화는 <b>다중 시작</b>(공간충진 점 2000개 중 상위 20곳에서 L-BFGS-B)이라 "
+        "가장 가까운 봉우리에 머물지 않습니다 — 검사 지점 72곳 전부에서 미분진화(전역 최적화기) "
+        "이상의 값을 찾았습니다.",
+    "Still, <b>some terrain it cannot find</b>. The 2026-09-05 benchmark "
+    "(budget 40 = 11 initial + 29 sequential, 3% noise, 10 seeds, hit = regret below 5%):":
+        "그래도 <b>못 찾는 지형</b>은 있습니다. 2026-09-05 벤치마크(예산 40 = 초기 11 + 순차 29, "
+        "잡음 3%, 시드 10개, 도달 = 후회 5% 미만):",
+    "test function": "시험함수",
+    "EI hit rate": "EI 도달률",
+    "what it measures": "무엇을 재는가",
+    "Branin · six-hump camel · Hartmann-3 · Rosenbrock": "Branin · 낙타등 6 · Hartmann-3 · Rosenbrock",
+    "several peaks (2–3 dimensions) — standard multimodal · a curved valley":
+        "봉우리 여럿 (2~3차원) — 표준 다봉 · 굽은 골짜기",
+    "Levy-4": "Levy-4",
+    "many local peaks (4 dimensions)": "국소 봉우리 다수 (4차원)",
+    "Two peaks (needle)": "두 봉우리 (바늘)",
+    "a narrow valley covering barely 1% of the space — only the seeds whose initial "
+    "design landed in it found it":
+        "전체의 1% 남짓한 좁은 골짜기 — 초기 설계가 거기 떨어진 시드만 찾아냈습니다",
+    "Ackley": "Ackley",
+    "a rough surface (terrain dense with small bumps)": "거친 표면 (잔봉우리가 촘촘한 지형)",
+    "Hartmann-6": "Hartmann-6",
+    "6 dimensions — no method finds it within a 40-run budget": "6차원 — 예산 40회로는 어떤 방식도 찾지 못합니다",
+    "So with <b>6 or more variables, or a very narrow optimum</b>, a 40-run budget is not "
+    "enough. The answer then is not a different acquisition function but the "
+    "<b>initial design size (25–30% of the budget) · the budget · the range</b>.":
+        "즉 <b>변수가 6개 이상이거나 최적점이 아주 좁다면</b> 예산 40회로는 부족합니다. "
+        "이때 답은 획득함수를 바꾸는 것이 아니라 <b>초기 설계 크기(예산의 25~30%) · 예산 · 범위</b>입니다.",
+    "<h3>Why there is no separate global-search acquisition</h3>": "<h3>왜 전역 탐색용 획득함수를 따로 두지 않았나</h3>",
+    "Four alternatives (MES · EI mixed with exploration · a GP-UCB schedule · Thompson) were "
+    "measured under the same conditions. The best multimodal average was "
+    "{best_alt}, which did not beat "
+    "EI ({ei}), and the narrow valley and the 6-dimensional "
+    "function defeated the alternatives just the same. The rule — 'it goes on screen only if it "
+    "beats EI on multimodal functions and loses nothing on unimodal ones' — was fixed "
+    "<b>before measuring</b>, and nothing passed it, so nothing went on screen. The candidate "
+    "code and the result file stay in the repo — re-measure, and if one passes, a test says so.":
+        "대안 4종(MES · 탐색을 섞은 EI · GP-UCB 일정 · Thompson)을 같은 조건에서 측정했습니다. "
+        "다봉 평균 최고값이 {best_alt} 로 EI({ei})를 넘지 못했고, 좁은 골짜기와 6차원 함수는 "
+        "대안들도 똑같이 찾지 못했습니다. ‘다봉 함수에서 EI 를 이기고 단봉 함수에서 손해가 없어야 "
+        "화면에 올린다’는 규칙을 <b>측정하기 전에</b> 정했는데, 이를 통과한 것이 없어 화면에 올리지 "
+        "않았습니다. 후보 코드와 결과 파일은 레포에 그대로 남아 있습니다 — 다시 측정해서 통과하는 "
+        "것이 나오면 테스트가 알려 줍니다.",
+    "<h3>Caution — pushing exploration harder does not help</h3>": "<h3>주의 — 탐색을 더 밀어붙인다고 좋아지지 않습니다</h3>",
+    "In the original validation (2026-08), raising UCB's b from 1 to 4 dropped the "
+    "global-optimum hit rate from <b>90% to 61%</b>, and pure space-filling was the "
+    "worst at 1–7%. In this benchmark too, UCB (b=2) averaged "
+    "{ucb} on the multimodal functions, below "
+    "EI's {ei}. "
+    "Do not casually raise the default b = 2.0.":
+        "원래 검증(2026-08)에서 UCB 의 b 를 1에서 4로 키우자 전역 최적 도달률이 <b>90%에서 61%</b>로 "
+        "떨어졌고, 순수한 공간충진은 1~7%로 가장 나빴습니다. 이번 벤치마크에서도 UCB(b=2)는 "
+        "다봉 함수에서 평균 {ucb} 로 EI 의 {ei} 보다 낮았습니다. 기본값 b = 2.0 을 함부로 올리지 마세요.",
+    "Can I get several at once": "여러 개를 한꺼번에 받을 수 있나요",
+    "batch several at once": "배치 여러개 한번에",
+    "Up to 10, via <b>\"At a time\"</b> under Advanced on the Recommend tab.":
+        "추천 탭의 고급 설정 <b>‘한 번에 N개’</b>로 최대 10개까지 받을 수 있습니다.",
+    "They are picked sequentially, each picked point <b>assuming its "
+    "predicted mean as if observed</b> before the model refits for the "
+    "next pick (kriging believer). No unmeasured value is ever "
+    "consulted, so the <b>no-lookahead rule</b> holds.":
+        "순차로 뽑되, 이미 뽑은 점은 <b>예측 평균을 관측값처럼 가정</b>하고 모델을 다시 학습한 뒤 "
+        "다음 점을 고릅니다(kriging believer). 아직 측정하지 않은 값은 절대 참조하지 않으므로 "
+        "<b>선행 참조 금지 규칙</b>이 지켜집니다.",
 }

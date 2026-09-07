@@ -279,84 +279,88 @@ def topics() -> list[Topic]:
           code=["ui/theme.py", "core/plotstyle.py"]),  # i18n: skip
 
     # ── recommendations ────────────────────────────────────────────
-    Topic("locked", "It is locked — can I not just use it anyway", tags="locked force override bypass unmet",
-          body=_p("You can. Turn on <b>\"Force a recommendation despite unmet "
-                  "requirements\"</b> on the Recommend tab.",
-                  "But <b>it leaves a mark</b> — on the result screen, in the "
-                  "instruction-sheet CSV, and as a <b>\"REQUIREMENTS UNMET\" stamp on "
-                  "every page of the PDF report.</b> Screenshot a single page into a "
-                  "slide and the warning travels with it.") +
-          "<h3>Try these first</h3>" +
-          _ul("Put a target discriminability into the <b>prescription</b> on the "
-              "Diagnose tab — it back-computes how many more replicates you need",
-              "If the <b>warning</b> box says one condition carries N% of the "
-              "variance, re-measuring that condition is the cheapest check",
-              "If requirement ① is the problem, make the step finer or the range wider on the "
-              "Setup tab. If the candidates are still fewer than the budget, <b>measuring everything "
-              "is right</b> — this program is not needed in that case"),
-          code=["core/recommend.py: recommend(override=...)", "core/report.py: write_pdf()"]),
+    Topic("locked", tr("It is locked — can I not just use it anyway"), tags=tr("locked force override bypass unmet"),  # i18n: skip
+          body=_p(tr("You can. Turn on <b>\"Force a recommendation despite unmet "
+                     "requirements\"</b> on the Recommend tab."),
+                  tr("But <b>it leaves a mark</b> — on the result screen, in the "
+                     "instruction-sheet CSV, and as a <b>\"REQUIREMENTS UNMET\" stamp on "
+                     "every page of the PDF report.</b> Screenshot a single page into a "
+                     "slide and the warning travels with it.")) +
+          tr("<h3>Try these first</h3>") +
+          _ul(tr("Put a target discriminability into the <b>prescription</b> on the "
+                 "Diagnose tab — it back-computes how many more replicates you need"),
+              tr("If the <b>warning</b> box says one condition carries N% of the "
+                 "variance, re-measuring that condition is the cheapest check"),
+              tr("If requirement ① is the problem, make the step finer or the range wider on the "
+                 "Setup tab. If the candidates are still fewer than the budget, <b>measuring everything "
+                 "is right</b> — this program is not needed in that case")),
+          code=["core/recommend.py: recommend(override=...)", "core/report.py: write_pdf()"]),  # i18n: skip
 
-    Topic("acq", "Which of the three methods should I use", tags="acquisition EI UCB Thompson beta explore method global local benchmark",
-          body=_p("Chosen at the <b>top of the Recommend tab</b>. Without a specific "
-                  "reason, keep the default.") +
-          _table(["", "what", "when"], [
-              ["<b>Default (EI)</b>", "Expected improvement — how much a candidate should beat the best so far",
-               "Almost always. On 8 standard test functions it reached the neighbourhood of the "
-               "global optimum within a 40-run budget — "
-               f"multimodal average {_pct(BENCH_CLAIMS['multimodal_hit'])} · "
-               f"unimodal average {_pct(BENCH_CLAIMS['unimodal_hit'])} (table below)"],
-              ["<b>Explore wider (UCB)</b>", "μ + b·σ. A larger b pushes into uncertainty",
-               "When the terrain is still unknown. Mind the caution below"],
-              ["<b>Diversify (Thompson)</b>", "draw one function from the posterior, take its maximum",
-               "When receiving several at once — candidates do not pile up in one spot"]]) +
-          "<h3>Does it get stuck in a local optimum</h3>" +
-          _p("Two layers guard against it. ① The initial design is space-filling (maximin LHS), so "
-             "the whole range is swept from the start, and ② the acquisition maximisation is "
-             "<b>multi-start</b> (L-BFGS-B from the best 20 of 2000 space-filling points), so it does "
-             "not settle on the nearest peak — at all 72 check points it found a value at least as "
-             "good as differential evolution (a global optimiser).",
-             "Still, <b>some terrain it cannot find</b>. The 2026-09-05 benchmark "
-             "(budget 40 = 11 initial + 29 sequential, 3% noise, 10 seeds, hit = regret below 5%):") +
-          _table(["test function", "EI hit rate", "what it measures"], [
-              ["Branin · six-hump camel · Hartmann-3 · Rosenbrock",
+    Topic("acq", tr("Which of the three methods should I use"),  # i18n: skip
+          tags=tr("acquisition EI UCB Thompson beta explore method global local benchmark"),
+          body=_p(tr("Chosen at the <b>top of the Recommend tab</b>. Without a specific "
+                     "reason, keep the default.")) +
+          _table(["", tr("what"), tr("when")], [
+              [tr("<b>Default (EI)</b>"), tr("Expected improvement — how much a candidate should beat the best so far"),
+               tr("Almost always. On 8 standard test functions it reached the neighbourhood of the "
+                  "global optimum within a 40-run budget — "
+                  "multimodal average {multi} · unimodal average {uni} (table below)",
+                  multi=_pct(BENCH_CLAIMS['multimodal_hit']), uni=_pct(BENCH_CLAIMS['unimodal_hit']))],
+              [tr("<b>Explore wider (UCB)</b>"), tr("μ + b·σ. A larger b pushes into uncertainty"),
+               tr("When the terrain is still unknown. Mind the caution below")],
+              [tr("<b>Diversify (Thompson)</b>"), tr("draw one function from the posterior, take its maximum"),
+               tr("When receiving several at once — candidates do not pile up in one spot")]]) +
+          tr("<h3>Does it get stuck in a local optimum</h3>") +
+          _p(tr("Two layers guard against it. ① The initial design is space-filling (maximin LHS), so "
+                "the whole range is swept from the start, and ② the acquisition maximisation is "
+                "<b>multi-start</b> (L-BFGS-B from the best 20 of 2000 space-filling points), so it does "
+                "not settle on the nearest peak — at all 72 check points it found a value at least as "
+                "good as differential evolution (a global optimiser)."),
+             tr("Still, <b>some terrain it cannot find</b>. The 2026-09-05 benchmark "
+                "(budget 40 = 11 initial + 29 sequential, 3% noise, 10 seeds, hit = regret below 5%):")) +
+          _table([tr("test function"), tr("EI hit rate"), tr("what it measures")], [
+              [tr("Branin · six-hump camel · Hartmann-3 · Rosenbrock"),
                " · ".join(_pct(BENCH_CLAIMS["ei_hit"][k]) for k in ("branin", "camel6", "hartmann3", "rosen2")),
-               "several peaks (2–3 dimensions) — standard multimodal · a curved valley"],
-              ["Levy-4", _pct(BENCH_CLAIMS["ei_hit"]["levy4"]), "many local peaks (4 dimensions)"],
-              ["Two peaks (needle)", _pct(BENCH_CLAIMS["ei_hit"]["twopeak"]),
-               "a narrow valley covering barely 1% of the space — only the seeds whose initial "
-               "design landed in it found it"],
-              ["Ackley", _pct(BENCH_CLAIMS["ei_hit"]["ackley2"]), "a rough surface (terrain dense with small bumps)"],
-              ["Hartmann-6", _pct(BENCH_CLAIMS["ei_hit"]["hartmann6"]),
-               "6 dimensions — no method finds it within a 40-run budget"]]) +
-          _p("So with <b>6 or more variables, or a very narrow optimum</b>, a 40-run budget is not "
-             "enough. The answer then is not a different acquisition function but the "
-             "<b>initial design size (25–30% of the budget) · the budget · the range</b>.") +
-          "<h3>Why there is no separate global-search acquisition</h3>" +
-          _p("Four alternatives (MES · EI mixed with exploration · a GP-UCB schedule · Thompson) were "
-             "measured under the same conditions. The best multimodal average was "
-             f"{_pct(BENCH_CLAIMS['best_alternative_multimodal_hit'])}, which did not beat "
-             f"EI ({_pct(BENCH_CLAIMS['multimodal_hit'])}), and the narrow valley and the 6-dimensional "
-             "function defeated the alternatives just the same. The rule — 'it goes on screen only if it "
-             "beats EI on multimodal functions and loses nothing on unimodal ones' — was fixed "
-             "<b>before measuring</b>, and nothing passed it, so nothing went on screen. The candidate "
-             "code and the result file stay in the repo — re-measure, and if one passes, a test says so.") +
-          "<h3>Caution — pushing exploration harder does not help</h3>" +
-          _p("In the original validation (2026-08), raising UCB's b from 1 to 4 dropped the "
-             "global-optimum hit rate from <b>90% to 61%</b>, and pure space-filling was the "
-             "worst at 1–7%. In this benchmark too, UCB (b=2) averaged "
-             f"{_pct(BENCH_CLAIMS['ucb_multimodal_hit'])} on the multimodal functions, below "
-             f"EI's {_pct(BENCH_CLAIMS['multimodal_hit'])}. "
-             "Do not casually raise the default b = 2.0."),
+               tr("several peaks (2–3 dimensions) — standard multimodal · a curved valley")],
+              [tr("Levy-4"), _pct(BENCH_CLAIMS["ei_hit"]["levy4"]), tr("many local peaks (4 dimensions)")],
+              [tr("Two peaks (needle)"), _pct(BENCH_CLAIMS["ei_hit"]["twopeak"]),
+               tr("a narrow valley covering barely 1% of the space — only the seeds whose initial "
+                  "design landed in it found it")],
+              [tr("Ackley"), _pct(BENCH_CLAIMS["ei_hit"]["ackley2"]), tr("a rough surface (terrain dense with small bumps)")],
+              [tr("Hartmann-6"), _pct(BENCH_CLAIMS["ei_hit"]["hartmann6"]),
+               tr("6 dimensions — no method finds it within a 40-run budget")]]) +
+          _p(tr("So with <b>6 or more variables, or a very narrow optimum</b>, a 40-run budget is not "
+                "enough. The answer then is not a different acquisition function but the "
+                "<b>initial design size (25–30% of the budget) · the budget · the range</b>.")) +
+          tr("<h3>Why there is no separate global-search acquisition</h3>") +
+          _p(tr("Four alternatives (MES · EI mixed with exploration · a GP-UCB schedule · Thompson) were "
+                "measured under the same conditions. The best multimodal average was "
+                "{best_alt}, which did not beat "
+                "EI ({ei}), and the narrow valley and the 6-dimensional "
+                "function defeated the alternatives just the same. The rule — 'it goes on screen only if it "
+                "beats EI on multimodal functions and loses nothing on unimodal ones' — was fixed "
+                "<b>before measuring</b>, and nothing passed it, so nothing went on screen. The candidate "
+                "code and the result file stay in the repo — re-measure, and if one passes, a test says so.",
+                best_alt=_pct(BENCH_CLAIMS['best_alternative_multimodal_hit']),
+                ei=_pct(BENCH_CLAIMS['multimodal_hit']))) +
+          tr("<h3>Caution — pushing exploration harder does not help</h3>") +
+          _p(tr("In the original validation (2026-08), raising UCB's b from 1 to 4 dropped the "
+                "global-optimum hit rate from <b>90% to 61%</b>, and pure space-filling was the "
+                "worst at 1–7%. In this benchmark too, UCB (b=2) averaged "
+                "{ucb} on the multimodal functions, below "
+                "EI's {ei}. "
+                "Do not casually raise the default b = 2.0.",
+                ucb=_pct(BENCH_CLAIMS['ucb_multimodal_hit']), ei=_pct(BENCH_CLAIMS['multimodal_hit']))),
           code=["core/acquisition.py: maximise_continuous() · BENCH_CLAIMS", "packaging/bench_global.py",
-                "docs/bench_global.json"]),
+                "docs/bench_global.json"]),  # i18n: skip
 
-    Topic("batch", "Can I get several at once", tags="batch several at once",
-          body=_p("Up to 10, via <b>\"At a time\"</b> under Advanced on the Recommend tab.",
-                  "They are picked sequentially, each picked point <b>assuming its "
-                  "predicted mean as if observed</b> before the model refits for the "
-                  "next pick (kriging believer). No unmeasured value is ever "
-                  "consulted, so the <b>no-lookahead rule</b> holds."),
-          code=["core/acquisition.py: batch_picks()"]),
+    Topic("batch", tr("Can I get several at once"), tags=tr("batch several at once"),  # i18n: skip
+          body=_p(tr("Up to 10, via <b>\"At a time\"</b> under Advanced on the Recommend tab."),
+                  tr("They are picked sequentially, each picked point <b>assuming its "
+                     "predicted mean as if observed</b> before the model refits for the "
+                     "next pick (kriging believer). No unmeasured value is ever "
+                     "consulted, so the <b>no-lookahead rule</b> holds.")),
+          code=["core/acquisition.py: batch_picks()"]),  # i18n: skip
 
     Topic("reps_rec", "Why does the recommendation carry a suggested replicate count", tags="suggested replicates instruction count",
           body=_p("Measure a new condition <b>only once and discriminability drops</b>, "
