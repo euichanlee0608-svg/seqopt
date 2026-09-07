@@ -143,7 +143,7 @@ def topics() -> list[Topic]:
                 "infinite, which passes. The count is always shown under the variable table on the Setup tab."),
              tr("Learnability R² is slow, so it runs in the background. "
                 "<b>The lock holds while it computes</b> — the unknown is never counted as a pass.")),
-          code=["core/diagnostics.py: gate()", "core/spec.py: count_candidates()",
+          code=["core/diagnostics.py: gate()", "core/spec.py: count_candidates()",  # i18n: skip
                 "core/recommend.py: recommend()"]),  # i18n: skip
 
     Topic("d", tr("What is discriminability (D)"),  # i18n: skip
@@ -195,7 +195,7 @@ def topics() -> list[Topic]:
                 "used geostatistics scale (Cambardella 1994) — &lt;0.25 strong spatial "
                 "structure · 0.25–0.75 moderate · &gt;0.75 weak — is shown alongside "
                 "on the Diagnose tab.")),
-          code=["core/diagnostics.py: D_LEVELS · replicate_plan() · NUGGET_CLASSES",
+          code=["core/diagnostics.py: D_LEVELS · replicate_plan() · NUGGET_CLASSES",  # i18n: skip
                 "tests/test_diagnostics.py"]),  # i18n: skip
 
     Topic("r2", tr("What does a negative learnability R² mean"),  # i18n: skip
@@ -351,7 +351,7 @@ def topics() -> list[Topic]:
                 "EI's {ei}. "
                 "Do not casually raise the default b = 2.0.",
                 ucb=_pct(BENCH_CLAIMS['ucb_multimodal_hit']), ei=_pct(BENCH_CLAIMS['multimodal_hit']))),
-          code=["core/acquisition.py: maximise_continuous() · BENCH_CLAIMS", "packaging/bench_global.py",
+          code=["core/acquisition.py: maximise_continuous() · BENCH_CLAIMS", "packaging/bench_global.py",  # i18n: skip
                 "docs/bench_global.json"]),  # i18n: skip
 
     Topic("batch", tr("Can I get several at once"), tags=tr("batch several at once"),  # i18n: skip
@@ -512,7 +512,7 @@ def topics() -> list[Topic]:
                  "safest in \"A vs B\" comparisons"),
               tr("The global-search benchmark uses <b>synthetic test functions</b>, not real device terrain"),
               tr("The stopping-rule history resets when the program restarts")),
-          code=["docs/ARCHITECTURE.md", "tests/test_diagnostics.py", "tests/data/verify_terrain.json",
+          code=["docs/ARCHITECTURE.md", "tests/test_diagnostics.py", "tests/data/verify_terrain.json",  # i18n: skip
                 "docs/bench_global.json"]),  # i18n: skip
 
     Topic("trust", tr("Can I trust these numbers"), tags=tr("validation trust evidence tests reproduce"),  # i18n: skip
@@ -532,69 +532,69 @@ def topics() -> list[Topic]:
              tr("So <b>changing the calculation breaks the tests.</b> That is the tripwire.")),
           code=["tests/test_diagnostics.py", "tests/data/verify_terrain.json"]),  # i18n: skip
 
-    Topic("slow", "The learnability computation is slow", tags="slow speed performance LOOCV background",
-          body=_p("It is. LOOCV refits the model once per condition — "
-                  "<b>39 seconds at 178 conditions × 5 variables</b> (measured).",
-                  "So the fast parts (surface, σ, EI — 0.2s) and the slow part "
-                  "(learnability R²) are split, and only the slow part runs in the "
-                  "background. Table input never freezes.") +
-          "<h3>Why not use the fast method</h3>" +
-          _p("Closed-form LOO with fixed hyperparameters is <b>200× faster.</b> "
-             "But on the validation study's lab data it flipped R² from "
-             "<b>−0.272 to +0.228</b> — information used in fitting leaks into "
-             "every fold.",
-             "That speed would buy a <b>gate verdict reversed from FAIL to OK.</b> "
-             "It would erase this tool's reason to exist, so it is not used."),
-          code=["core/diagnostics.py: loocv_r2()"]),
+    Topic("slow", tr("The learnability computation is slow"), tags=tr("slow speed performance LOOCV background"),  # i18n: skip
+          body=_p(tr("It is. LOOCV refits the model once per condition — "
+                     "<b>39 seconds at 178 conditions × 5 variables</b> (measured)."),
+                  tr("So the fast parts (surface, σ, EI — 0.2s) and the slow part "
+                     "(learnability R²) are split, and only the slow part runs in the "
+                     "background. Table input never freezes.")) +
+          tr("<h3>Why not use the fast method</h3>") +
+          _p(tr("Closed-form LOO with fixed hyperparameters is <b>200× faster.</b> "
+                "But on the validation study's lab data it flipped R² from "
+                "<b>−0.272 to +0.228</b> — information used in fitting leaks into "
+                "every fold."),
+             tr("That speed would buy a <b>gate verdict reversed from FAIL to OK.</b> "
+                "It would erase this tool's reason to exist, so it is not used.")),
+          code=["core/diagnostics.py: loocv_r2()"]),  # i18n: skip
 
-    Topic("limits", "What this program does not do", tags="limits out of scope constraints multi-objective",
-          body=_p("<b>Explicitly out of scope.</b> Not for lack of ability — half-built "
-                  "features with no explanation are more dangerous than absent ones.") +
-          _ul("<b>Multi-objective optimization (Pareto)</b> — more than one response",
-              "<b>Constraints other than one sum</b> — only <b>a single linear sum constraint</b> "
-              "(e.g. composition = 100%) is supported. Inequalities between variables such as "
-              "'A &gt; B', nonlinear constraints and two or more constraints are not",
-              "<b>Population methods — genetic algorithms · PSO · CMA-ES</b> — each generation needs "
-              "dozens of runs, so a budget of a few dozen runs affords one or two generations "
-              "(effectively random search). Global search is done by the space-filling initial "
-              "design and the multi-start acquisition maximisation — see «Which of the three "
-              "methods» for the results on 8 test functions",
-              "<b>Multi-fidelity</b> — mixing coarse and precise computations",
-              "<b>Instrument control / automated measurement</b> — a person measures and types the value",
-              "<b>Cloud sync · multiple users</b>") +
-          "<h3>Scale limits</h3>" +
-          _p("Around 200 conditions × 5 variables is the comfortable range. Beyond "
-             "500 conditions, a single model fit passes 2 seconds. For thousands of "
-             "points, a different tool is the right choice."),
-          code=["docs/ARCHITECTURE.md"]),
+    Topic("limits", tr("What this program does not do"), tags=tr("limits out of scope constraints multi-objective"),  # i18n: skip
+          body=_p(tr("<b>Explicitly out of scope.</b> Not for lack of ability — half-built "
+                     "features with no explanation are more dangerous than absent ones.")) +
+          _ul(tr("<b>Multi-objective optimization (Pareto)</b> — more than one response"),
+              tr("<b>Constraints other than one sum</b> — only <b>a single linear sum constraint</b> "
+                 "(e.g. composition = 100%) is supported. Inequalities between variables such as "
+                 "'A &gt; B', nonlinear constraints and two or more constraints are not"),
+              tr("<b>Population methods — genetic algorithms · PSO · CMA-ES</b> — each generation needs "
+                 "dozens of runs, so a budget of a few dozen runs affords one or two generations "
+                 "(effectively random search). Global search is done by the space-filling initial "
+                 "design and the multi-start acquisition maximisation — see «Which of the three "
+                 "methods» for the results on 8 test functions"),
+              tr("<b>Multi-fidelity</b> — mixing coarse and precise computations"),
+              tr("<b>Instrument control / automated measurement</b> — a person measures and types the value"),
+              tr("<b>Cloud sync · multiple users</b>")) +
+          tr("<h3>Scale limits</h3>") +
+          _p(tr("Around 200 conditions × 5 variables is the comfortable range. Beyond "
+                "500 conditions, a single model fit passes 2 seconds. For thousands of "
+                "points, a different tool is the right choice.")),
+          code=["docs/ARCHITECTURE.md"]),  # i18n: skip
 
-    Topic("save", "How do saving and backups work", tags="save backup autosave recovery seqopt file",
-          body=_ul("A project is one <b>.seqopt</b> file, with <b>the raw data inside "
-                   "it, whole</b> — move the original spreadsheet and every number "
-                   "still traces back",
-                   "Saves are <b>atomic</b> — the program dying mid-save leaves the previous file intact",
-                   "The previous version survives as <b>.seqopt.bak</b>",
-                   "Every minute, an <b>.seqopt.autosave</b> is written. A dead PC "
-                   "still yields the last state",
-                   "The Data tab undoes with <b>Ctrl+Z</b> (50 steps)"),
-          code=["core/project.py: save()", "ui/tab_data.py: undo()"]),
+    Topic("save", tr("How do saving and backups work"), tags=tr("save backup autosave recovery seqopt file"),  # i18n: skip
+          body=_ul(tr("A project is one <b>.seqopt</b> file, with <b>the raw data inside "
+                      "it, whole</b> — move the original spreadsheet and every number "
+                      "still traces back"),
+                   tr("Saves are <b>atomic</b> — the program dying mid-save leaves the previous file intact"),
+                   tr("The previous version survives as <b>.seqopt.bak</b>"),
+                   tr("Every minute, an <b>.seqopt.autosave</b> is written. A dead PC "
+                      "still yields the last state"),
+                   tr("The Data tab undoes with <b>Ctrl+Z</b> (50 steps)")),
+          code=["core/project.py: save()", "ui/tab_data.py: undo()"]),  # i18n: skip
 
-    Topic("dev", "Adding features", tags="development extension code algorithm add module",
-          body=_p("<b>Computation (core/) and screens (ui/) are split.</b> "
-                  "core never imports the GUI and runs entirely from the CLI.") +
-          "<h3>Plugging in a new algorithm</h3>" +
-          _p("Register <b>one class</b> — no existing file changes. It enters the "
-             "screen list, the report and the recommendation path automatically.") +
-          "<pre>@ACQUISITIONS.register(\"PI\")\nclass ProbabilityOfImprovement:\n"
+    Topic("dev", tr("Adding features"), tags=tr("development extension code algorithm add module"),  # i18n: skip
+          body=_p(tr("<b>Computation (core/) and screens (ui/) are split.</b> "
+                     "core never imports the GUI and runs entirely from the CLI.")) +
+          tr("<h3>Plugging in a new algorithm</h3>") +
+          _p(tr("Register <b>one class</b> — no existing file changes. It enters the "
+                "screen list, the report and the recommendation path automatically.")) +
+          ("<pre>@ACQUISITIONS.register(\"PI\")\nclass ProbabilityOfImprovement:\n"  # i18n: skip
           "    label = \"PI — probability of improvement\"\n    supports_continuous = True\n"
           "    def score(self, model, X, best, rng=None): ...\n"
-          "    def describe(self): return \"PI\"</pre>" +
-          "<h3>What must not change</h3>" +
-          _ul("<b>The GP kernel</b> — exactly one combination reproduces the regression expectations",
-              "<b>LOOCV to closed form</b> — the gate verdict flips",
-              "<b>The scikit-learn version</b> — pinned at 1.8.0",
-              "<b>Any path around the gate</b> — the one entrance to a recommendation is <code>recommend()</code>"),
-          code=["docs/ARCHITECTURE.md", "core/protocols.py", "core/registry.py"]),
+          "    def describe(self): return \"PI\"</pre>") +
+          tr("<h3>What must not change</h3>") +
+          _ul(tr("<b>The GP kernel</b> — exactly one combination reproduces the regression expectations"),
+              tr("<b>LOOCV to closed form</b> — the gate verdict flips"),
+              tr("<b>The scikit-learn version</b> — pinned at 1.8.0"),
+              tr("<b>Any path around the gate</b> — the one entrance to a recommendation is <code>recommend()</code>")),
+          code=["docs/ARCHITECTURE.md", "core/protocols.py", "core/registry.py"]),  # i18n: skip
 ]
 
 _CSS = f"""

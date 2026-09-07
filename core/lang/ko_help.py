@@ -683,4 +683,92 @@ KO: dict[str, str] = {
         "테스트는 모두 {n}개입니다.",
     "So <b>changing the calculation breaks the tests.</b> That is the tripwire.":
         "그래서 <b>계산 방식을 바꾸면 테스트가 깨집니다.</b> 그것이 안전장치입니다.",
+    "The learnability computation is slow": "학습가능성 계산이 오래 걸립니다",
+    "slow speed performance LOOCV background": "느림 속도 성능 LOOCV 백그라운드",
+    "It is. LOOCV refits the model once per condition — "
+    "<b>39 seconds at 178 conditions × 5 variables</b> (measured).":
+        "맞습니다. LOOCV 는 조건 수만큼 모델을 다시 학습하므로 <b>조건 178개·변수 5개에서 39초</b>가 "
+        "걸립니다(실측).",
+    "So the fast parts (surface, σ, EI — 0.2s) and the slow part "
+    "(learnability R²) are split, and only the slow part runs in the "
+    "background. Table input never freezes.":
+        "그래서 빠른 부분(응답면·σ·EI, 0.2초)과 느린 부분(학습가능성 R²)을 나누어 느린 쪽만 "
+        "백그라운드에서 돌립니다. 표 입력은 절대 멈추지 않습니다.",
+    "<h3>Why not use the fast method</h3>": "<h3>왜 빠른 방법을 안 쓰나</h3>",
+    "Closed-form LOO with fixed hyperparameters is <b>200× faster.</b> "
+    "But on the validation study's lab data it flipped R² from "
+    "<b>−0.272 to +0.228</b> — information used in fitting leaks into "
+    "every fold.":
+        "하이퍼파라미터를 고정한 폐형식 LOO 를 쓰면 <b>200배 빨라집니다.</b> "
+        "그런데 그 검증 연구의 실험 데이터에서는 R² 가 <b>−0.272 에서 +0.228 로 뒤집힙니다</b> — "
+        "학습에 쓰인 정보가 모든 폴드로 새어 들어가기 때문입니다.",
+    "That speed would buy a <b>gate verdict reversed from FAIL to OK.</b> "
+    "It would erase this tool's reason to exist, so it is not used.":
+        "그 속도를 얻는 대가로 <b>관문 판정이 FAIL 에서 OK 로 뒤바뀝니다.</b> "
+        "이 도구가 존재하는 이유 자체가 사라지므로 쓰지 않습니다.",
+    "What this program does not do": "이 프로그램이 못 하는 것",
+    "limits out of scope constraints multi-objective": "한계 범위밖 제약 다목적",
+    "<b>Explicitly out of scope.</b> Not for lack of ability — half-built "
+    "features with no explanation are more dangerous than absent ones.":
+        "<b>명시적으로 범위 밖입니다.</b> 못 만들어서가 아닙니다 — 설명 없이 어설프게 들어간 기능이 "
+        "아예 없는 기능보다 더 위험하기 때문입니다.",
+    "<b>Multi-objective optimization (Pareto)</b> — more than one response":
+        "<b>다목적 최적화(파레토)</b> — 출력변수가 2개 이상인 경우",
+    "<b>Constraints other than one sum</b> — only <b>a single linear sum constraint</b> "
+    "(e.g. composition = 100%) is supported. Inequalities between variables such as "
+    "'A &gt; B', nonlinear constraints and two or more constraints are not":
+        "<b>합 제약 외의 다른 제약</b> — 조성 = 100% 같은 <b>선형 합 제약 하나</b>만 지원합니다. "
+        "‘A &gt; B’ 같은 변수 간 부등식, 비선형 제약, 제약 2개 이상은 지원하지 않습니다",
+    "<b>Population methods — genetic algorithms · PSO · CMA-ES</b> — each generation needs "
+    "dozens of runs, so a budget of a few dozen runs affords one or two generations "
+    "(effectively random search). Global search is done by the space-filling initial "
+    "design and the multi-start acquisition maximisation — see «Which of the three "
+    "methods» for the results on 8 test functions":
+        "<b>유전 알고리즘 · PSO · CMA-ES 같은 개체군 방식</b> — 세대마다 수십 번의 측정이 필요해, "
+        "예산이 수십 회뿐이면 한두 세대밖에 돌릴 수 없습니다(사실상 무작위 탐색). 전역 탐색은 공간을 "
+        "고루 채우는 초기 설계와 획득함수의 다중 시작 최대화로 대신합니다 — 시험함수 8개에 대한 결과는 "
+        "«고르는 방식 셋 중 뭘 써야 하나요»를 보세요",
+    "<b>Multi-fidelity</b> — mixing coarse and precise computations":
+        "<b>다중 정밀도(multi-fidelity)</b> — 거친 계산과 정밀한 계산을 섞어 쓰는 방식",
+    "<b>Instrument control / automated measurement</b> — a person measures and types the value":
+        "<b>장비 직접 제어 · 자동 측정</b> — 사람이 측정해서 값을 입력하는 구조입니다",
+    "<b>Cloud sync · multiple users</b>": "<b>클라우드 동기화 · 다중 사용자</b>",
+    "<h3>Scale limits</h3>": "<h3>규모의 한계</h3>",
+    "Around 200 conditions × 5 variables is the comfortable range. Beyond "
+    "500 conditions, a single model fit passes 2 seconds. For thousands of "
+    "points, a different tool is the right choice.":
+        "조건 200개 · 변수 5개 정도가 편안한 범위입니다. 500개를 넘어가면 모델을 한 번 학습하는 데만 "
+        "2초를 넘습니다. 수천 개의 점을 다루려면 다른 도구가 맞습니다.",
+    "How do saving and backups work": "저장 · 백업은 어떻게 되나요",
+    "save backup autosave recovery seqopt file": "저장 백업 자동저장 복구 seqopt 파일",
+    "A project is one <b>.seqopt</b> file, with <b>the raw data inside "
+    "it, whole</b> — move the original spreadsheet and every number "
+    "still traces back":
+        "프로젝트는 <b>.seqopt</b> 파일 하나입니다. <b>원본 데이터를 통째로 그 안에</b> 담고 있어서, "
+        "원본 스프레드시트를 옮겨도 모든 숫자를 그대로 추적할 수 있습니다",
+    "Saves are <b>atomic</b> — the program dying mid-save leaves the previous file intact":
+        "저장은 <b>원자적</b>입니다 — 저장 도중 프로그램이 죽어도 이전 파일은 그대로 남습니다",
+    "The previous version survives as <b>.seqopt.bak</b>": "이전 버전은 <b>.seqopt.bak</b> 으로 남습니다",
+    "Every minute, an <b>.seqopt.autosave</b> is written. A dead PC "
+    "still yields the last state":
+        "1분마다 <b>.seqopt.autosave</b> 가 기록됩니다. PC 가 꺼져도 마지막 상태를 되찾을 수 있습니다",
+    "The Data tab undoes with <b>Ctrl+Z</b> (50 steps)": "데이터 탭은 <b>Ctrl+Z</b> 로 되돌릴 수 있습니다 (50단계)",
+    "Adding features": "기능을 추가하려면",
+    "development extension code algorithm add module": "개발 확장 코드 알고리즘 추가 모듈",
+    "<b>Computation (core/) and screens (ui/) are split.</b> "
+    "core never imports the GUI and runs entirely from the CLI.":
+        "<b>계산(core/)과 화면(ui/)이 분리되어 있습니다.</b> core 는 GUI 를 임포트하지 않으며 "
+        "CLI 만으로도 전부 동작합니다.",
+    "<h3>Plugging in a new algorithm</h3>": "<h3>새 알고리즘 붙이기</h3>",
+    "Register <b>one class</b> — no existing file changes. It enters the "
+    "screen list, the report and the recommendation path automatically.":
+        "<b>클래스 하나만 등록</b>하면 됩니다 — 기존 파일은 고치지 않습니다. "
+        "화면 목록·리포트·추천 경로에 자동으로 들어갑니다.",
+    "<h3>What must not change</h3>": "<h3>바꾸면 안 되는 것</h3>",
+    "<b>The GP kernel</b> — exactly one combination reproduces the regression expectations":
+        "<b>GP 커널</b> — 회귀 기댓값을 재현하는 조합은 단 하나뿐입니다",
+    "<b>LOOCV to closed form</b> — the gate verdict flips": "<b>LOOCV 를 폐형식으로 바꾸기</b> — 관문 판정이 뒤집힙니다",
+    "<b>The scikit-learn version</b> — pinned at 1.8.0": "<b>scikit-learn 버전</b> — 1.8.0 으로 고정되어 있습니다",
+    "<b>Any path around the gate</b> — the one entrance to a recommendation is <code>recommend()</code>":
+        "<b>관문을 우회하는 경로</b> — 추천으로 가는 입구는 <code>recommend()</code> 하나뿐입니다",
 }
