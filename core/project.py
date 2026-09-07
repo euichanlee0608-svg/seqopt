@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from .dataset import from_measurements
+from .i18n import tr
 from .profile import ImportProfile
 from .spec import Dataset, ObjSpec, SumConstraint, VarSpec, count_candidates
 
@@ -22,9 +23,15 @@ SCHEMA = 1
 EXT = ".seqopt"
 
 
+def default_name() -> str:
+    """The name a brand-new project starts with — a value the user can overwrite, so it is
+    translated when the project is made (never at import time: the language can still change)."""
+    return tr("New project")
+
+
 @dataclass
 class Project:
-    name: str = "New project"
+    name: str = field(default_factory=default_name)
     inputs: list[VarSpec] = field(default_factory=list)
     objective: ObjSpec = field(default_factory=lambda: ObjSpec("response"))
     budget_total: int = 40
@@ -98,7 +105,8 @@ class Project:
     @classmethod
     def from_dict(cls, d: dict) -> "Project":
         if d.get("schema") != SCHEMA:
-            raise ValueError(f"Unknown schema version: {d.get('schema')} (this program is {SCHEMA})")
+            raise ValueError(tr("Unknown project file version: {found} (this program writes {ours})",
+                                found=d.get("schema"), ours=SCHEMA))
         o = d["objective"]
         inputs = [VarSpec(name=v["name"], unit=v.get("unit", ""), type=v.get("type", "continuous"),
                           lo=v.get("min"), hi=v.get("max"), levels=tuple(v.get("levels") or ()),
@@ -112,7 +120,7 @@ class Project:
         if constraint is not None:
             constraint.validate(inputs)          # a hand-edited file gets caught here
         return cls(
-            name=d.get("name", "New project"),
+            name=d.get("name") or default_name(),
             inputs=inputs,
             objective=ObjSpec(o["name"], o.get("unit", ""), o.get("goal", "max"), o.get("log", False)),
             budget_total=d.get("budget", {}).get("total", 40),
@@ -133,7 +141,7 @@ class Project:
         """Write atomically — dying mid-save leaves the previous file intact."""
         path = path or self.path
         if not path:
-            raise ValueError("No save path")
+            raise ValueError("No save path")                     # i18n: skip (a programming mistake)
         if not self.created:
             self.created = datetime.now().astimezone().isoformat(timespec="seconds")
         tmp = path + ".tmp"

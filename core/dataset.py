@@ -38,7 +38,7 @@ def from_measurements(measurements: list[dict], inputs: list[VarSpec], objective
     """Build a Dataset straight from the row list (the start of the §7-3 state flow)."""
     groups = group_measurements(measurements, round_digits)
     if not groups:
-        raise ValueError("There are no measurements")
+        raise ValueError("There are no measurements")            # i18n: skip (main_window catches it and writes its own line)
     return build(groups, inputs, objective, exclude_zero, exclude_conditions)
 
 
@@ -60,7 +60,7 @@ def build(groups: dict[tuple, list[float]], inputs: list[VarSpec], objective: Ob
         (dead if dropped else live).append(k)
 
     if not live:
-        raise ValueError("No usable conditions remain — check the exclusion rules")
+        raise ValueError("No usable conditions remain — check the exclusion rules")   # i18n: skip (caught, never shown)
 
     X = np.array(live, dtype=float)
     reps = [objective.to_internal(np.asarray(groups[k], dtype=float)) for k in live]
