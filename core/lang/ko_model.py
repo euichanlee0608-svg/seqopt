@@ -32,4 +32,96 @@ KO: dict[str, str] = {
         '가우시안 프로세스 (Matern · ARD)',
     'Random forest (for comparison)':
         '랜덤 포레스트 (비교용)',
+    'Recommend — the next condition to measure':
+        '추천 — 다음에 잴 조건',
+    'Opens only after the diagnostic requirements pass. A recommendation comes as condition values, a suggested replicate count, and its evidence.':
+        '진단 요건을 통과했을 때만 엽니다. 추천은 조건값과 권장 반복 횟수, 그 근거로 나옵니다.',
+    'It is locked — can I not just use it anyway?':
+        '잠겼는데 그냥 쓰면 안 되나요?',
+    'How the next candidate is chosen':
+        '다음 후보를 어떻게 고를까',
+    'Recommend next candidates':
+        '다음 후보 추천',
+    'Force a recommendation despite unmet requirements':
+        '요건 미달이어도 강제로 추천받기',
+    'Only after reading the warnings.\nReports built in this state carry a "generated with requirements unmet" stamp.':
+        '경고를 읽고도 진행할 때만 쓰세요.\n이 상태에서 만든 리포트에는 ‘요건 미달 상태에서 생성됨’ 이 박힙니다.',
+    '1 suggestion at a time':
+        '한 번에 1개씩 추천',
+    '{n} suggestions at a time':
+        '한 번에 {n}개씩 추천',
+    'At a time':
+        '한 번에',
+    'Receive several at once. Each picked point assumes its predicted\nmean as if observed, then the next is chosen (kriging believer).\nWhether batches beat sequential picking has not been validated.':
+        '여러 개를 한꺼번에 받습니다. 이미 뽑은 점은 예측 평균을\n관측값처럼 두고 다음 점을 고릅니다 (kriging believer).\n배치가 순차보다 나은지는 아직 검증하지 않았습니다.',
+    'Exploration strength b':
+        '탐색 세기 b',
+    'Larger pushes further into uncertainty. Do not casually raise the default 2.0.':
+        '크게 하면 불확실한 쪽으로 더 나갑니다. 기본 2.0 을 함부로 올리지 마세요.',
+    'Measure this next':
+        '다음 측정 조건',
+    'Other candidates':
+        '다른 후보',
+    'Insert into the data table':
+        '측정표에 넣기',
+    'Pre-fills the suggested conditions as gray rows on the Data tab.\nThey become real once you enter the measured values.':
+        '제안 조건을 데이터 탭에 회색 행으로 미리 넣습니다.\n측정한 값을 채우면 확정됩니다.',
+    'Export instruction sheet (CSV)':
+        '지시서 CSV 내보내기',
+    'Saves condition values + suggested replicates + the evidence, as a table.':
+        '조건값 + 권장 반복 횟수 + 제안 근거를 표로 저장합니다.',
+    '<b style=\'color:{c}\'>{headline}</b><ul style=\'margin:6px 0\'>{reasons}</ul>Follow the prescription on the Diagnose tab first. If you must proceed anyway, turn on "Force a recommendation" above — the result will carry the mark.':
+        "<b style='color:{c}'>{headline}</b><ul style='margin:6px 0'>{reasons}</ul>진단 탭의 처방을 먼저 따르세요. 그래도 진행해야 한다면 위의 ‘요건 미달이어도 강제로 추천받기’ 를 켜면 되지만, 그 결과에는 표시가 남습니다.",
+    'predicted {mean} ± {sd} · acquisition {acq} · suggested reps ×{n}':
+        '예측 {mean} ± {sd} · 획득값 {acq} · 권장 반복 ×{n}',
+    '<b>1 condition suggested.</b>':
+        '<b>조건 1개를 제안합니다.</b>',
+    '<b>{n} conditions suggested.</b>':
+        '<b>조건 {n}개를 제안합니다.</b>',
+    'best measured so far {best}':
+        '지금 최선 측정값 {best}',
+    "<b style='color:{c}'>This recommendation was forced with requirements unmet.</b> The report will say so.":
+        "<b style='color:{c}'>요건 미달 상태에서 강제로 만든 추천입니다.</b> 리포트에 그 사실이 박힙니다.",
+    "<b style='color:{c}'>Stopping advised</b> — {why}":
+        "<b style='color:{c}'>종료 권고</b> — {why}",
+    '"Insert into the data table" pre-fills these as gray rows on the Data tab. Enter the measured values to make them real.':
+        '‘측정표에 넣기’ 를 누르면 데이터 탭에 회색 행으로 들어갑니다. 값을 채우면 확정됩니다.',
+    'Press "Recommend next candidates" to pick what to measure next from the current data.':
+        '‘다음 후보 추천’ 을 누르면 지금 데이터로 다음에 잴 조건을 고릅니다.',
+    'Requirements are unmet':
+        '요건 미달 상태입니다',
+    'There is no evidence this data can support a recommendation.\n\nProceed anyway and the results and the report will be marked "generated with requirements unmet".':
+        '이 데이터로는 추천을 믿을 근거가 없습니다.\n\n그래도 진행하면 결과와 리포트에 ‘요건 미달 상태에서 생성됨’ 이 표시됩니다.',
+    'suggested · {acq} · predicted {mean}±{sd}':
+        '추천 · {acq} · 예측 {mean}±{sd}',
+    'Export instruction sheet':
+        '지시서 내보내기',
+    'CSV (*.csv)':
+        'CSV (*.csv)',
+    'Exported':
+        '내보냈습니다',
+    '{path}\n\nFill in the values after measuring.':
+        '{path}\n\n측정한 뒤 값을 채워 넣으세요.',
+    'outside measured range':
+        '실측 범위 밖',
+    'predicted':
+        '예측',
+    'predicted mean':
+        '예측 평균',
+    'uncertainty σ':
+        '불확실성 σ',
+    'acq.':
+        '획득값',
+    'acq. value':
+        '획득값',
+    'suggested reps':
+        '권장 반복',
+    'note':
+        '메모',
+    'evidence':
+        '근거',
+    'caution':
+        '주의',
+    'generated with requirements unmet':
+        '요건 미달 상태에서 생성됨',
 }

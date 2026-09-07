@@ -268,14 +268,16 @@ def test_tab_shows_lock_and_disables_export(tab, syn, locked_gate):
 
 
 def test_tab_lists_suggestions_when_open(tab, syn, syn_inputs, open_gate):
+    """The first suggestion is the card, the rest the table — all 3 are on the screen."""
     tab.set_context(syn, open_gate, fit(syn.XN, syn.y_mean), ExpectedImprovement())
     tab.batch.setValue(3)
     tab.request()
     assert isinstance(tab.result, Recommendation)
-    assert tab.table.rowCount() == 3
+    assert tab.card.isVisibleTo(tab)
+    assert tab.table.rowCount() == 2                    # the runners-up, ranks 2 and 3
     assert tab.accept.isEnabled()
-    # 2 inputs + suggested reps + mean + σ + acq value + note
-    assert tab.table.columnCount() == len(syn_inputs) + 5
+    # 2 inputs + predicted + σ + acq value
+    assert tab.table.columnCount() == len(syn_inputs) + 3
 
 
 def test_accepting_emits_rows_for_the_data_tab(tab, syn, open_gate, qapp):

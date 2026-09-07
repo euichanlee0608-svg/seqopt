@@ -8,24 +8,54 @@ data that cannot support it") would move inside the tool.
 
 Receive `Locked` and the suggestions **are simply not in the object.**
 Nothing to take out by mistake.
+
+**Why the first suggestion is a card and the rest a table**
+
+One table of everything put five variables × four-decimal values side by side,
+and at 1024 px the row ran off the screen — the one thing the user has to copy
+onto the instrument was the thing that got cut. The suggestion to act on is now
+a card (one line per variable, the value large and right-aligned), and the
+runners-up stay a table, which may elide because nobody types from it.
+Values are shown at the precision the variable declares (`core.surface.decimals`),
+never as `89.0915 %`.
 """
 from __future__ import annotations
 
 import csv
 
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtCore import QEvent, Qt, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox,
-                               QFileDialog, QHBoxLayout, QHeaderView, QLabel,
+                               QFileDialog, QGridLayout, QHBoxLayout, QHeaderView, QLabel,
                                QMessageBox, QPushButton, QSpinBox, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.acquisition import ACQUISITIONS, make_acquisition
+from core.i18n import tr
 from core.recommend import Locked, Recommendation, RecommendResult, recommend
+from core.surface import fmt_value
 from . import theme
 from .widgets.advanced import Advanced
 from .widgets.section import PageHeader, Section, link_button
 
 MAX_BATCH = 10
+
+
+class _AltTable(QTableWidget):
+    """The runners-up table. It re-fits its columns whenever its viewport changes size.
+
+    A vertical scroll bar appearing narrows the viewport without resizing the
+    table, so the viewport — not the table — is what has to be watched.
+    """
+
+    def __init__(self, fit, parent=None):
+        super().__init__(0, 0, parent)
+        self._fit = fit
+        self.viewport().installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if obj is self.viewport() and event.type() == QEvent.Resize:
+            self._fit()
+        return super().eventFilter(obj, event)
 
 
 class RecommendTab(QWidget):
@@ -44,6 +74,9 @@ class RecommendTab(QWidget):
         self.model = None
         self.result: RecommendResult | None = None
         self.acq_history: list[float] = []
+        self._card_rows: list[tuple[QLabel, QLabel]] = []
+        self._alt_headers: list[tuple[str, str]] = []       # (header text, tooltip)
+        self._fitting = False
         self._build()
 
     # ── screen ─────────────────────────────────────────────────────
@@ -52,10 +85,10 @@ class RecommendTab(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(12)
 
-        head = PageHeader("Recommend — the next condition to measure",
-                          "Opens only after the diagnostic requirements pass. A recommendation "
-                          "comes as condition values, a suggested replicate count, and its evidence.")
-        why = link_button("It is locked — can I not just use it anyway?")
+        head = PageHeader(tr("Recommend — the next condition to measure"),
+                          tr("Opens only after the diagnostic requirements pass. A recommendation "
+                             "comes as condition values, a suggested replicate count, and its evidence."))
+        why = link_button(tr("It is locked — can I not just use it anyway?"))
         why.clicked.connect(lambda: self.help_requested.emit("locked"))
         head.add_right(why)
         root.addWidget(head)
@@ -66,12 +99,12 @@ class RecommendTab(QWidget):
         root.addWidget(self.status)
 
         # The picking method — not hidden. Named plainly so the single default suffices.
-        pick = Section("How the next candidate is chosen")
+        pick = Section(tr("How the next candidate is chosen"))
         pv = pick.body
         prow = QHBoxLayout()
         self.method = QComboBox()
         for name, cls in ACQUISITIONS:
-            self.method.addItem(getattr(cls, "label", name), name)
+            self.method.addItem(tr(getattr(cls, "label", name)), name)
         self.method.setMinimumWidth(280)
         self.method.currentIndexChanged.connect(self._on_method)
         prow.addWidget(self.method)
@@ -85,16 +118,16 @@ class RecommendTab(QWidget):
         root.addWidget(pick)
 
         bar = QHBoxLayout()
-        self.run = QPushButton("Recommend next candidates")
+        self.run = QPushButton(tr("Recommend next candidates"))
         self.run.setProperty("primary", True)
         self.run.clicked.connect(self.request)
         bar.addWidget(self.run)
 
         bar.addSpacing(12)
-        self.override = QCheckBox("Force a recommendation despite unmet requirements")
-        self.override.setToolTip("Only after reading the warnings.\n"
-                                 "Reports built in this state carry a "
-                                 "\"generated with requirements unmet\" stamp.")
+        self.override = QCheckBox(tr("Force a recommendation despite unmet requirements"))
+        self.override.setToolTip(tr("Only after reading the warnings.\n"
+                                    "Reports built in this state carry a "
+                                    "\"generated with requirements unmet\" stamp."))
         self.override.stateChanged.connect(self._on_override)
         bar.addWidget(self.override)
         bar.addStretch(1)
@@ -102,13 +135,13 @@ class RecommendTab(QWidget):
 
         # One at a time is the default. Whether batches beat sequential picking
         # has not been validated — so it does not get a prominent spot.
-        self.adv = Advanced(summary="1 suggestion at a time")
+        self.adv = Advanced(summary=tr("1 suggestion at a time"))
         brow = QHBoxLayout()
-        brow.addWidget(QLabel("At a time"))
+        brow.addWidget(QLabel(tr("At a time")))
         self.batch = QSpinBox(minimum=1, maximum=MAX_BATCH, value=1)
-        self.batch.setToolTip("Receive several at once. Each picked point assumes its predicted\n"
-                              "mean as if observed, then the next is chosen (kriging believer).\n"
-                              "Whether batches beat sequential picking has not been validated.")
+        self.batch.setToolTip(tr("Receive several at once. Each picked point assumes its predicted\n"
+                                 "mean as if observed, then the next is chosen (kriging believer).\n"
+                                 "Whether batches beat sequential picking has not been validated."))
         self.batch.valueChanged.connect(lambda _: self.adv.set_summary(self._summary_text()))
         brow.addWidget(self.batch)
         brow.addStretch(1)
@@ -117,19 +150,48 @@ class RecommendTab(QWidget):
         self.beta_row = QWidget()
         bl = QHBoxLayout(self.beta_row)
         bl.setContentsMargins(0, 0, 0, 0)
-        bl.addWidget(QLabel("Exploration strength b"))
+        bl.addWidget(QLabel(tr("Exploration strength b")))
         self.beta = QDoubleSpinBox(minimum=0.5, maximum=4.0, singleStep=0.5, value=2.0)
-        self.beta.setToolTip("Larger pushes further into uncertainty. Do not casually raise the default 2.0.")
+        self.beta.setToolTip(tr("Larger pushes further into uncertainty. Do not casually raise the default 2.0."))
         self.beta.valueChanged.connect(self._on_method)
         bl.addWidget(self.beta)
         bl.addStretch(1)
         self.adv.add(self.beta_row)
         root.addWidget(self.adv)
 
-        self.table = QTableWidget(0, 0)
+        # ── the one to act on ──────────────────────────────────────
+        self.card = Section(tr("Measure this next"))
+        self.card_grid = QGridLayout()
+        self.card_grid.setHorizontalSpacing(16)
+        self.card_grid.setVerticalSpacing(4)
+        self.card_grid.setColumnStretch(0, 1)
+        self.card.add_layout(self.card_grid)
+        self.card_meta = QLabel()
+        self.card_meta.setWordWrap(True)
+        theme.set_role(self.card_meta, "muted")
+        self.card.add(self.card_meta)
+        self.card_flag = QLabel()
+        self.card_flag.setWordWrap(True)
+        self.card_flag.setStyleSheet(f"color:{theme.WARN};")
+        self.card_flag.setVisible(False)
+        self.card.add(self.card_flag)
+        self.card.setVisible(False)
+        root.addWidget(self.card)
+
+        # ── the runners-up ─────────────────────────────────────────
+        self.alt_title = QLabel(tr("Other candidates"))
+        theme.set_role(self.alt_title, "h2")
+        self.alt_title.setVisible(False)
+        root.addWidget(self.alt_title)
+
+        self.table = _AltTable(self._fit_columns)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setWordWrap(False)
         self.table.verticalHeader().setVisible(False)
+        # the widths are set from font metrics below — no floor of the style's own
+        self.table.horizontalHeader().setMinimumSectionSize(1)
+        self.table.setVisible(False)
         root.addWidget(self.table, 1)
 
         self.note = QLabel()
@@ -138,12 +200,12 @@ class RecommendTab(QWidget):
         root.addWidget(self.note)
 
         out = QHBoxLayout()
-        self.accept = QPushButton("Insert into the data table")
-        self.accept.setToolTip("Pre-fills the suggested conditions as gray rows on the Data tab.\n"
-                               "They become real once you enter the measured values.")
+        self.accept = QPushButton(tr("Insert into the data table"))
+        self.accept.setToolTip(tr("Pre-fills the suggested conditions as gray rows on the Data tab.\n"
+                                  "They become real once you enter the measured values."))
         self.accept.clicked.connect(self._accept)
-        self.export = QPushButton("Export instruction sheet (CSV)")
-        self.export.setToolTip("Saves condition values + suggested replicates + the evidence, as a table.")
+        self.export = QPushButton(tr("Export instruction sheet (CSV)"))
+        self.export.setToolTip(tr("Saves condition values + suggested replicates + the evidence, as a table."))
         self.export.clicked.connect(self._export)
         out.addWidget(self.accept)
         out.addWidget(self.export)
@@ -151,22 +213,24 @@ class RecommendTab(QWidget):
         root.addLayout(out)
 
         self._set_enabled(False)
-        self.table.setVisible(False)
         self._on_method()
         self._say_idle()
 
     def _on_method(self) -> None:
         name = self.method.currentData() or "EI"
         cls = dict(ACQUISITIONS)[name]
-        self.method_why.setText(getattr(cls, "when", ""))
+        when = getattr(cls, "when", "")
+        self.method_why.setText(tr(when) if when else "")
         self.beta_row.setVisible(name == "UCB")
         self.adv.set_summary(self._summary_text())
         self.acquisition_changed.emit()
 
     def _summary_text(self) -> str:
         n = self.batch.value()
-        return f"{n} suggestion{'s' if n > 1 else ''} at a time" + (
-            f" · b = {self.beta.value():g}" if self.method.currentData() == "UCB" else "")
+        parts = [tr("1 suggestion at a time") if n == 1 else tr("{n} suggestions at a time", n=n)]
+        if self.method.currentData() == "UCB":
+            parts.append(f"b = {self.beta.value():g}")
+        return " · ".join(parts)
 
     def acquisition(self):
         """The currently chosen method. The Model tab uses this too — it must be set in one place."""
@@ -220,63 +284,150 @@ class RecommendTab(QWidget):
         else:
             self._render_suggestions(result)
 
-    def _render_locked(self, locked: Locked) -> None:
+    def _hide_results(self) -> None:
+        self.card.setVisible(False)
+        self.alt_title.setVisible(False)
         self.table.setRowCount(0)
-        self.table.setVisible(False)          # an empty table hogging the screen buries the reasons
+        self.table.setVisible(False)      # an empty table hogging the screen buries the reasons
+
+    def _render_locked(self, locked: Locked) -> None:
+        self._hide_results()
         self._set_enabled(False)
-        reasons = "".join(f"<li>{r}</li>" for r in locked.reasons)
-        self.status.setText(
-            f"<b style='color:{theme.FAIL}'>{locked.headline}</b>"
-            f"<ul style='margin:6px 0'>{reasons}</ul>"
+        self.status.setText(tr(
+            "<b style='color:{c}'>{headline}</b><ul style='margin:6px 0'>{reasons}</ul>"
             "Follow the prescription on the Diagnose tab first. If you must proceed anyway, "
-            "turn on \"Force a recommendation\" above — the result will carry the mark.")
+            "turn on \"Force a recommendation\" above — the result will carry the mark.",
+            c=theme.FAIL, headline=locked.headline,
+            reasons="".join(f"<li>{r}</li>" for r in locked.reasons)))
         self.status.setStyleSheet(theme.card("fail"))
         self.note.setText("")
 
-    def _render_suggestions(self, rec: Recommendation) -> None:
-        headers = [f"{v.name} ({v.unit})" if v.unit else v.name for v in self.project.inputs]
-        headers += ["suggested reps", "predicted mean", "uncertainty σ", "acq. value", "note"]
-        self.table.setColumnCount(len(headers))
-        self.table.setHorizontalHeaderLabels(headers)
-        self.table.setRowCount(len(rec.suggestions))
-        d = len(self.project.inputs)
+    # the card ─────────────────────────────────────────────────────
+    def _card_labels(self) -> list[tuple[QLabel, QLabel]]:
+        """One (name, value) label pair per variable, rebuilt when the variables change."""
+        inputs = self.project.inputs
+        if len(self._card_rows) == len(inputs) and \
+                all(n.text() == v.name for (n, _), v in zip(self._card_rows, inputs)):
+            return self._card_rows
+        while self.card_grid.count():
+            w = self.card_grid.takeAt(0).widget()
+            if w is not None:
+                w.setParent(None)
+                w.deleteLater()
+        self._card_rows = []
+        for r, v in enumerate(inputs):
+            name = QLabel(v.name)
+            theme.set_role(name, "muted")
+            value = QLabel()
+            theme.set_role(value, "h2")
+            value.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            self.card_grid.addWidget(name, r, 0)
+            self.card_grid.addWidget(value, r, 1)
+            self._card_rows.append((name, value))
+        return self._card_rows
 
-        for r, s in enumerate(rec.suggestions):
-            for c, v in enumerate(s.x_real):
-                spec = self.project.inputs[c]
-                txt = f"{v:.0f}" if spec.type == "integer" else f"{v:g}"
-                self.table.setItem(r, c, QTableWidgetItem(txt))
-            self.table.setItem(r, d, QTableWidgetItem(f"×{s.suggested_reps}"))
-            self.table.setItem(r, d + 1, QTableWidgetItem(f"{s.predicted_mean:.4g}"))
-            self.table.setItem(r, d + 2, QTableWidgetItem(f"{s.predicted_std:.4g}"))
-            self.table.setItem(r, d + 3, QTableWidgetItem(f"{s.acq_value:.4g}"))
-            self.table.setItem(r, d + 4, QTableWidgetItem(
-                "outside measured range" if s.extrapolated else ""))
-        self.table.setVisible(True)
-        self.table.resizeColumnsToContents()
-        self.table.horizontalHeader().setSectionResizeMode(
-            self.table.columnCount() - 1, QHeaderView.Stretch)
+    def _fill_card(self, top, rec: Recommendation) -> None:
+        for (_, value), v, x in zip(self._card_labels(), self.project.inputs, top.x_real):
+            value.setText(fmt_value(v, x) + (f" {v.unit}" if v.unit else ""))
+        self.card_meta.setText(tr(
+            "predicted {mean} ± {sd} · acquisition {acq} · suggested reps ×{n}",
+            mean=f"{top.predicted_mean:.4g}", sd=f"{top.predicted_std:.3g}",
+            acq=f"{top.acq_value:.4g}", n=top.suggested_reps))
+        self.card_flag.setText(tr("outside measured range") if top.extrapolated else "")
+        self.card_flag.setVisible(top.extrapolated)
+        self.card.setVisible(True)
+
+    # the runners-up ───────────────────────────────────────────────
+    def _fill_alternatives(self, rest: list) -> None:
+        self._alt_headers = [(v.name, f"{v.name} ({v.unit})" if v.unit else v.name)
+                             for v in self.project.inputs]
+        self._alt_headers += [(tr("predicted"), tr("predicted mean")),
+                              ("σ", tr("uncertainty σ")),      # a symbol, not text — the scanner does not see it either
+                              (tr("acq."), tr("acq. value"))]
+        self.table.setColumnCount(len(self._alt_headers))
+        self.table.setHorizontalHeaderLabels([h for h, _ in self._alt_headers])
+        self.table.setRowCount(len(rest))
+        d = len(self.project.inputs)
+        for r, s in enumerate(rest):
+            for c, x in enumerate(s.x_real):
+                self.table.setItem(r, c, QTableWidgetItem(fmt_value(self.project.inputs[c], x)))
+            self.table.setItem(r, d, QTableWidgetItem(f"{s.predicted_mean:.4g}"))
+            self.table.setItem(r, d + 1, QTableWidgetItem(f"{s.predicted_std:.4g}"))
+            self.table.setItem(r, d + 2, QTableWidgetItem(f"{s.acq_value:.4g}"))
+            if s.extrapolated:
+                self.table.item(r, 0).setToolTip(tr("outside measured range"))
+        # a single suggestion has no runners-up — an empty table would only take room
+        self.alt_title.setVisible(bool(rest))
+        self.table.setVisible(bool(rest))
+        self._fit_columns()
+
+    def _fit_columns(self) -> None:
+        """Share the viewport out between the columns, then shrink each header to the width it got.
+
+        The widths add up to exactly the viewport, so the table can never grow a
+        horizontal scroll bar, and each column gets a share in proportion to what
+        its own header needs. A header too long for its share is elided — measured
+        against the header's real size hint rather than a guessed padding — and
+        keeps its full text, unit included, in the tooltip.
+        """
+        n = self.table.columnCount()
+        total = self.table.viewport().width()
+        if self._fitting or not n or n != len(self._alt_headers) or total < 4 * n:
+            return
+        self._fitting = True
+        try:
+            header = self.table.horizontalHeader()
+            header.setSectionResizeMode(QHeaderView.Fixed)
+            for i, (text, tip) in enumerate(self._alt_headers):
+                item = self.table.horizontalHeaderItem(i)
+                item.setText(text)
+                item.setToolTip(tip)
+            hints = [max(1, header.sectionSizeHint(i)) for i in range(n)]
+            want = sum(hints)
+            widths = [max(1, h * total // want) for h in hints]
+            widest = hints.index(max(hints))
+            widths[widest] = max(1, widths[widest] + total - sum(widths))    # the rounding remainder
+            metrics = header.fontMetrics()
+            for i, (text, _tip) in enumerate(self._alt_headers):
+                item = self.table.horizontalHeaderItem(i)
+                budget = widths[i]
+                while True:
+                    item.setText(metrics.elidedText(text, Qt.ElideRight, budget))
+                    if budget <= 4 or header.sectionSizeHint(i) <= widths[i]:
+                        break
+                    budget -= 6                      # the style's own padding, walked off
+                header.resizeSection(i, widths[i])
+        finally:
+            self._fitting = False
+
+    def _render_suggestions(self, rec: Recommendation) -> None:
+        self._fill_card(rec.suggestions[0], rec)
+        self._fill_alternatives(rec.suggestions[1:])
         self._set_enabled(bool(rec.suggestions))
 
-        head = (f"<b>Suggesting {len(rec.suggestions)} condition"
-                f"{'s' if len(rec.suggestions) > 1 else ''}.</b>  "
-                f"{rec.acquisition_label} · {rec.surrogate_label} · "
-                f"best measured so far {rec.best_measured:.4g}")
+        n = len(rec.suggestions)
+        head = [tr("<b>1 condition suggested.</b>") if n == 1
+                else tr("<b>{n} conditions suggested.</b>", n=n),
+                rec.acquisition_label, rec.surrogate_label,
+                tr("best measured so far {best}", best=f"{rec.best_measured:.4g}")]
+        text = " · ".join(head)
         if rec.gate_bypassed:
-            head = (f"<b style='color:{theme.FAIL}'>This recommendation was forced with "
-                    "requirements unmet.</b> The report will say so.<br>") + head
-        self.status.setText(head)
+            text = tr("<b style='color:{c}'>This recommendation was forced with requirements "
+                      "unmet.</b> The report will say so.", c=theme.FAIL) + "<br>" + text
+        self.status.setText(text)
         self.status.setStyleSheet(theme.card("fail" if rec.gate_bypassed else "ok"))
 
         notes = list(rec.warnings)
         if rec.stop_advised:
-            notes.append(f"<b style='color:{theme.WARN}'>Stopping advised</b> — {rec.stop_reason}")
-        notes.append("\"Insert into the data table\" pre-fills these as gray rows on the "
-                     "Data tab. Enter the measured values to make them real.")
+            notes.append(tr("<b style='color:{c}'>Stopping advised</b> — {why}",
+                            c=theme.WARN, why=rec.stop_reason))
+        notes.append(tr("\"Insert into the data table\" pre-fills these as gray rows on the "
+                        "Data tab. Enter the measured values to make them real."))
         self.note.setText("<br>".join(notes))
 
     def _say_idle(self) -> None:
-        self.status.setText("Press \"Recommend next candidates\" to pick what to measure next from the current data.")
+        self.status.setText(
+            tr("Press \"Recommend next candidates\" to pick what to measure next from the current data."))
         self.status.setStyleSheet(theme.card())
 
     def _set_enabled(self, on: bool) -> None:
@@ -289,17 +440,19 @@ class RecommendTab(QWidget):
         self.override_changed.emit(self.override.isChecked())
         if self.override.isChecked():
             QMessageBox.warning(
-                self, "Requirements are unmet",
-                "There is no evidence this data can support a recommendation.\n\n"
-                "Proceed anyway and the results and the report will be marked "
-                "\"generated with requirements unmet\".")
+                self, tr("Requirements are unmet"),
+                tr("There is no evidence this data can support a recommendation.\n\n"
+                   "Proceed anyway and the results and the report will be marked "
+                   "\"generated with requirements unmet\"."))
 
     # ── export ─────────────────────────────────────────────────────
     def _accept(self) -> None:
         if not isinstance(self.result, Recommendation):
             return
-        payload = [(list(s.x_real), f"suggested · {self.result.acquisition_label} · "
-                                    f"predicted {s.predicted_mean:.4g}±{s.predicted_std:.3g}")
+        payload = [(list(s.x_real),
+                    tr("suggested · {acq} · predicted {mean}±{sd}",
+                       acq=self.result.acquisition_label,
+                       mean=f"{s.predicted_mean:.4g}", sd=f"{s.predicted_std:.3g}"))
                    for s in self.result.suggestions]
         self.points_accepted.emit(payload)
 
@@ -307,23 +460,25 @@ class RecommendTab(QWidget):
         """The instruction sheet (F-42) — condition values + suggested replicates + evidence."""
         if not isinstance(self.result, Recommendation):
             return
-        fn, _ = QFileDialog.getSaveFileName(self, "Export instruction sheet",
-                                            "next_measurements.csv", "CSV (*.csv)")
+        fn, _ = QFileDialog.getSaveFileName(self, tr("Export instruction sheet"),
+                                            "next_measurements.csv",        # i18n: skip
+                                            tr("CSV (*.csv)"))
         if not fn:
             return
         with open(fn, "w", encoding="utf-8-sig", newline="") as f:
             w = csv.writer(f)
             w.writerow([f"{v.name} ({v.unit})" if v.unit else v.name
                         for v in self.project.inputs]
-                       + ["suggested reps", "predicted mean", "uncertainty σ",
-                          "acq. value", "note"])
+                       + [tr("suggested reps"), tr("predicted mean"), tr("uncertainty σ"),
+                          tr("acq. value"), tr("note")])
             for s in self.result.suggestions:
-                w.writerow([f"{v:g}" for v in s.x_real]
+                w.writerow([fmt_value(v, x) for v, x in zip(self.project.inputs, s.x_real)]
                            + [s.suggested_reps, f"{s.predicted_mean:.6g}",
                               f"{s.predicted_std:.6g}", f"{s.acq_value:.6g}",
-                              "outside measured range" if s.extrapolated else ""])
+                              tr("outside measured range") if s.extrapolated else ""])
             w.writerow([])
-            w.writerow(["evidence", self.result.acquisition_label, self.result.surrogate_label])
+            w.writerow([tr("evidence"), self.result.acquisition_label, self.result.surrogate_label])
             if self.result.gate_bypassed:
-                w.writerow(["caution", "generated with requirements unmet"])
-        QMessageBox.information(self, "Exported", f"{fn}\n\nFill in the values after measuring.")
+                w.writerow([tr("caution"), tr("generated with requirements unmet")])
+        QMessageBox.information(self, tr("Exported"),
+                                tr("{path}\n\nFill in the values after measuring.", path=fn))
