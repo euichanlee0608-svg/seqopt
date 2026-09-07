@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleS
 
 from core.design import initial_design, suggest_initial_size
 from core.i18n import tr
+from core.project import default_name
 from core.spec import (ObjSpec, SumConstraint, VarSpec, candidate_summary, count_candidates,
                        suggest_log_transform)
 from . import theme
@@ -429,7 +430,7 @@ class SetupTab(QWidget):
         if self._loading:
             return
         p = self.project
-        p.name = self.name.text() or "New project"        # i18n: skip — the saved project's name
+        p.name = self.name.text() or default_name()
         p.objective = ObjSpec(self.obj_name.text() or "response",           # i18n: skip — data
                               self.obj_unit.text(),
                               self.goal.currentData(), self.log.isChecked())
