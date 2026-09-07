@@ -25,7 +25,7 @@ from .diagnostics import Gate
 from .i18n import tr
 from .protocols import Acquisition, Surrogate
 from .spec import Dataset, SumConstraint, VarSpec
-from .surface import decimals, fmt_value, format_condition, to_real   # noqa: F401 — decimals/fmt_value are this module's public precision helpers
+from .surface import format_condition, to_real
 from .surrogate import DEFAULT_SURROGATE, SURROGATES, fit
 
 CANDIDATE_POOL = 4000

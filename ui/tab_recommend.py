@@ -189,10 +189,16 @@ class RecommendTab(QWidget):
         # ── the one to act on ──────────────────────────────────────
         self.card = Section(tr("Measure this next"))
         self.card_grid = QGridLayout()
-        self.card_grid.setHorizontalSpacing(16)
+        self.card_grid.setHorizontalSpacing(24)
         self.card_grid.setVerticalSpacing(4)
         self.card_grid.setColumnStretch(0, 1)
-        self.card.add_layout(self.card_grid)
+        # the grid keeps its natural width instead of stretching across a wide
+        # window — a name at the far left and its value at the far right is not
+        # a pair anyone can read
+        card_row = QHBoxLayout()
+        card_row.addLayout(self.card_grid)
+        card_row.addStretch(1)
+        self.card.add_layout(card_row)
         self.card_meta = _wrapping(QLabel())
         theme.set_role(self.card_meta, "muted")
         self.card.add(self.card_meta)
@@ -411,7 +417,9 @@ class RecommendTab(QWidget):
                 item = self.table.horizontalHeaderItem(i)
                 item.setText(text)
                 item.setToolTip(tip)
-            hints = [max(1, header.sectionSizeHint(i)) for i in range(n)]
+            # what the column would like: its header, or its widest cell
+            hints = [max(1, header.sectionSizeHint(i), self.table.sizeHintForColumn(i))
+                     for i in range(n)]
             want = sum(hints)
             widths = [max(1, h * total // want) for h in hints]
             widest = hints.index(max(hints))
