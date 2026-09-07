@@ -11,6 +11,10 @@ import pytest
 def qapp():
     from PySide6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication([])
+    # the app's real font and style — Qt's fallback font is ~30% narrower, so a
+    # layout measured without the theme passes text that users see clipped
+    from ui import theme
+    theme.apply(app)
     yield app
 
 
