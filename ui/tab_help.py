@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QHBoxLayout, QLabel, QLineEdit, QListWidget, QLis
                                QPushButton, QSplitter, QTextBrowser, QVBoxLayout, QWidget)
 
 from core.acquisition import BENCH_CLAIMS
+from core.i18n import tr
 
 from . import theme
 from .widgets.section import PageHeader
@@ -62,61 +63,64 @@ def _table(head: list[str], rows: list[list[str]]) -> str:
 # ══════════════════════════════════════════════════════════════════════
 # Content
 # ══════════════════════════════════════════════════════════════════════
-TOPICS: list[Topic] = [
+def topics() -> list[Topic]:
+    """Built fresh each call — `tr()` reads the current language, so this must not run at import time."""
+    return [
     # ── getting started ────────────────────────────────────────────
-    Topic("start", "What is this program", tags="overview start introduction",
+    Topic("start", tr("What is this program"), tags=tr("overview start introduction"),  # i18n: skip
           body=_p(
-              "<b>Enter your measurements and it tells you which condition to "
-              "measure next — and whether that advice can be trusted at all.</b>",
-              "The second half is the point. Plenty of tools already suggest the "
-              "next condition. This one <b>checks the advice's reliability first, "
-              "and refuses to advise when the data falls short.</b>") +
-          "<h3>Why it was built this way</h3>" +
-          _p("While validating this method, the same question was answered <b>four "
-             "times and got it wrong three times.</b> The cause was never a code "
-             "bug — it was <b>never asking whether the data could support the "
-             "question at all.</b>",
-             "One real lab dataset from that study had a learnability of "
-             "R² = −0.272 — worse than always answering the overall mean. Feed it "
-             "to an ordinary optimization tool and you get <b>a smooth response "
-             "surface and a plausible next candidate anyway.</b> Trust that, and "
-             "you spend time and samples on noise."),
-          code=["core/diagnostics.py: gate()", "docs/ARCHITECTURE.md"]),
+              tr("<b>Enter your measurements and it tells you which condition to "
+                 "measure next — and whether that advice can be trusted at all.</b>"),
+              tr("The second half is the point. Plenty of tools already suggest the "
+                 "next condition. This one <b>checks the advice's reliability first, "
+                 "and refuses to advise when the data falls short.</b>")) +
+          tr("<h3>Why it was built this way</h3>") +
+          _p(tr("While validating this method, the same question was answered <b>four "
+                "times and got it wrong three times.</b> The cause was never a code "
+                "bug — it was <b>never asking whether the data could support the "
+                "question at all.</b>"),
+             tr("One real lab dataset from that study had a learnability of "
+                "R² = −0.272 — worse than always answering the overall mean. Feed it "
+                "to an ordinary optimization tool and you get <b>a smooth response "
+                "surface and a plausible next candidate anyway.</b> Trust that, and "
+                "you spend time and samples on noise.")),
+          code=["core/diagnostics.py: gate()", "docs/ARCHITECTURE.md"]),  # i18n: skip
 
-    Topic("simple", "Why are there so few choices", tags="simple choices advanced defaults algorithm kernel",
-          body=_p("Deliberately. Compared with other optimization tools:") +
-          _table(["tool", "what the user must choose"], [
-              ["AutoOED", "surrogate · acquisition · multi-objective solver · selection strategy — four dropdowns"],
-              ["MADGUI", "ElasticNet / RandomForest / XGBoost · cross-validation scheme"],
-              ["OPTIMEO", "DoE type · model · acquisition"],
-              ["<b>this program</b>", "<b>none</b> — fixed kernel · fixed EI · fixed model"]]) +
-          "<h3>Why fixing them is affordable</h3>" +
-          _p("<b>Because the gate exists.</b> Other tools hand you choices so you "
-             "can wander between models when the data is bad. This program rules "
-             "<b>\"changing the model will not help\"</b> — so there is nothing to choose.",
-             "In the validation study, six model families were tried on a bad "
-             "dataset and <b>not one</b> reached R² > 0. Offer a menu there, and "
-             "people spend their time hunting for an answer that does not exist.") +
-          "<h3>If you still want to change things</h3>" +
-          _p("Unfold <b>\"Advanced ▸\"</b> on each screen — acquisition function, "
-             "batch size, target discriminability, log transform and the initial "
-             "design size are all there. Not removed. <b>Deferred.</b>"),
-          code=["ui/widgets/advanced.py", "core/surrogate.py: DEFAULT_SURROGATE"]),
+    Topic("simple", tr("Why are there so few choices"),  # i18n: skip
+          tags=tr("simple choices advanced defaults algorithm kernel"),
+          body=_p(tr("Deliberately. Compared with other optimization tools:")) +
+          _table([tr("tool"), tr("what the user must choose")], [
+              [tr("AutoOED"), tr("surrogate · acquisition · multi-objective solver · selection strategy — four dropdowns")],
+              [tr("MADGUI"), tr("ElasticNet / RandomForest / XGBoost · cross-validation scheme")],
+              [tr("OPTIMEO"), tr("DoE type · model · acquisition")],
+              [tr("<b>this program</b>"), tr("<b>none</b> — fixed kernel · fixed EI · fixed model")]]) +
+          tr("<h3>Why fixing them is affordable</h3>") +
+          _p(tr("<b>Because the gate exists.</b> Other tools hand you choices so you "
+                "can wander between models when the data is bad. This program rules "
+                "<b>\"changing the model will not help\"</b> — so there is nothing to choose."),
+             tr("In the validation study, six model families were tried on a bad "
+                "dataset and <b>not one</b> reached R² > 0. Offer a menu there, and "
+                "people spend their time hunting for an answer that does not exist.")) +
+          tr("<h3>If you still want to change things</h3>") +
+          _p(tr("Unfold <b>\"Advanced ▸\"</b> on each screen — acquisition function, "
+                "batch size, target discriminability, log transform and the initial "
+                "design size are all there. Not removed. <b>Deferred.</b>")),
+          code=["ui/widgets/advanced.py", "core/surrogate.py: DEFAULT_SURROGATE"]),  # i18n: skip
 
-    Topic("flow", "In what order do I use it", tags="order flow workflow first",
-          body="<h3>Starting a new experiment</h3>" +
-          _ul("<b>Setup</b> — define your knobs (inputs), the objective, and the budget",
-              "<b>Setup → generate initial design</b> — get the first measurement points as CSV",
-              "Measure them in the lab",
-              "<b>Data</b> — enter the values (paste · import · type)",
-              "<b>Diagnose</b> — check the four requirements ← <b>this is the fork</b>",
-              "Pass → get the next condition on <b>Recommend</b>, and repeat 4–6",
-              "Fail → fix the data first, following the <b>prescription</b> on the Diagnose tab") +
-          "<h3>Diagnosing a spreadsheet you already have</h3>" +
-          _ul("<b>Data → import from file</b> and map the columns",
-              "Read the verdict table on <b>Diagnose</b>",
-              "Keep the evidence as a PDF with <b>Report</b>"),
-          code=["ui/main_window.py: recompute()"]),
+    Topic("flow", tr("In what order do I use it"), tags=tr("order flow workflow first"),  # i18n: skip
+          body=tr("<h3>Starting a new experiment</h3>") +
+          _ul(tr("<b>Setup</b> — define your knobs (inputs), the objective, and the budget"),
+              tr("<b>Setup → generate initial design</b> — get the first measurement points as CSV"),
+              tr("Measure them in the lab"),
+              tr("<b>Data</b> — enter the values (paste · import · type)"),
+              tr("<b>Diagnose</b> — check the four requirements ← <b>this is the fork</b>"),
+              tr("Pass → get the next condition on <b>Recommend</b>, and repeat 4–6"),
+              tr("Fail → fix the data first, following the <b>prescription</b> on the Diagnose tab")) +
+          tr("<h3>Diagnosing a spreadsheet you already have</h3>") +
+          _ul(tr("<b>Data → import from file</b> and map the columns"),
+              tr("Read the verdict table on <b>Diagnose</b>"),
+              tr("Keep the evidence as a PDF with <b>Report</b>")),
+          code=["ui/main_window.py: recompute()"]),  # i18n: skip
 
     # ── the requirements ───────────────────────────────────────────
     Topic("gate", "The four requirements — what and why", tags="gate requirements verdict locked",
@@ -597,7 +601,7 @@ _CSS = f"""
           font-family:{theme.MONO_FAMILY}; }}
   .src {{ color:{theme.TEXT_MUTED}; font-size:12px; }}
 </style>
-"""
+"""  # i18n: skip
 
 
 class HelpTab(QWidget):
@@ -611,13 +615,14 @@ class HelpTab(QWidget):
         self.list.setCurrentRow(0)
 
     def _build(self) -> None:
+        self._topics = topics()
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(12)
 
-        head = PageHeader("Help — the questions this tool is likely to raise",
-                          "Each topic ends with the code locations that back its explanation.")
-        self.search = QLineEdit(placeholderText="Search  (e.g. discriminability, locked, excel, slow)")
+        head = PageHeader(tr("Help — the questions this tool is likely to raise"),
+                          tr("Each topic ends with the code locations that back its explanation."))
+        self.search = QLineEdit(placeholderText=tr("Search  (e.g. discriminability, locked, excel, slow)"))
         self.search.setFixedWidth(300)
         self.search.setClearButtonEnabled(True)
         self.search.textChanged.connect(self._filter)
@@ -645,14 +650,14 @@ class HelpTab(QWidget):
         split.setSizes([272, 860])
         root.addWidget(split, 1)
 
-        self.hint = QLabel("The README covers installation and the Windows build.")
+        self.hint = QLabel(tr("The README covers installation and the Windows build."))
         self.hint.setStyleSheet(theme.muted())
         root.addWidget(self.hint)
 
     # ── the list ───────────────────────────────────────────────────
     def _filter(self, text: str) -> None:
         q = text.strip().lower()
-        self.shown = [t for t in TOPICS if not q or q in t.searchable()]
+        self.shown = [t for t in self._topics if not q or q in t.searchable()]
         self.list.clear()
         for t in self.shown:
             it = QListWidgetItem(t.title)
@@ -661,7 +666,7 @@ class HelpTab(QWidget):
         if self.shown:
             self.list.setCurrentRow(0)
         else:
-            self.view.setHtml(_CSS + _p(f"Nothing matches '{text}'."))
+            self.view.setHtml(_CSS + _p(tr("Nothing matches '{q}'.", q=text)))
 
     def _show(self, row: int) -> None:
         if not (0 <= row < len(self.shown)):
@@ -670,7 +675,7 @@ class HelpTab(QWidget):
         src = ""
         if t.code:
             items = "".join(f"<li><code>{c}</code></li>" for c in t.code)
-            src = f"<h3>Backing code and documents</h3><ul class='src'>{items}</ul>"
+            src = tr("<h3>Backing code and documents</h3><ul class='src'>{items}</ul>", items=items)
         self.view.setHtml(_CSS + f"<h2>{t.title}</h2>" + t.body + src)
         self.view.verticalScrollBar().setValue(0)
 

@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _topics():
-    from ui.tab_help import TOPICS
-    return {t.key: t for t in TOPICS}
+    from ui.tab_help import topics
+    return {t.key: t for t in topics()}
 
 
 def _plain(html: str) -> str:
