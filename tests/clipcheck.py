@@ -55,7 +55,9 @@ def _check(w: QWidget, win: QWidget) -> list[str]:
             if need > w.height() + SLACK:
                 out.append(f"wrapped text needs {need}px height, has {w.height()}px: {_describe(w)}")
         else:
-            need = w.sizeHint().width()
+            # a self-eliding label (ui.main_window._Elided) asks the layout for its whole text
+            # but shows what fits — measure what it shows
+            need = w.shown_width() if hasattr(w, "shown_width") else w.sizeHint().width()
             if need > w.width() + SLACK:
                 out.append(f"text needs {need}px, has {w.width()}px: {_describe(w)}")
     elif isinstance(w, QAbstractButton) and w.text().strip():

@@ -81,6 +81,11 @@ class _Elided(QLabel):
         base = super().sizeHint()
         return QSize(self._text_width(self._full) + self._chrome(), base.height())
 
+    def shown_width(self) -> int:
+        """What the text on screen needs. `tests/clipcheck.py` asks this instead of sizeHint(),
+        which is what the *whole* text would like — an elided label is never clipped, only short."""
+        return self._text_width(super().text()) + self._chrome()
+
     def _text_width(self, text: str) -> int:
         # measured the way QLabel measures its own text, so the two never disagree by a pixel
         return self.fontMetrics().size(Qt.TextSingleLine, text).width()
