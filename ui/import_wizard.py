@@ -36,6 +36,20 @@ TYPE_KEYS = ("continuous", "integer", "categorical")            # i18n: key
 PREVIEW_ROWS = 60
 
 
+def _wraps(label: QLabel) -> QLabel:
+    """Wrap, and tell the layout the height that wrapping actually needs.
+
+    Qt asks `heightForWidth()` only when the size policy says to; without it the lines past
+    the first are silently cut. Every sentence here is a different length in the two
+    languages, so every one of them says to.
+    """
+    label.setWordWrap(True)
+    sp = label.sizePolicy()
+    sp.setHeightForWidth(True)
+    label.setSizePolicy(sp)
+    return label
+
+
 class ImportWizard(QDialog):
     """Yields (measurements, profile). Cancel makes exec() Rejected."""
 
@@ -91,20 +105,24 @@ class ImportWizard(QDialog):
         left = QWidget()
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
-        lv.addWidget(QLabel(tr("<b>Original preview</b>  <span style='color:{c}'>"
-                               "— exactly as it is in the file</span>", c=theme.TEXT_MUTED)))
+        lv.addWidget(_wraps(QLabel(tr("<b>Original preview</b>  <span style='color:{c}'>"
+                                      "— exactly as it is in the file</span>",
+                                      c=theme.TEXT_MUTED))))
         self.raw = QTableWidget(alternatingRowColors=True)
         self.raw.setEditTriggers(QTableWidget.NoEditTriggers)
+        # The left side is the file as it is — a spreadsheet with many columns scrolls,
+        # it is not squeezed. Its column headers are still measured.
+        self.raw.setProperty("clip_ok", True)
         lv.addWidget(self.raw)
         split.addWidget(left)
 
         right = QWidget()
         rv = QVBoxLayout(right)
         rv.setContentsMargins(0, 0, 0, 0)
-        rv.addWidget(QLabel(tr(
+        rv.addWidget(_wraps(QLabel(tr(
             "<b>Assign column meanings</b>  <span style='color:{c}'>— the roles are a "
             "<b>guess</b>. Check that the condition count below matches what you "
-            "expect</span>", c=theme.TEXT_MUTED)))
+            "expect</span>", c=theme.TEXT_MUTED))))
         self.mapper = QTableWidget(0, 6)
         self.mapper.setHorizontalHeaderLabels([tr("column"), tr("sample values"), tr("role"),
                                                tr("name"), tr("unit"), tr("type")])
@@ -130,8 +148,7 @@ class ImportWizard(QDialog):
         root.addWidget(split, 1)
 
         # row 3: outcome summary
-        self.summary = QLabel(tr("Choose a file and the outcome is previewed here."))
-        self.summary.setWordWrap(True)
+        self.summary = _wraps(QLabel(tr("Choose a file and the outcome is previewed here.")))
         self.summary.setStyleSheet(theme.card())
         root.addWidget(self.summary)
 
@@ -227,6 +244,18 @@ class ImportWizard(QDialog):
             self.mapper.setCellWidget(i, 5, vtype)
 
         self.mapper.resizeColumnsToContents()
+        # resizeColumnsToContents measures the cell's item, never the combo box inside it —
+        # so the two combo columns are sized from the labels of the language that is on
+        fm = self.mapper.fontMetrics()
+        self.mapper.setColumnWidth(2, max(fm.horizontalAdvance(tr(r)) for r in ROLE_KEYS) + 64)
+        self.mapper.setColumnWidth(5, max(fm.horizontalAdvance(tr(t)) for t in TYPE_KEYS) + 64)
+        # What the six columns actually need, in the language that is on. Saying so keeps the
+        # splitter from crushing "sample values" to nothing — the preview scrolls, this does not.
+        hh = self.mapper.horizontalHeader()
+        need = sum(self.mapper.columnWidth(c) if c in (2, 5) else hh.sectionSizeHint(c)
+                   for c in range(self.mapper.columnCount()))
+        self.mapper.setMinimumWidth(need + 2 * self.mapper.frameWidth()
+                                    + self.mapper.verticalScrollBar().sizeHint().width() + 2)
         self.mapper.itemChanged.connect(self._refresh)
         self._loading = False
 
