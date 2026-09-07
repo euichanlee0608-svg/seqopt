@@ -35,6 +35,7 @@ from .tab_setup import SetupTab
 from .widgets.nav import NavList
 from .worker import DiagnosticsRunner
 
+TABS = ["Setup", "Data", "Diagnose", "Model", "Recommend", "Report", "Help"]   # i18n: key
 NAV_NUMBERS = ["1", "2", "3", "4", "5", "6", "?"]
 MIN_SIZE = (1024, 660)      # any smaller and the Diagnose screen's two columns collide
 AUTOSAVE_MS = 60_000
@@ -44,8 +45,7 @@ RECENT_FILE = os.path.join(os.path.expanduser('~'), '.seqopt_recent')
 
 def tab_names() -> list[str]:
     """The seven screens, in rail order. A function, not a constant — `tr()` must not run at import."""
-    return [tr("Setup"), tr("Data"), tr("Diagnose"), tr("Model"),
-            tr("Recommend"), tr("Report"), tr("Help")]
+    return [tr(name) for name in TABS]
 
 
 class _Elided(QLabel):
