@@ -215,4 +215,12 @@ KO: dict[str, str] = {
     "Import failed": "가져오기 실패",
     "Nothing to import": "가져올 값이 없습니다",
     "Check the column roles and reading rules.": "열 역할과 읽기 규칙을 확인하세요.",
+    # --- core/importer.py · core/profile.py — messages the wizard shows ---
+    "Assign the input and response columns first": "입력변수와 출력변수를 먼저 지정하세요",
+    "Assign at least one input variable": "입력변수를 최소 1개 지정해야 합니다",
+    "At most 10 input variables (currently {n})": "입력변수는 10개까지입니다 (현재 {n}개)",
+    "Assign exactly one response variable": "출력변수(응답)를 1개 지정해야 합니다",
+    "Only one response variable can be assigned (multi-objective is out of scope)":
+        "출력변수는 1개만 지정할 수 있습니다 (다목적 최적화는 범위 밖)",
+    "Duplicate names: {names}": "이름이 겹칩니다: {names}",
 }
