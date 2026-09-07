@@ -142,12 +142,10 @@ class DiagTab(QWidget):
         head = PageHeader(tr("Diagnose — can this data be trusted"),
                           tr("Four requirements are checked before any recommendation. "
                              "Failing any one locks it."))
-        # Four links have to share one row with the title at 1024 px — keep every label short.
-        for label, key in ((tr("The four requirements?"), "gate"), (tr("Discriminability?"), "d"),
-                           (tr("Why 1 · 2 · 3.5?"), "levels"), (tr("R² is negative?"), "r2")):
-            b = link_button(label)
-            b.clicked.connect(lambda _=False, k=key: self.help_requested.emit(k))
-            head.add_right(b)
+        # The header row is the title plus these links; four of them no longer fit beside an
+        # English title at 1024 px, so the two that belong to one card moved onto that card.
+        for label, key in ((tr("The four requirements?"), "gate"), (tr("Discriminability?"), "d")):
+            head.add_right(self._help_link(label, key))
         root.addWidget(head)
 
         scroll = QScrollArea()
@@ -181,6 +179,7 @@ class DiagTab(QWidget):
         _tell_true_height(self.verdict)
         self.verdict.setStyleSheet(theme.card("plain"))
         gate.add(self.verdict)
+        gate.add_link(self._help_link(tr("R² is negative?"), "r2"))     # requirement ②'s "why?"
         bv.addWidget(gate)
 
         cols = QHBoxLayout()
@@ -210,6 +209,10 @@ class DiagTab(QWidget):
         self.levels.setTextFormat(Qt.RichText)
         self.levels.setText(self._levels_html())
         level.add(self.levels)
+        why = QHBoxLayout()                          # the "why these numbers?" link, under them
+        why.addWidget(self._help_link(tr("Why 1 · 2 · 3.5?"), "levels"))
+        why.addStretch(1)
+        level.add_layout(why)
         left.addWidget(level)
         left.addStretch(1)
 
@@ -263,7 +266,7 @@ class DiagTab(QWidget):
         self.plan = QTableWidget(0, 4)
         # Two-line headers: four columns of prose do not fit beside the gauge at 1024 px
         self.plan.setHorizontalHeaderLabels(
-            [tr("target D"), tr("meaning"), tr("reps\nper condition"), tr("extra\nruns")])
+            [tr("target\nD"), tr("meaning"), tr("reps per\ncondition"), tr("extra\nruns")])
         for col, tip in enumerate([
                 tr("The discriminability you want to reach."),
                 tr("What that mark means (core/diagnostics.py: D_LEVELS)."),
@@ -321,6 +324,12 @@ class DiagTab(QWidget):
 
         bv.addWidget(calc)
         bv.addStretch(1)
+
+    def _help_link(self, label: str, topic: str):
+        """A "why?" link that opens a help topic (main_window connects `help_requested`)."""
+        b = link_button(label)
+        b.clicked.connect(lambda _=False, k=topic: self.help_requested.emit(k))
+        return b
 
     def _levels_html(self) -> str:
         """The D marks and their basis. Only the two short cells hold their line — meaning and

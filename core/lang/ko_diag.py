@@ -123,9 +123,9 @@ KO: dict[str, str] = {
     "Prescription — how many replicates": "처방 — 반복을 몇 번 하면 되나",
     "For each target discriminability: replicates per condition, and how many more measurements that costs. The recommended row is green.":
         "목표 판별력마다 조건당 반복 횟수와 추가로 재야 하는 횟수입니다. 권장 줄이 초록입니다.",
-    "target D": "목표 D",
+    "target\nD": "목표 D",
     "meaning": "뜻",
-    "reps\nper condition": "조건당\n반복",
+    "reps per\ncondition": "조건당\n반복",
     "extra\nruns": "추가\n측정",
     "The discriminability you want to reach.": "도달하려는 판별력입니다.",
     "What that mark means (core/diagnostics.py: D_LEVELS).":
