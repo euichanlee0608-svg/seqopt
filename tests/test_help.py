@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def _topics():
-    from ui.tab_help import TOPICS
-    return {t.key: t for t in TOPICS}
+    from ui.tab_help import topics
+    return {t.key: t for t in topics()}
 
 
 def _plain(html: str) -> str:
@@ -60,3 +60,19 @@ def test_every_topic_says_where_its_numbers_come_from():
     for key, topic in _topics().items():
         assert topic.code, f"{key}: the list of backing code locations is empty"
         assert len(_plain(topic.body)) > 80, f"{key}: the body is too short"
+
+
+def test_help_renders_in_korean(korean):
+    hangul = re.compile(r"[가-힣]")
+    stray_placeholder = re.compile(r"\{\w+\}")
+    for key, topic in _topics().items():
+        assert hangul.search(topic.title), f"{key}: title is not Korean"
+        assert hangul.search(topic.body), f"{key}: body is not Korean"
+        assert not stray_placeholder.search(topic.title), f"{key}: unformatted placeholder in title"
+        assert not stray_placeholder.search(topic.body), f"{key}: unformatted placeholder in body"
+
+
+def test_search_finds_topics_in_korean(korean):
+    t = _topics()
+    hits = [key for key, topic in t.items() if "판별력" in topic.searchable()]
+    assert "d" in hits, "searching a Korean word from the discriminability topic found nothing"
