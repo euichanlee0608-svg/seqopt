@@ -362,69 +362,73 @@ def topics() -> list[Topic]:
                      "consulted, so the <b>no-lookahead rule</b> holds.")),
           code=["core/acquisition.py: batch_picks()"]),  # i18n: skip
 
-    Topic("reps_rec", "Why does the recommendation carry a suggested replicate count", tags="suggested replicates instruction count",
-          body=_p("Measure a new condition <b>only once and discriminability drops</b>, "
-                  "worsening the next verdict. So \"measure it n times\" goes on the "
-                  "instruction sheet.",
-                  "The value follows the <b>median</b> replicate count of the current data."),
-          code=["core/recommend.py: recommended_reps()"]),
+    Topic("reps_rec", tr("Why does the recommendation carry a suggested replicate count"),  # i18n: skip
+          tags=tr("suggested replicates instruction count"),
+          body=_p(tr("Measure a new condition <b>only once and discriminability drops</b>, "
+                     "worsening the next verdict. So \"measure it n times\" goes on the "
+                     "instruction sheet."),
+                  tr("The value follows the <b>median</b> replicate count of the current data.")),
+          code=["core/recommend.py: recommended_reps()"]),  # i18n: skip
 
-    Topic("step", "What is the \"step\", and must I fill it in", tags="step grid resolution instrument setting candidates",
-          body=_p("The <b>step</b> in the Setup tab's variable table is <b>the spacing the instrument "
-                  "can actually be set to</b>. If the power dial moves in 10 W units, enter 10; if the "
-                  "temperature setting moves in 5 °C units, enter 5. Only continuous variables have "
-                  "one — integer variables have a built-in step of 1.") +
-          "<h3>What changes once it is filled in</h3>" +
-          _ul("<b>Recommendations land on the grid</b>. A value like 173.6 W cannot go on an instruction sheet",
-              "<b>The candidate count of requirement ①</b> becomes countable — with even one continuous "
-              "variable without a step, the candidates are infinite and ① always passes",
-              "The initial design points are snapped to the grid too. If snapping makes two coincide, "
-              "they stay — a coincidence is simply a replicate") +
-          _p("Leave it empty and the variable is treated as continuous. That is not wrong, but the "
-             "recommendations will be finer than the instrument can set."),
-          code=["core/spec.py: VarSpec.step · n_levels()", "core/design.py: to_real()"]),
+    Topic("step", tr("What is the \"step\", and must I fill it in"),  # i18n: skip
+          tags=tr("step grid resolution instrument setting candidates"),
+          body=_p(tr("The <b>step</b> in the Setup tab's variable table is <b>the spacing the instrument "
+                     "can actually be set to</b>. If the power dial moves in 10 W units, enter 10; if the "
+                     "temperature setting moves in 5 °C units, enter 5. Only continuous variables have "
+                     "one — integer variables have a built-in step of 1.")) +
+          tr("<h3>What changes once it is filled in</h3>") +
+          _ul(tr("<b>Recommendations land on the grid</b>. A value like 173.6 W cannot go on an instruction sheet"),
+              tr("<b>The candidate count of requirement ①</b> becomes countable — with even one continuous "
+                 "variable without a step, the candidates are infinite and ① always passes"),
+              tr("The initial design points are snapped to the grid too. If snapping makes two coincide, "
+                 "they stay — a coincidence is simply a replicate")) +
+          _p(tr("Leave it empty and the variable is treated as continuous. That is not wrong, but the "
+                "recommendations will be finer than the instrument can set.")),
+          code=["core/spec.py: VarSpec.step · n_levels()", "core/design.py: to_real()"]),  # i18n: skip
 
-    Topic("constraint", "Can I add a constraint like composition sum = 100 %", tags="constraint sum composition 100 mixture blend",
-          body=_p("Yes. Under <b>\"Sum constraint\"</b> on the Setup tab, pick 2 or more variables and "
-                  "enter <b>= exactly</b> or <b>≤ at most</b> with the total. From then on the initial "
-                  "design points and the recommendations come out <b>only as values that satisfy "
-                  "the constraint</b>.") +
-          "<h3>How it is kept</h3>" +
-          _ul("Points are drawn evenly on the constraint plane (Dirichlet) and the ones far apart "
-              "from each other become the initial design",
-              "If snapping to the grid breaks the sum, the values are moved <b>in whole steps</b> to "
-              "restore it — which is why <b>\"= exactly\" needs the constrained variables to share "
-              "one step</b> (the Setup tab tells you)",
-              "The candidate count of requirement ① is also counted inside the constraint "
-              "(A·B·C with step 10, sum 100 → 66 candidates)") +
-          "<h3>If measured values already violate the constraint</h3>" +
-          _p("The Setup tab shows how many rows violate it. Those rows are still used for learning "
-             "(they were actually measured); only the new recommendations stay inside the constraint."),
-          code=["core/spec.py: SumConstraint", "core/design.py: feasible_unit() · snap_to_constraint()"]),
+    Topic("constraint", tr("Can I add a constraint like composition sum = 100 %"),  # i18n: skip
+          tags=tr("constraint sum composition 100 mixture blend"),
+          body=_p(tr("Yes. Under <b>\"Sum constraint\"</b> on the Setup tab, pick 2 or more variables and "
+                     "enter <b>= exactly</b> or <b>≤ at most</b> with the total. From then on the initial "
+                     "design points and the recommendations come out <b>only as values that satisfy "
+                     "the constraint</b>.")) +
+          tr("<h3>How it is kept</h3>") +
+          _ul(tr("Points are drawn evenly on the constraint plane (Dirichlet) and the ones far apart "
+                 "from each other become the initial design"),
+              tr("If snapping to the grid breaks the sum, the values are moved <b>in whole steps</b> to "
+                 "restore it — which is why <b>\"= exactly\" needs the constrained variables to share "
+                 "one step</b> (the Setup tab tells you)"),
+              tr("The candidate count of requirement ① is also counted inside the constraint "
+                 "(A·B·C with step 10, sum 100 → 66 candidates)")) +
+          tr("<h3>If measured values already violate the constraint</h3>") +
+          _p(tr("The Setup tab shows how many rows violate it. Those rows are still used for learning "
+                "(they were actually measured); only the new recommendations stay inside the constraint.")),
+          code=["core/spec.py: SumConstraint", "core/design.py: feasible_unit() · snap_to_constraint()"]),  # i18n: skip
 
-    Topic("startlog", "What happens at startup (the boot log)", tags="startup slow loading splash black window terminal log",
-          body=_p("On launch a small card appears and says in one line what it is doing — <b>loading "
-                  "the computation engine</b> is the longest part (numpy · scipy · scikit-learn, "
-                  "usually 2–6 seconds). Then the window opens.") +
-          "<h3>The black console windows that used to flash</h3>" +
-          _p("Earlier builds flashed black windows on launch. They were not our code but the "
-             "<code>cmd</code> · <code>powershell</code> processes that the computation packages "
-             "spawn while being imported (the Python standard library's <code>platform</code> module "
-             "and joblib's CPU count). Every child process is now forced to start <b>without a "
-             "window</b>, and whatever was spawned is written to the log.") +
-          "<h3>The log file</h3>" +
-          _p("<code>home folder\\.seqopt\\seqopt.log</code> records how long each stage took. "
-             "When someone says 'it is slow to start' or 'a strange window appeared', this file is "
-             "the place to look. Errors go to <code>error.log</code> in the same folder."),
-          code=["core/boot.py", "app.py: _splash()"]),
+    Topic("startlog", tr("What happens at startup (the boot log)"),  # i18n: skip
+          tags=tr("startup slow loading splash black window terminal log"),
+          body=_p(tr("On launch a small card appears and says in one line what it is doing — <b>loading "
+                     "the computation engine</b> is the longest part (numpy · scipy · scikit-learn, "
+                     "usually 2–6 seconds). Then the window opens.")) +
+          tr("<h3>The black console windows that used to flash</h3>") +
+          _p(tr("Earlier builds flashed black windows on launch. They were not our code but the "
+                "<code>cmd</code> · <code>powershell</code> processes that the computation packages "
+                "spawn while being imported (the Python standard library's <code>platform</code> module "
+                "and joblib's CPU count). Every child process is now forced to start <b>without a "
+                "window</b>, and whatever was spawned is written to the log.")) +
+          tr("<h3>The log file</h3>") +
+          _p(tr("<code>home folder\\.seqopt\\seqopt.log</code> records how long each stage took. "
+                "When someone says 'it is slow to start' or 'a strange window appeared', this file is "
+                "the place to look. Errors go to <code>error.log</code> in the same folder.")),
+          code=["core/boot.py", "app.py: _splash()"]),  # i18n: skip
 
-    Topic("extrap", "It says \"outside measured range\"", tags="extrapolation outside range warning",
-          body=_p("The model learned <b>the range you actually measured.</b> Where the "
-                  "declared range on the Setup tab is wider, the outside is somewhere "
-                  "the model has never seen.",
-                  "<b>It is not blocked</b> — widening the range and measuring there "
-                  "is sometimes exactly the right move. But it is always marked."),
-          code=["core/recommend.py: _axis_bounds()"]),
+    Topic("extrap", tr("It says \"outside measured range\""), tags=tr("extrapolation outside range warning"),  # i18n: skip
+          body=_p(tr("The model learned <b>the range you actually measured.</b> Where the "
+                     "declared range on the Setup tab is wider, the outside is somewhere "
+                     "the model has never seen."),
+                  tr("<b>It is not blocked</b> — widening the range and measuring there "
+                     "is sometimes exactly the right move. But it is always marked.")),
+          code=["core/recommend.py: _axis_bounds()"]),  # i18n: skip
 
     # ── trust ──────────────────────────────────────────────────────
     Topic("logic", "What is it computing inside", tags="logic algorithm GP kernel EI principle formulas",

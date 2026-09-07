@@ -435,4 +435,99 @@ KO: dict[str, str] = {
         "순차로 뽑되, 이미 뽑은 점은 <b>예측 평균을 관측값처럼 가정</b>하고 모델을 다시 학습한 뒤 "
         "다음 점을 고릅니다(kriging believer). 아직 측정하지 않은 값은 절대 참조하지 않으므로 "
         "<b>선행 참조 금지 규칙</b>이 지켜집니다.",
+    "Why does the recommendation carry a suggested replicate count": "추천에 ‘권장 반복’ 이 왜 붙나요",
+    "suggested replicates instruction count": "권장반복 지시서 횟수",
+    "Measure a new condition <b>only once and discriminability drops</b>, "
+    "worsening the next verdict. So \"measure it n times\" goes on the "
+    "instruction sheet.":
+        "새 조건을 <b>한 번만 재면 판별력이 떨어져</b> 다음 판정이 나빠집니다. "
+        "그래서 ‘n번 재라’를 지시서에 함께 적습니다.",
+    "The value follows the <b>median</b> replicate count of the current data.":
+        "이 값은 현재 데이터의 반복 횟수 <b>중앙값</b>을 따릅니다.",
+    "What is the \"step\", and must I fill it in": "‘간격’은 무엇이고 꼭 채워야 하나요",
+    "step grid resolution instrument setting candidates": "간격 그리드 해상도 장비 설정 후보",
+    "The <b>step</b> in the Setup tab's variable table is <b>the spacing the instrument "
+    "can actually be set to</b>. If the power dial moves in 10 W units, enter 10; if the "
+    "temperature setting moves in 5 °C units, enter 5. Only continuous variables have "
+    "one — integer variables have a built-in step of 1.":
+        "설정 탭 변수표의 <b>간격</b>은 <b>장비가 실제로 낼 수 있는 조정 단위</b>입니다. "
+        "전력 다이얼이 10 W 단위로 움직인다면 10을, 온도 설정이 5 °C 단위로 움직인다면 5를 넣습니다. "
+        "연속형 변수에만 있고, 정수형 변수는 간격 1이 기본으로 내장되어 있습니다.",
+    "<h3>What changes once it is filled in</h3>": "<h3>넣으면 달라지는 것</h3>",
+    "<b>Recommendations land on the grid</b>. A value like 173.6 W cannot go on an instruction sheet":
+        "<b>추천값은 간격에 맞는 값</b>으로만 나옵니다. 173.6 W 같은 값은 지시서에 쓸 수 없습니다",
+    "<b>The candidate count of requirement ①</b> becomes countable — with even one continuous "
+    "variable without a step, the candidates are infinite and ① always passes":
+        "<b>요건 ① 의 후보 수</b>를 셀 수 있게 됩니다 — 간격이 없는 연속형 변수가 하나라도 있으면 "
+        "후보가 무한이 되어 ① 은 항상 통과합니다",
+    "The initial design points are snapped to the grid too. If snapping makes two coincide, "
+    "they stay — a coincidence is simply a replicate":
+        "초기 설계점도 간격에 맞춰 스냅됩니다. 스냅으로 두 점이 겹치면 그대로 둡니다 — "
+        "겹침은 곧 반복 측정입니다",
+    "Leave it empty and the variable is treated as continuous. That is not wrong, but the "
+    "recommendations will be finer than the instrument can set.":
+        "비워 두면 그 변수는 연속형으로 다룹니다. 틀린 것은 아니지만, "
+        "장비가 실제로 낼 수 있는 것보다 더 촘촘한 값을 추천받게 됩니다.",
+    "Can I add a constraint like composition sum = 100 %": "조성 합 = 100 % 같은 제약을 걸 수 있나요",
+    "constraint sum composition 100 mixture blend": "제약 합 조성 100 혼합물 배합",
+    "Yes. Under <b>\"Sum constraint\"</b> on the Setup tab, pick 2 or more variables and "
+    "enter <b>= exactly</b> or <b>≤ at most</b> with the total. From then on the initial "
+    "design points and the recommendations come out <b>only as values that satisfy "
+    "the constraint</b>.":
+        "됩니다. 설정 탭의 <b>‘합 제약’</b>에서 변수를 2개 이상 고르고 <b>= 정확히</b> 또는 "
+        "<b>≤ 최대</b>와 합계를 넣으세요. 그 뒤로는 초기 설계점과 추천이 <b>전부 그 제약을 "
+        "만족하는 값</b>으로만 나옵니다.",
+    "<h3>How it is kept</h3>": "<h3>어떻게 지키는가</h3>",
+    "Points are drawn evenly on the constraint plane (Dirichlet) and the ones far apart "
+    "from each other become the initial design":
+        "제약 평면 위에서 고르게 점을 뽑고(Dirichlet), 서로 멀리 떨어진 점들을 초기 설계로 씁니다",
+    "If snapping to the grid breaks the sum, the values are moved <b>in whole steps</b> to "
+    "restore it — which is why <b>\"= exactly\" needs the constrained variables to share "
+    "one step</b> (the Setup tab tells you)":
+        "간격에 맞추다가 합이 어긋나면 <b>간격 단위로</b> 값을 옮겨 합을 되돌립니다 — 그래서 "
+        "<b>‘= 정확히’는 제약에 걸린 변수들의 간격이 같아야</b> 합니다 (설정 탭이 알려 줍니다)",
+    "The candidate count of requirement ① is also counted inside the constraint "
+    "(A·B·C with step 10, sum 100 → 66 candidates)":
+        "요건 ① 의 후보 수도 이 제약 안에서 셉니다 (A·B·C 간격 10, 합 100 → 66개)",
+    "<h3>If measured values already violate the constraint</h3>": "<h3>이미 측정한 값이 제약을 어길 때</h3>",
+    "The Setup tab shows how many rows violate it. Those rows are still used for learning "
+    "(they were actually measured); only the new recommendations stay inside the constraint.":
+        "설정 탭에 몇 개 행이 제약을 어기는지 표시됩니다. 그 행도 실제로 측정한 값이므로 "
+        "학습에는 그대로 쓰이고, 새 추천만 제약 안에서 나옵니다.",
+    "What happens at startup (the boot log)": "켤 때 무슨 일이 일어나나요 (시작 기록)",
+    "startup slow loading splash black window terminal log": "시작 느림 로딩 스플래시 검은창 터미널 로그",
+    "On launch a small card appears and says in one line what it is doing — <b>loading "
+    "the computation engine</b> is the longest part (numpy · scipy · scikit-learn, "
+    "usually 2–6 seconds). Then the window opens.":
+        "실행하면 작은 카드가 뜨고 지금 하는 일을 한 줄로 보여 줍니다 — "
+        "<b>계산 엔진을 불러오는 중</b>이 가장 오래 걸립니다 (numpy·scipy·scikit-learn, 보통 2~6초). "
+        "그다음 창이 열립니다.",
+    "<h3>The black console windows that used to flash</h3>": "<h3>예전에 번쩍이던 검은 콘솔 창</h3>",
+    "Earlier builds flashed black windows on launch. They were not our code but the "
+    "<code>cmd</code> · <code>powershell</code> processes that the computation packages "
+    "spawn while being imported (the Python standard library's <code>platform</code> module "
+    "and joblib's CPU count). Every child process is now forced to start <b>without a "
+    "window</b>, and whatever was spawned is written to the log.":
+        "예전 버전은 실행할 때 검은 창이 번쩍이며 떴다 사라지곤 했습니다. 이는 우리 코드가 아니라, "
+        "계산 패키지들이 임포트되는 동안 띄우는 <code>cmd</code>·<code>powershell</code> 프로세스였습니다 "
+        "(파이썬 표준 라이브러리의 <code>platform</code> 모듈과 joblib 의 CPU 개수 확인). "
+        "이제는 모든 자식 프로세스가 <b>창 없이</b> 실행되도록 강제되며, 무엇이 실행됐는지는 로그에 기록됩니다.",
+    "<h3>The log file</h3>": "<h3>로그 파일</h3>",
+    "<code>home folder\\.seqopt\\seqopt.log</code> records how long each stage took. "
+    "When someone says 'it is slow to start' or 'a strange window appeared', this file is "
+    "the place to look. Errors go to <code>error.log</code> in the same folder.":
+        "<code>홈 폴더\\.seqopt\\seqopt.log</code> 에 각 단계가 걸린 시간이 기록됩니다. "
+        "‘시작이 느리다’거나 ‘이상한 창이 떴다’는 말이 나오면 이 파일을 보면 됩니다. "
+        "오류는 같은 폴더의 <code>error.log</code> 에 남습니다.",
+    "It says \"outside measured range\"": "‘실측 범위 밖’ 이라고 뜨는데요",
+    "extrapolation outside range warning": "외삽 범위밖 경고",
+    "The model learned <b>the range you actually measured.</b> Where the "
+    "declared range on the Setup tab is wider, the outside is somewhere "
+    "the model has never seen.":
+        "모델은 <b>실제로 측정한 범위</b>를 학습했습니다. 설정 탭에 선언한 범위가 그보다 넓다면, "
+        "그 바깥은 모델이 한 번도 보지 못한 곳입니다.",
+    "<b>It is not blocked</b> — widening the range and measuring there "
+    "is sometimes exactly the right move. But it is always marked.":
+        "<b>막지는 않습니다</b> — 범위를 넓혀서 그 바깥을 측정하는 것이 오히려 옳은 선택일 때도 "
+        "있기 때문입니다. 다만 항상 표시됩니다.",
 }
