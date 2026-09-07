@@ -198,82 +198,85 @@ def topics() -> list[Topic]:
           code=["core/diagnostics.py: D_LEVELS · replicate_plan() · NUGGET_CLASSES",
                 "tests/test_diagnostics.py"]),  # i18n: skip
 
-    Topic("r2", "What does a negative learnability R² mean", tags="R2 learnability LOOCV negative surface",
-          body=_p("Each condition is left out in turn, the model is fitted on the rest, "
-                  "and the left-out condition is predicted (LOOCV). "
-                  "R² = 1 − SS_res/SS_tot.",
-                  "<b>R² ≤ 0 means worse than always answering the overall mean.</b> "
-                  "The model has learned nothing.") +
-          "<h3>Why changing the model will not help</h3>" +
-          _p("The validation study ran six families (constant, linear, quadratic, GP, "
-             "RF, …) on such a dataset, and <b>not one reached R² > 0.</b> When the "
-             "signal is not in the data, no model can learn it.",
-             "Look at the scatter on the <b>Validation tab</b>. Points clustering "
-             "around the red \"always answer the mean\" line instead of the diagonal — "
-             "that is what R² < 0 looks like."),
-          code=["core/diagnostics.py: loocv_r2()", "ui/tab_model.py: _plot_loocv()"]),
+    Topic("r2", tr("What does a negative learnability R² mean"),  # i18n: skip
+          tags=tr("R2 learnability LOOCV negative surface"),
+          body=_p(tr("Each condition is left out in turn, the model is fitted on the rest, "
+                     "and the left-out condition is predicted (LOOCV). "
+                     "R² = 1 − SS_res/SS_tot."),
+                  tr("<b>R² ≤ 0 means worse than always answering the overall mean.</b> "
+                     "The model has learned nothing.")) +
+          tr("<h3>Why changing the model will not help</h3>") +
+          _p(tr("The validation study ran six families (constant, linear, quadratic, GP, "
+                "RF, …) on such a dataset, and <b>not one reached R² > 0.</b> When the "
+                "signal is not in the data, no model can learn it."),
+             tr("Look at the scatter on the <b>Validation tab</b>. Points clustering "
+                "around the red \"always answer the mean\" line instead of the diagonal — "
+                "that is what R² < 0 looks like.")),
+          code=["core/diagnostics.py: loocv_r2()", "ui/tab_model.py: _plot_loocv()"]),  # i18n: skip
 
-    Topic("nugget", "Nugget ratio · terrain roughness", tags="nugget sill semivariogram terrain roughness",
-          body=_p("A semivariogram is built from condition-pair distances and value "
-                  "differences: how much difference survives even at near-zero "
-                  "distance (<b>the nugget</b>), as a share of the height reached far "
-                  "away (<b>the sill</b>).") +
-          "<pre>nugget ratio = nugget / sill      &gt; 0.3 counts as a 'rough surface'</pre>" +
-          _p("A large nugget ratio means <b>most of the visible variation is "
-             "measurement wobble.</b> The lab dataset in the validation study sat at "
-             "0.489, with a noise share of <b>95%</b>.") +
-          "<h3>Caution — it does not predict the ordering</h3>" +
-          _p("The original write-up claimed the nugget-ratio ordering matches the R² "
-             "ordering exactly. Checked against the actual values, <b>it does not "
-             "hold</b> (one dataset has the lower nugget ratio and the lower R²). "
-             "What does hold is the <b>separation between the smooth and the rough.</b>"),
-          code=["core/diagnostics.py: nugget_ratio()"]),
+    Topic("nugget", tr("Nugget ratio · terrain roughness"),  # i18n: skip
+          tags=tr("nugget sill semivariogram terrain roughness"),
+          body=_p(tr("A semivariogram is built from condition-pair distances and value "
+                     "differences: how much difference survives even at near-zero "
+                     "distance (<b>the nugget</b>), as a share of the height reached far "
+                     "away (<b>the sill</b>).")) +
+          tr("<pre>nugget ratio = nugget / sill      &gt; 0.3 counts as a 'rough surface'</pre>") +
+          _p(tr("A large nugget ratio means <b>most of the visible variation is "
+                "measurement wobble.</b> The lab dataset in the validation study sat at "
+                "0.489, with a noise share of <b>95%</b>.")) +
+          tr("<h3>Caution — it does not predict the ordering</h3>") +
+          _p(tr("The original write-up claimed the nugget-ratio ordering matches the R² "
+                "ordering exactly. Checked against the actual values, <b>it does not "
+                "hold</b> (one dataset has the lower nugget ratio and the lower R²). "
+                "What does hold is the <b>separation between the smooth and the rough.</b>")),
+          code=["core/diagnostics.py: nugget_ratio()"]),  # i18n: skip
 
     # ── the screens ────────────────────────────────────────────────
-    Topic("import", "My spreadsheets differ every time", tags="import excel column mapping preset format csv",
-          body=_p("Which is why the program does not guess the format. "
-                  "<b>The original shows on the left, and you assign the columns' "
-                  "meanings on the right.</b>") +
-          _ul("Changing a role recolors the left column instantly (blue=input · green=response · gray=ignore)",
-              "<b>Before you press Import</b>, the bottom shows \"N conditions · N "
-              "measurements · N missing\". Check that those match what you expect, then press",
-              "<b>Save a preset</b> and the next file from the same instrument loads in one step",
-              "The mapping is also stored in the project file, so reopening reads identically") +
-          "<h3>How the role guessing works</h3>" +
-          _p("<b>Design axes recycle their values; measurement columns differ on "
-             "almost every row.</b> Only numeric columns with a low distinct-value "
-             "ratio become input candidates. This one rule keeps intermediate "
-             "measurement columns (raw band intensities and the like) from being "
-             "mistaken for inputs."),
-          code=["core/profile.py: guess_profile()", "core/importer.py: apply_profile()"]),
+    Topic("import", tr("My spreadsheets differ every time"),  # i18n: skip
+          tags=tr("import excel column mapping preset format csv"),
+          body=_p(tr("Which is why the program does not guess the format. "
+                     "<b>The original shows on the left, and you assign the columns' "
+                     "meanings on the right.</b>")) +
+          _ul(tr("Changing a role recolors the left column instantly (blue=input · green=response · gray=ignore)"),
+              tr("<b>Before you press Import</b>, the bottom shows \"N conditions · N "
+                 "measurements · N missing\". Check that those match what you expect, then press"),
+              tr("<b>Save a preset</b> and the next file from the same instrument loads in one step"),
+              tr("The mapping is also stored in the project file, so reopening reads identically")) +
+          tr("<h3>How the role guessing works</h3>") +
+          _p(tr("<b>Design axes recycle their values; measurement columns differ on "
+                "almost every row.</b> Only numeric columns with a low distinct-value "
+                "ratio become input candidates. This one rule keeps intermediate "
+                "measurement columns (raw band intensities and the like) from being "
+                "mistaken for inputs.")),
+          code=["core/profile.py: guess_profile()", "core/importer.py: apply_profile()"]),  # i18n: skip
 
-    Topic("reps", "May I enter the same condition several times", tags="replicates duplicates rows",
-          body=_p("<b>You should.</b> One row = one measurement, and the same "
-                  "condition on several rows is automatically read as <b>replicates</b>.",
-                  "Without replicates, σw (the measurement wobble) cannot be computed "
-                  "and requirement ③ shows <b>\"not computable\"</b>. The program "
-                  "<b>does not substitute an assumed value</b> — it refuses to "
-                  "pretend to know what it does not."),
-          code=["core/dataset.py: group_measurements()"]),
+    Topic("reps", tr("May I enter the same condition several times"), tags=tr("replicates duplicates rows"),  # i18n: skip
+          body=_p(tr("<b>You should.</b> One row = one measurement, and the same "
+                     "condition on several rows is automatically read as <b>replicates</b>."),
+                  tr("Without replicates, σw (the measurement wobble) cannot be computed "
+                     "and requirement ③ shows <b>\"not computable\"</b>. The program "
+                     "<b>does not substitute an assumed value</b> — it refuses to "
+                     "pretend to know what it does not.")),
+          code=["core/dataset.py: group_measurements()"]),  # i18n: skip
 
-    Topic("colors", "What do the table colors mean", tags="colors background yellow red gray legend table",
-          body=_table(["color", "meaning", "where"], [
-              [f"<span style='background:{theme.ROW_ZERO}'>&nbsp;yellow&nbsp;</span>",
-               "a zero-response row · a condition with only one replicate", "Data · Diagnose"],
-              [f"<span style='background:{theme.ROW_EXCLUDED}'>&nbsp;pink&nbsp;</span>",
-               "an excluded row · the variance-dominating condition", "Data · Diagnose"],
-              [f"<span style='background:{theme.ROW_PENDING}'>&nbsp;blue&nbsp;</span>",
-               "a row pre-filled from a recommendation (not yet measured)", "Data"],
-              [f"<span style='background:{theme.ACCENT_SOFT}'>&nbsp;sky&nbsp;</span>",
-               "a column assigned as an input", "Import"],
-              [f"<span style='background:{theme.OK_SOFT}'>&nbsp;green&nbsp;</span>",
-               "the column assigned as the response", "Import"]]) +
-          "<h3>Figure colors</h3>" +
-          _ul("<b>μ (predicted mean)</b> — viridis. Magnitude",
-              "<b>σ (uncertainty)</b> — grayscale. It is \"how unknown\", not a value",
-              "<b>EI (acquisition)</b> — warm. The one color that calls for action",
-              "No rainbow (jet) — it invents boundaries that do not exist"),
-          code=["ui/theme.py", "core/plotstyle.py"]),
+    Topic("colors", tr("What do the table colors mean"), tags=tr("colors background yellow red gray legend table"),  # i18n: skip
+          body=_table([tr("color"), tr("meaning"), tr("where")], [
+              [tr("<span style='background:{c}'>&nbsp;yellow&nbsp;</span>", c=theme.ROW_ZERO),
+               tr("a zero-response row · a condition with only one replicate"), tr("Data · Diagnose")],
+              [tr("<span style='background:{c}'>&nbsp;pink&nbsp;</span>", c=theme.ROW_EXCLUDED),
+               tr("an excluded row · the variance-dominating condition"), tr("Data · Diagnose")],
+              [tr("<span style='background:{c}'>&nbsp;blue&nbsp;</span>", c=theme.ROW_PENDING),
+               tr("a row pre-filled from a recommendation (not yet measured)"), tr("Data")],
+              [tr("<span style='background:{c}'>&nbsp;sky&nbsp;</span>", c=theme.ACCENT_SOFT),
+               tr("a column assigned as an input"), tr("Import")],
+              [tr("<span style='background:{c}'>&nbsp;green&nbsp;</span>", c=theme.OK_SOFT),
+               tr("the column assigned as the response"), tr("Import")]]) +
+          tr("<h3>Figure colors</h3>") +
+          _ul(tr("<b>μ (predicted mean)</b> — viridis. Magnitude"),
+              tr("<b>σ (uncertainty)</b> — grayscale. It is \"how unknown\", not a value"),
+              tr("<b>EI (acquisition)</b> — warm. The one color that calls for action"),
+              tr("No rainbow (jet) — it invents boundaries that do not exist")),
+          code=["ui/theme.py", "core/plotstyle.py"]),  # i18n: skip
 
     # ── recommendations ────────────────────────────────────────────
     Topic("locked", "It is locked — can I not just use it anyway", tags="locked force override bypass unmet",

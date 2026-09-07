@@ -209,4 +209,112 @@ KO: dict[str, str] = {
         "이 도구는 너깃비가 0.3 을 넘으면 거친 응답면으로 봅니다. 널리 쓰이는 지구통계학 눈금"
         "(Cambardella 1994) — &lt;0.25 강한 공간구조 · 0.25–0.75 보통 · &gt;0.75 약한 구조 — "
         "도 진단 탭에 함께 표시됩니다.",
+    "What does a negative learnability R² mean": "학습가능성 R² 가 음수면 무슨 뜻인가",
+    "R2 learnability LOOCV negative surface": "R2 학습가능성 LOOCV 음수 응답면",
+    "Each condition is left out in turn, the model is fitted on the rest, "
+    "and the left-out condition is predicted (LOOCV). "
+    "R² = 1 − SS_res/SS_tot.":
+        "조건을 하나씩 빼고 나머지로 모델을 학습해 그 조건을 예측합니다(LOOCV). "
+        "R² = 1 − SS_res/SS_tot 입니다.",
+    "<b>R² ≤ 0 means worse than always answering the overall mean.</b> "
+    "The model has learned nothing.":
+        "<b>R² ≤ 0 은 ‘전체 평균만 답하기’보다 나쁘다</b>는 뜻입니다. 모델이 아무것도 못 배운 상태입니다.",
+    "<h3>Why changing the model will not help</h3>": "<h3>왜 모델을 바꿔도 소용없나</h3>",
+    "The validation study ran six families (constant, linear, quadratic, GP, "
+    "RF, …) on such a dataset, and <b>not one reached R² > 0.</b> When the "
+    "signal is not in the data, no model can learn it.":
+        "검증에서 6종(상수·선형·2차·GP·RF 등)을 전부 돌렸는데 <b>R² > 0 인 것이 하나도 없었습니다.</b> "
+        "배울 신호가 데이터에 없으면 어떤 모델도 배울 수 없습니다.",
+    "Look at the scatter on the <b>Validation tab</b>. Points clustering "
+    "around the red \"always answer the mean\" line instead of the diagonal — "
+    "that is what R² < 0 looks like.":
+        "<b>검증 탭의 산점도</b>를 보세요. 점이 대각선이 아니라 빨간 ‘전체 평균선’ 주위에 "
+        "흩어져 있으면 그게 R² < 0 의 모습입니다.",
+    "Nugget ratio · terrain roughness": "너깃비 · 지형 거칠기",
+    "nugget sill semivariogram terrain roughness": "너깃 문턱값 세미베리오그램 지형 거칠기",
+    "A semivariogram is built from condition-pair distances and value "
+    "differences: how much difference survives even at near-zero "
+    "distance (<b>the nugget</b>), as a share of the height reached far "
+    "away (<b>the sill</b>).":
+        "조건 쌍의 거리와 값 차이로 세미베리오그램을 그려, 거리가 거의 0 일 때도 남는 차이"
+        "(<b>너깃</b>)가 멀리서 도달하는 높이(<b>문턱값</b>)의 몇 %인지를 봅니다.",
+    "<pre>nugget ratio = nugget / sill      &gt; 0.3 counts as a 'rough surface'</pre>":
+        "<pre>nugget ratio = nugget / sill      &gt; 0.3 이면 '거친 응답면'</pre>",
+    "A large nugget ratio means <b>most of the visible variation is "
+    "measurement wobble.</b> The lab dataset in the validation study sat at "
+    "0.489, with a noise share of <b>95%</b>.":
+        "너깃비가 크다는 것은 <b>눈에 보이는 변동 대부분이 측정 흔들림</b>이라는 뜻입니다. "
+        "그 검증 연구의 실험 데이터는 0.489 였고, 잡음 비중은 <b>95%</b>였습니다.",
+    "<h3>Caution — it does not predict the ordering</h3>": "<h3>주의 — 순서까지 맞히지는 못합니다</h3>",
+    "The original write-up claimed the nugget-ratio ordering matches the R² "
+    "ordering exactly. Checked against the actual values, <b>it does not "
+    "hold</b> (one dataset has the lower nugget ratio and the lower R²). "
+    "What does hold is the <b>separation between the smooth and the rough.</b>":
+        "원래 설명에는 ‘너깃비 순서가 R² 순서와 정확히 일치한다’고 되어 있었지만, "
+        "실제 값으로 확인해 보니 <b>그렇지 않았습니다</b>(너깃비도 R² 도 함께 낮은 데이터셋이 있었습니다). "
+        "성립하는 것은 <b>매끄러운 쪽과 거친 쪽이 갈린다는 분리</b>뿐입니다.",
+    "My spreadsheets differ every time": "엑셀 형식이 매번 다른데요",
+    "import excel column mapping preset format csv": "가져오기 엑셀 열 매핑 프리셋 형식 csv",
+    "Which is why the program does not guess the format. "
+    "<b>The original shows on the left, and you assign the columns' "
+    "meanings on the right.</b>":
+        "그래서 프로그램이 형식을 알아서 짐작하게 하지 않습니다. "
+        "<b>왼쪽에 원본을 그대로 보여 주고, 오른쪽에서 열의 뜻을 지정합니다.</b>",
+    "Changing a role recolors the left column instantly (blue=input · green=response · gray=ignore)":
+        "역할을 바꾸면 왼쪽 열 색이 즉시 바뀝니다 (파랑=입력 · 초록=출력 · 회색=무시)",
+    "<b>Before you press Import</b>, the bottom shows \"N conditions · N "
+    "measurements · N missing\". Check that those match what you expect, then press":
+        "<b>가져오기를 누르기 전에</b> 아래에 ‘조건 N개 · 측정 N회 · 결측 N건’이 표시됩니다. "
+        "예상과 맞는지 확인한 뒤 누르세요",
+    "<b>Save a preset</b> and the next file from the same instrument loads in one step":
+        "<b>프리셋을 저장</b>해 두면 같은 장비의 다음 파일은 한 번에 불러올 수 있습니다",
+    "The mapping is also stored in the project file, so reopening reads identically":
+        "매핑은 프로젝트 파일에도 저장되어, 다시 열어도 똑같이 읽힙니다",
+    "<h3>How the role guessing works</h3>": "<h3>역할은 어떻게 추측하나</h3>",
+    "<b>Design axes recycle their values; measurement columns differ on "
+    "almost every row.</b> Only numeric columns with a low distinct-value "
+    "ratio become input candidates. This one rule keeps intermediate "
+    "measurement columns (raw band intensities and the like) from being "
+    "mistaken for inputs.":
+        "<b>설계축은 값이 되풀이되고, 측정값 열은 거의 모든 행에서 다릅니다.</b> "
+        "고유값 비율이 낮은 숫자 열만 입력 후보로 봅니다. 이 한 가지 규칙 덕분에 "
+        "원시 밴드 강도 같은 중간 측정값 열이 입력변수로 잘못 인식되지 않습니다.",
+    "May I enter the same condition several times": "같은 조건을 여러 번 넣어도 되나요",
+    "replicates duplicates rows": "반복측정 중복 행",
+    "<b>You should.</b> One row = one measurement, and the same "
+    "condition on several rows is automatically read as <b>replicates</b>.":
+        "<b>넣어야 합니다.</b> 한 행 = 한 번의 측정이고, 같은 조건이 여러 행에 있으면 "
+        "자동으로 <b>반복 측정</b>으로 인식합니다.",
+    "Without replicates, σw (the measurement wobble) cannot be computed "
+    "and requirement ③ shows <b>\"not computable\"</b>. The program "
+    "<b>does not substitute an assumed value</b> — it refuses to "
+    "pretend to know what it does not.":
+        "반복이 없으면 σw(측정 흔들림)를 계산할 수 없어 요건 ③ 이 <b>‘계산 불가’</b>가 됩니다. "
+        "이때 프로그램은 <b>가정값을 대신 넣지 않습니다</b> — 모르는 것을 아는 척하지 않습니다.",
+    "What do the table colors mean": "표의 색이 무슨 뜻인가요",
+    "colors background yellow red gray legend table": "색 배경 노랑 빨강 회색 범례 표",
+    "color": "색",
+    "meaning": "뜻",
+    "where": "어디서",
+    "<span style='background:{c}'>&nbsp;yellow&nbsp;</span>": "<span style='background:{c}'>&nbsp;노랑&nbsp;</span>",
+    "a zero-response row · a condition with only one replicate": "응답이 0 인 행 · 반복이 1회뿐인 조건",
+    "Data · Diagnose": "데이터 · 진단",
+    "<span style='background:{c}'>&nbsp;pink&nbsp;</span>": "<span style='background:{c}'>&nbsp;분홍&nbsp;</span>",
+    "an excluded row · the variance-dominating condition": "제외한 행 · 분산을 지배하는 조건",
+    "<span style='background:{c}'>&nbsp;blue&nbsp;</span>": "<span style='background:{c}'>&nbsp;파랑&nbsp;</span>",
+    "a row pre-filled from a recommendation (not yet measured)": "추천으로 미리 채운 행 (아직 측정 전)",
+    "Data": "데이터",
+    "<span style='background:{c}'>&nbsp;sky&nbsp;</span>": "<span style='background:{c}'>&nbsp;하늘색&nbsp;</span>",
+    "a column assigned as an input": "입력변수로 지정한 열",
+    "Import": "가져오기",
+    "<span style='background:{c}'>&nbsp;green&nbsp;</span>": "<span style='background:{c}'>&nbsp;초록&nbsp;</span>",
+    "the column assigned as the response": "출력변수로 지정한 열",
+    "<h3>Figure colors</h3>": "<h3>그림의 색</h3>",
+    "<b>μ (predicted mean)</b> — viridis. Magnitude": "<b>μ (예측 평균)</b> — viridis. 값의 높낮이",
+    "<b>σ (uncertainty)</b> — grayscale. It is \"how unknown\", not a value":
+        "<b>σ (불확실성)</b> — 무채색. 값이 아니라 ‘얼마나 모르는가’라서",
+    "<b>EI (acquisition)</b> — warm. The one color that calls for action":
+        "<b>EI (획득함수)</b> — 따뜻한 색. 유일하게 ‘행동을 부르는’ 색",
+    "No rainbow (jet) — it invents boundaries that do not exist":
+        "무지개색(jet)은 쓰지 않습니다 — 없는 경계선을 만들어 냅니다",
 }
