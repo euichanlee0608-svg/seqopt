@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import numpy as np
 from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import (QComboBox, QDoubleSpinBox, QGroupBox, QHBoxLayout, QLabel,
-                               QSlider, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QDoubleSpinBox, QFrame, QGroupBox, QHBoxLayout,
+                               QLabel, QScrollArea, QSlider, QTabWidget, QVBoxLayout, QWidget)
 
 from core.acquisition import ACQUISITIONS, make_acquisition
 from core.diagnostics import sensitivity
@@ -114,9 +114,18 @@ class ModelTab(QWidget):
         left.addWidget(self.surface_caption)
         sv.addLayout(left, 1)
 
+        # The slice readout names every variable twice and the sensitivity note grows
+        # with the variable count — at the 660 px minimum height this column does not
+        # fit, so it scrolls rather than cutting its own text off.
+        side_scroll = QScrollArea()
+        side_scroll.setFixedWidth(320)
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setFrameShape(QFrame.NoFrame)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         side = QWidget()
-        side.setFixedWidth(320)
         sd = QVBoxLayout(side)
+        sd.setContentsMargins(0, 0, 6, 0)
+        side_scroll.setWidget(side)
 
         self.cut_box = QGroupBox(tr("Slice"))
         cv = QVBoxLayout(self.cut_box)
@@ -151,7 +160,7 @@ class ModelTab(QWidget):
         gsv.addWidget(self.sens_note)
         sd.addWidget(gs)
         sd.addStretch(1)
-        sv.addWidget(side)
+        sv.addWidget(side_scroll)
         self.tabs.addTab(surf, tr("Surface"))
 
         # ── validation figures ─────────────────────────────────────
