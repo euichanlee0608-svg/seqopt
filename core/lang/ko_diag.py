@@ -156,7 +156,7 @@ KO: dict[str, str] = {
     "A rough surface — raise replicates first.": "거친 응답면입니다 — 반복을 먼저 늘려야 합니다.",
     "A smooth surface.": "매끄러운 응답면입니다.",
     "This tool's criterion: nugget ratio > {limit} counts as rough. Reference scale (geostatistics, Cambardella 1994): &lt;0.25 strong structure · 0.25–0.75 moderate · &gt;0.75 weak — currently «{cls}».":
-        "이 도구의 기준: 너깃비 > {limit} 이면 거칠다고 봅니다. 참고 눈금(지구통계, Cambardella 1994): &lt;0.25 강한 구조 · 0.25~0.75 보통 · &gt;0.75 약한 구조 — 지금은 «{cls}».",
+        "이 도구의 기준: 너깃비 > {limit} 이면 거칠다고 봅니다. 참고 눈금(지구통계, Cambardella 1994): &lt;0.25 강한 구조 · 0.25~0.75 보통 · &gt;0.75 약한 구조 — 지금은 「{cls}」.",
     "Replicate measurements are needed to compute D": "반복 측정이 있어야 판별력 D 를 계산할 수 있습니다",
     "indistinguishable": "구별 불가",
     "borderline": "경계",
