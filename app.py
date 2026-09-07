@@ -220,6 +220,9 @@ def _tolerant_stdout() -> None:
 def main() -> int:
     _tolerant_stdout()
     if "--selftest" in sys.argv:
+        # The check must not load Qt (a slow check is a check nobody runs), so the saved
+        # setting is out of reach here — SEQOPT_LANG decides, and otherwise it is English.
+        i18n.set_language(i18n.default_language())
         return selftest()
 
     log = _install_crash_log()
