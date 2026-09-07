@@ -102,4 +102,58 @@ KO: dict[str, str] = {
         "{where} ≤ 예산 {budget}회 — <b>요건 ① 미달</b>: 전수 측정이 더 낫습니다. 간격을 촘촘히 하거나 범위를 넓히면 후보가 늘어납니다.",
     "{where} — more than the budget of {budget}, so requirement ① passes.":
         "{where} — 예산 {budget}회보다 많아 요건 ① 은 통과합니다.",
+    # --- ui/tab_data.py — toolbar, table ---
+    "Data — enter what you measured": "데이터 — 잰 값을 넣습니다",
+    "One row is one measurement. The same condition on several rows counts automatically as replicates.":
+        "한 행이 측정 한 번입니다. 같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다.",
+    "Import from file…": "파일에서 가져오기…",
+    "Opens an Excel/CSV file and lets you assign what each column means.\nThe assignment is saved with the project, so the next file reads in one step.":
+        "엑셀·CSV 를 열고 어떤 열이 무엇인지 지정합니다.\n지정한 규칙은 프로젝트에 저장돼 다음에는 한 번에 읽힙니다.",
+    "+ Add row": "+ 행 추가",
+    "Paste (Ctrl+V)": "붙여넣기 (Ctrl+V)",
+    "Copy a range in Excel, then press this. Tab- or comma-separated tables come in as they are.":
+        "엑셀에서 범위를 복사한 뒤 누르세요. 탭·쉼표로 나뉜 표를 그대로 받습니다.",
+    "Export CSV": "CSV 내보내기",
+    "Hide excluded rows": "제외한 행 숨기기",
+    "exclude": "제외",
+    "excluded": "제외함",
+    "note": "메모",
+    "  ·  range {lo} ~ {hi}": "  ·  범위 {lo} ~ {hi}",
+    "input variable · {type}{range}\nA knob you turn.": "입력변수 · {type}{range}\n내가 돌리는 손잡이입니다.",
+    "bigger is better": "클수록 좋음",
+    "smaller is better": "작을수록 좋음",
+    "  ·  log10 transform": "  ·  log10 변환",
+    "response · {goal}{log}\nThe value you get by measuring.": "출력변수 · {goal}{log}\n측정해서 얻는 값입니다.",
+    "Checked rows leave the calculation. They are removed from the math, not deleted — the raw data stays.":
+        "체크하면 계산에서 뺍니다. 지우는 것이 아니라 빼는 것이라 원자료는 남습니다.",
+    "Free-form note. Rows inserted from a recommendation carry their evidence automatically.":
+        "자유 메모. 추천으로 넣은 행에는 근거가 자동으로 적힙니다.",
+    "Pre-filled from a recommendation. It becomes real when you enter the measured value.":
+        "추천으로 미리 넣은 행입니다. 측정값을 채우면 확정됩니다.",
+    "The response is 0. If the sample was destroyed, exclude it.": "응답이 0 입니다. 시료 소실이면 제외하세요.",
+    # --- ui/tab_data.py — editing, paste, import, export ---
+    "Numbers only": "숫자를 넣어 주세요",
+    "'{value}' is not a number.": "'{value}' 는 숫자가 아닙니다.",
+    "Define variables first": "먼저 변수를 정의하세요",
+    "Define your input variables on the Setup tab.": "설정 탭에서 입력변수를 정의해 주세요.",
+    "No numbers to paste": "붙여넣을 숫자가 없습니다",
+    "Each line needs {need} numbers ({d} inputs + 1 response).": "각 줄에 숫자 {need}개(입력 {d} + 응답 1)가 필요합니다.",
+    "Inserted {n} rows.": "{n}행을 넣었습니다.",
+    "\nSkipped {n} non-numeric lines (possibly a header row).": "\n숫자가 아니어서 건너뛴 줄 {n}개 (헤더 행일 수 있습니다).",
+    "Paste finished": "붙여넣기 완료",
+    "There is existing data": "기존 데이터가 있습니다",
+    "There are already {n} rows.\n\n[Yes] replace them with the import\n[No] append after them":
+        "이미 {n}행이 있습니다.\n\n[Yes] 기존 것을 지우고 새로 가져오기\n[No] 뒤에 이어 붙이기",
+    "Export measurement table": "측정표 내보내기",
+    # --- ui/tab_data.py — summary line ---
+    "No measurements yet. Start with import, paste, or add-row.": "측정값이 없습니다. 가져오기·붙여넣기·행 추가 중 하나로 시작하세요.",
+    "<b>{n} usable conditions</b>": "<b>유효 조건 {n}개</b>",
+    "({total} total · {n} exclusion candidates)": "(전체 {total}개 · 제외 후보 {n}개)",
+    "{n} measurements": "측정 {n}회",
+    "conditions with replicates {reps}/{n} ({pct}%)": "반복 있는 조건 {reps}/{n} ({pct}%)",
+    "{n} rows excluded by hand": "손으로 제외한 행 {n}개",
+    "{n} all-zero conditions": "응답 0 인 조건 {n}개",
+    "{n} rows awaiting measurement": "측정 대기 {n}행",
+    "The same condition on several rows counts automatically as replicates. Ctrl+Z undoes.":
+        "같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다. Ctrl+Z 로 되돌릴 수 있습니다.",
 }
