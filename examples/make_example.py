@@ -10,9 +10,12 @@ Why a subset and not all 178 conditions: the learnability check (LOOCV) refits
 one GP per condition, so the full dataset takes ~40 s in the background. The
 example must show the gate passing within seconds of being opened. The subset
 keeps the first N_CONDITIONS conditions in file order, replicates included —
-enough to stay learnable (R² > 0, verified when this script runs). Gate ① looks
-at the declared design space, not at the subset: the inputs carry no grid step,
-so the candidate count is unbounded and ① passes whatever the budget.
+enough to stay learnable (R² > 0, verified when this script runs).
+
+The five inputs are weight fractions of one composite, so they carry a sum
+constraint (= 100 %) and a 1 % grid — without them a suggestion can add up to
+226 %, which no one can weigh out. Gate ① then counts the grid points on the
+constraint surface (about 2.4 million), far above any budget.
 
 Data: Langner et al., Adv. Funct. Mater. 31, 2102606 (2021), via the public
 repository github.com/PV-Lab/Benchmarking (tests/data/p3ht.csv).
@@ -31,7 +34,7 @@ from core.diagnostics import discriminability, gate, loocv_r2          # noqa: E
 from core.importer import group_rows, read_csv                          # noqa: E402
 from core.profile import ColumnMap, ImportProfile                       # noqa: E402
 from core.project import Project                                        # noqa: E402
-from core.spec import ObjSpec, VarSpec                                  # noqa: E402
+from core.spec import ObjSpec, SumConstraint, VarSpec                   # noqa: E402
 
 N_CONDITIONS = 48
 BUDGET = 100
@@ -60,11 +63,14 @@ def main() -> None:
             break
 
     inputs = [VarSpec(bare(c), "%", "continuous",
-                      float(min(k[i] for k in keep)), float(max(k[i] for k in keep)))
+                      float(min(k[i] for k in keep)), float(max(k[i] for k in keep)), step=1.0)
               for i, c in enumerate(cols)]
+    composition = SumConstraint(tuple(v.name for v in inputs), 100.0, "eq")
+    composition.validate(inputs)
     project = Project(
         name="Example — P3HT:CNT conductivity",
         inputs=inputs,
+        constraint=composition,
         objective=ObjSpec("Conductivity", "S/cm", "max", log=True),
         budget_total=BUDGET,
         import_profile=ImportProfile(

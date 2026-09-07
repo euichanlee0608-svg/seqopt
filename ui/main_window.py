@@ -72,17 +72,37 @@ class _Elided(QLabel):
     def minimumSizeHint(self) -> QSize:                      # noqa: N802 (Qt)
         return QSize(0, super().minimumSizeHint().height())
 
+    def sizeHint(self) -> QSize:                             # noqa: N802 (Qt)
+        # Ask for the full text, not the elided one on show: a QLabel's hint follows what it
+        # currently shows, so one early squeeze would otherwise stick — the layout never
+        # offers the room back and the title stays "…" beside empty header space.
+        # (The workspace is laid out once at its default 640 px while the start screen is
+        # still up, so every project title starts squeezed.)
+        base = super().sizeHint()
+        return QSize(self._text_width(self._full) + self._chrome(), base.height())
+
+    def _text_width(self, text: str) -> int:
+        # measured the way QLabel measures its own text, so the two never disagree by a pixel
+        return self.fontMetrics().size(Qt.TextSingleLine, text).width()
+
+    def _chrome(self) -> int:
+        # The widget also pays for its style sheet's padding and border (the file pill has
+        # both). Measure that overhead instead of guessing it — QLabel's own hint minus the
+        # width of the text it is currently showing.
+        return max(0, super().sizeHint().width() - self._text_width(super().text()))
+
     def resizeEvent(self, event) -> None:                    # noqa: N802 (Qt)
         super().resizeEvent(event)
         self._elide()
 
     def _elide(self) -> None:
-        # Font metrics measure the text; the widget also pays for its style sheet's padding and
-        # border (the file pill has both). Measure that overhead instead of guessing it —
-        # sizeHint minus the width of the text it is currently showing.
-        fm = self.fontMetrics()
-        chrome = max(0, super().sizeHint().width() - fm.horizontalAdvance(super().text()))
-        shown = fm.elidedText(self._full, Qt.ElideRight, max(0, self.width() - chrome))
+        avail = max(0, self.width() - self._chrome())
+        if self._text_width(self._full) <= avail:
+            # elidedText() compares fractional widths and would still trim a text that fits
+            # its own hint exactly — the last letter would become "…" for a tenth of a pixel
+            shown = self._full
+        else:
+            shown = self.fontMetrics().elidedText(self._full, Qt.ElideRight, avail)
         if shown != super().text():
             super().setText(shown)
 

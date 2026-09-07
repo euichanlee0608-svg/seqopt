@@ -31,8 +31,10 @@ def _plain(html: str) -> str:
 def test_claimed_test_count_is_the_real_one():
     from ui.tab_help import TEST_COUNT
     env = dict(os.environ, QT_QPA_PLATFORM="offscreen")
+    # a private checkout overlays lab-only tests (tests/test_lab_*.py); they never count here
     out = subprocess.run([sys.executable, "-m", "pytest", "tests", "--collect-only", "-q",
-                          "-p", "no:cacheprovider"], cwd=ROOT, env=env,
+                          "-p", "no:cacheprovider", "--ignore-glob=tests/test_lab_*.py"],
+                         cwd=ROOT, env=env,
                          capture_output=True, text=True, timeout=300).stdout
     m = re.search(r"(\d+) tests? collected", out)
     assert m, out[-500:]
