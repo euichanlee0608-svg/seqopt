@@ -27,6 +27,7 @@ from core.i18n import tr
 from core.importer import apply_profile, preview, sheet_count
 from core.profile import ColumnMap, ImportProfile, guess_profile
 from . import theme
+from .widgets.section import wrapping
 
 ROLE_KEYS = ("input", "response", "ignore")                     # i18n: key
 ROLE_COLOR = {"input": QColor(theme.ACCENT_SOFT), "response": QColor(theme.OK_SOFT),
@@ -35,19 +36,6 @@ TYPE_KEYS = ("continuous", "integer", "categorical")            # i18n: key
 
 PREVIEW_ROWS = 60
 
-
-def _wraps(label: QLabel) -> QLabel:
-    """Wrap, and tell the layout the height that wrapping actually needs.
-
-    Qt asks `heightForWidth()` only when the size policy says to; without it the lines past
-    the first are silently cut. Every sentence here is a different length in the two
-    languages, so every one of them says to.
-    """
-    label.setWordWrap(True)
-    sp = label.sizePolicy()
-    sp.setHeightForWidth(True)
-    label.setSizePolicy(sp)
-    return label
 
 
 class ImportWizard(QDialog):
@@ -105,7 +93,7 @@ class ImportWizard(QDialog):
         left = QWidget()
         lv = QVBoxLayout(left)
         lv.setContentsMargins(0, 0, 0, 0)
-        lv.addWidget(_wraps(QLabel(tr("<b>Original preview</b>  <span style='color:{c}'>"
+        lv.addWidget(wrapping(QLabel(tr("<b>Original preview</b>  <span style='color:{c}'>"
                                       "— exactly as it is in the file</span>",
                                       c=theme.TEXT_MUTED))))
         self.raw = QTableWidget(alternatingRowColors=True)
@@ -119,7 +107,7 @@ class ImportWizard(QDialog):
         right = QWidget()
         rv = QVBoxLayout(right)
         rv.setContentsMargins(0, 0, 0, 0)
-        rv.addWidget(_wraps(QLabel(tr(
+        rv.addWidget(wrapping(QLabel(tr(
             "<b>Assign column meanings</b>  <span style='color:{c}'>— the roles are a "
             "<b>guess</b>. Check that the condition count below matches what you "
             "expect</span>", c=theme.TEXT_MUTED))))
@@ -148,7 +136,7 @@ class ImportWizard(QDialog):
         root.addWidget(split, 1)
 
         # row 3: outcome summary
-        self.summary = _wraps(QLabel(tr("Choose a file and the outcome is previewed here.")))
+        self.summary = wrapping(QLabel(tr("Choose a file and the outcome is previewed here.")))
         self.summary.setStyleSheet(theme.card())
         root.addWidget(self.summary)
 

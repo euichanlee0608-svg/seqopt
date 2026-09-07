@@ -27,10 +27,11 @@ class PageHeader(QWidget):
         row.setSpacing(12)
         col = QVBoxLayout()
         col.setSpacing(2)
-        self.title = QLabel(title)
+        # a title that cannot wrap sets the page's minimum width — and the English
+        # titles are the long ones
+        self.title = wrapping(QLabel(title))
         theme.set_role(self.title, "h1")
-        self.desc = QLabel(desc)
-        self.desc.setWordWrap(True)
+        self.desc = wrapping(QLabel(desc))
         theme.set_role(self.desc, "desc")
         col.addWidget(self.title)
         col.addWidget(self.desc)
@@ -58,10 +59,9 @@ class Section(QFrame):
         head.setSpacing(10)
         tcol = QVBoxLayout()
         tcol.setSpacing(2)
-        self.title = QLabel(title)
+        self.title = wrapping(QLabel(title))
         theme.set_role(self.title, "h2")
-        self.desc = QLabel(desc)
-        self.desc.setWordWrap(True)
+        self.desc = wrapping(QLabel(desc))
         theme.set_role(self.desc, "desc")
         self.desc.setVisible(bool(desc))
         tcol.addWidget(self.title)
@@ -76,16 +76,8 @@ class Section(QFrame):
         self.body.setSpacing(8)
         outer.addLayout(self.body)
 
-        # Height-for-width, or the description loses its last line. A card used to be
-        # QSizePolicy.Maximum vertically, which caps it at its own sizeHint — and a sizeHint
-        # is measured at the width Qt *wants*, not the narrower width the card actually gets.
-        # Wrapped prose then needs more lines than the cap allows and the bottom one is cut.
-        sp = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-        sp.setHeightForWidth(True)
-        self.setSizePolicy(sp)
-        dsp = self.desc.sizePolicy()
-        dsp.setHeightForWidth(True)
-        self.desc.setSizePolicy(dsp)
+        # Height-for-width, or the description loses its last line (see tell_true_height).
+        tell_true_height(self)
 
     def add(self, widget: QWidget, stretch: int = 0) -> None:
         self.body.addWidget(widget, stretch)
@@ -100,6 +92,30 @@ class Section(QFrame):
     def set_desc(self, text: str) -> None:
         self.desc.setText(text)
         self.desc.setVisible(bool(text))
+
+
+def tell_true_height(w: QWidget) -> QWidget:
+    """Let `w` tell its layout the height it needs **at the width it actually gets**.
+
+    A word-wrapped label's sizeHint is measured at the width Qt would like to give it; hand it
+    less and the lines past the first are simply cut off, because Qt asks `heightForWidth()`
+    only when the size policy says to. Korean and English wrap at different points, so every
+    wrapping label — and every card holding one — says to. A card used to be
+    QSizePolicy.Maximum vertically, which caps it at its own sizeHint, measured before the
+    text has wrapped; a card that must grow a line has to give that cap up.
+    """
+    sp = w.sizePolicy()
+    sp.setHeightForWidth(True)
+    if sp.verticalPolicy() == QSizePolicy.Maximum:
+        sp.setVerticalPolicy(QSizePolicy.Preferred)
+    w.setSizePolicy(sp)
+    return w
+
+
+def wrapping(label: QLabel) -> QLabel:
+    """A label that wraps **and says so to its layout** — `setWordWrap` alone is not enough."""
+    label.setWordWrap(True)
+    return tell_true_height(label)
 
 
 def link_button(text: str, parent=None):

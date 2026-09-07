@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDoubleSpinBox,
                                QFileDialog, QFormLayout, QFrame, QHBoxLayout, QHeaderView,
                                QLabel, QLineEdit, QListWidget, QListWidgetItem, QMessageBox,
-                               QPushButton, QScrollArea, QSizePolicy, QSpinBox, QTableWidget,
+                               QPushButton, QScrollArea, QSpinBox, QTableWidget,
                                QTableWidgetItem, QVBoxLayout, QWidget)
 
 from core.design import initial_design, suggest_initial_size
@@ -23,7 +23,7 @@ from core.spec import (ObjSpec, SumConstraint, VarSpec, candidate_summary, count
                        suggest_log_transform)
 from . import theme
 from .widgets.advanced import Advanced
-from .widgets.section import PageHeader, Section
+from .widgets.section import PageHeader, Section, tell_true_height
 
 TYPE_KEYS = ("continuous", "integer", "categorical")        # i18n: key
 
@@ -32,23 +32,6 @@ def type_labels() -> list[tuple[str, str]]:
     """(key, label) for the variable-type combo — translated per call, never at import."""
     return [(k, tr(k)) for k in TYPE_KEYS]
 
-
-def _tell_true_height(w):
-    """Let `w` tell its layout the height it needs **at the width it actually gets**.
-
-    A word-wrapped label's sizeHint is measured at the width Qt would like to give it; hand it
-    less and the lines past the first are simply cut off, because Qt asks `heightForWidth()`
-    only when the size policy says to. The Korean and the English wrap at different points, so
-    every wrapping label on this page says to. (`ui/tab_diag.py` carries the same helper.)
-    """
-    sp = w.sizePolicy()
-    sp.setHeightForWidth(True)
-    if sp.verticalPolicy() == QSizePolicy.Maximum:
-        # Maximum caps the height at sizeHint, and sizeHint is measured before the text has
-        # wrapped — so a card that must grow a line has to give that cap up
-        sp.setVerticalPolicy(QSizePolicy.Preferred)
-    w.setSizePolicy(sp)
-    return w
 
 
 class SetupTab(QWidget):
@@ -69,11 +52,6 @@ class SetupTab(QWidget):
         head = PageHeader(tr("Setup — what you can turn, and what should improve"),
                           tr("Everything defined here is the premise of every other screen. "
                              "Invalid values never get in."))
-        # A title that cannot wrap sets the page's minimum width, and the English titles are
-        # the long ones. (One line in ui/widgets/section.py would do this for every screen.)
-        head.title.setWordWrap(True)
-        _tell_true_height(head.title)
-        _tell_true_height(head.desc)
         head.add_right(QLabel(tr("Project name")))
         self.name = QLineEdit()
         self.name.setMinimumWidth(self.name.fontMetrics().averageCharWidth() * 22)
@@ -101,17 +79,13 @@ class SetupTab(QWidget):
         gin = Section(tr("Input variables — the knobs you can turn"),
                       tr("Design variables only. Loads and ambient values a device merely "
                          "experiences are not knobs."))
-        gin.title.setWordWrap(True)
-        _tell_true_height(gin)
-        _tell_true_height(gin.title)
-        _tell_true_height(gin.desc)
 
         self.empty_hint = QLabel(tr(
             "No variables yet.  Press <b>\"+ Add variable\"</b> to start.<br>"
             "e.g. — name <b>power</b> · unit <b>W</b> · type <b>continuous</b> · "
             "min <b>150</b> · max <b>200</b>"))
         self.empty_hint.setWordWrap(True)
-        _tell_true_height(self.empty_hint)
+        tell_true_height(self.empty_hint)
         self.empty_hint.setStyleSheet(theme.card("info"))
         gin.add(self.empty_hint)
 
@@ -169,7 +143,7 @@ class SetupTab(QWidget):
         self.autofill.clicked.connect(self._autofill_ranges)
         self.var_msg = QLabel()
         self.var_msg.setWordWrap(True)
-        _tell_true_height(self.var_msg)
+        tell_true_height(self.var_msg)
         self.var_msg.setStyleSheet(f"color:{theme.FAIL};")
         row.addWidget(add)
         row.addWidget(rm)
@@ -180,7 +154,7 @@ class SetupTab(QWidget):
         # candidate count — shown right where requirement ①'s input is defined
         self.cand_hint = QLabel()
         self.cand_hint.setWordWrap(True)
-        _tell_true_height(self.cand_hint)
+        tell_true_height(self.cand_hint)
         self.cand_hint.setStyleSheet(theme.muted())
         gin.add(self.cand_hint)
         left.addWidget(gin)
@@ -190,10 +164,6 @@ class SetupTab(QWidget):
                        tr("Turn on when a few variables must add up to a fixed total, as a "
                           "composition does. The initial design, the candidates and the "
                           "recommendations all stay inside it."))
-        gcon.title.setWordWrap(True)
-        _tell_true_height(gcon)
-        _tell_true_height(gcon.title)
-        _tell_true_height(gcon.desc)
         self.con_on = QCheckBox(tr("Use a sum constraint"))
         self.con_on.setToolTip(tr("e.g. A + B + C = 100 (%)  ·  additive1 + additive2 ≤ 5 (wt%)"))
         self.con_on.toggled.connect(self._on_constraint_toggled)
@@ -224,7 +194,7 @@ class SetupTab(QWidget):
         cb.addLayout(row_c)
         self.con_msg = QLabel()
         self.con_msg.setWordWrap(True)
-        _tell_true_height(self.con_msg)
+        tell_true_height(self.con_msg)
         cb.addWidget(self.con_msg)
         self.con_body.setVisible(False)
         gcon.add(self.con_body)
@@ -234,10 +204,6 @@ class SetupTab(QWidget):
         # ── objective ──────────────────────────────────────────────
         gout = Section(tr("Response — the value you want to improve"),
                        tr("Exactly one. Improving several values at once is outside this tool."))
-        gout.title.setWordWrap(True)
-        _tell_true_height(gout)
-        _tell_true_height(gout.title)
-        _tell_true_height(gout.desc)
         of = QFormLayout()
         of.setHorizontalSpacing(14)
         of.setVerticalSpacing(10)
@@ -252,7 +218,7 @@ class SetupTab(QWidget):
                                "it changes the verdicts."))
         self.log_hint = QLabel()
         self.log_hint.setWordWrap(True)
-        _tell_true_height(self.log_hint)
+        tell_true_height(self.log_hint)
         self.log_hint.setStyleSheet(theme.muted())
         for w in (self.obj_name, self.obj_unit):
             w.textChanged.connect(self._push)
@@ -273,10 +239,6 @@ class SetupTab(QWidget):
         gb = Section(tr("Budget — how many measurements in total"),
                      tr("This count against the condition count decides whether optimization "
                         "means anything at all."))
-        gb.title.setWordWrap(True)
-        _tell_true_height(gb)
-        _tell_true_height(gb.title)
-        _tell_true_height(gb.desc)
         bf = QFormLayout()
         bf.setHorizontalSpacing(14)
         bf.setVerticalSpacing(10)
@@ -286,7 +248,7 @@ class SetupTab(QWidget):
         self.init_n.valueChanged.connect(self._push)
         self.init_hint = QLabel()
         self.init_hint.setWordWrap(True)
-        _tell_true_height(self.init_hint)
+        tell_true_height(self.init_hint)
         self.init_hint.setStyleSheet(theme.muted())
 
         gen = QPushButton(tr("Generate initial design → export CSV"))

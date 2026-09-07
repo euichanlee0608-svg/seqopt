@@ -50,3 +50,25 @@ def _walk(qapp, project_path, size, lang):
 def test_no_clipped_text(qapp, name, size, lang):
     findings = _walk(qapp, EXAMPLES[name], size, lang)
     assert not findings, f"{len(findings)} clipped:\n  " + "\n  ".join(findings)
+
+
+@pytest.mark.parametrize("lang", ("en", "ko"))
+@pytest.mark.parametrize("width", (1024, 1366))
+def test_import_wizard_has_no_clipped_text(qapp, width, lang):
+    """The wizard is a dialog, so the tab walk above never sees it — it gets its own case."""
+    from pathlib import Path
+    from ui.import_wizard import ImportWizard
+    from tests.clipcheck import clipped_texts
+
+    i18n.set_language(lang)
+    dlg = ImportWizard(path=str(Path(__file__).parent / "data" / "synthetic_raman.xlsx"))
+    dlg.resize(width, 660)
+    dlg.show()
+    qapp.processEvents()
+    try:
+        findings = clipped_texts(dlg)
+    finally:
+        dlg.close()
+        dlg.deleteLater()
+        qapp.processEvents()
+    assert not findings, f"{len(findings)} clipped:\n  " + "\n  ".join(findings)

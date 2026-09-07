@@ -31,7 +31,7 @@ from . import theme
 from .widgets.advanced import Advanced
 from .widgets.gauge import DGauge
 from .widgets.mathtext import FormulaCard
-from .widgets.section import PageHeader, Section, link_button
+from .widgets.section import PageHeader, Section, link_button, tell_true_height
 
 MARK = theme.STATE_MARK
 COLOR = theme.STATE_COLOR
@@ -56,7 +56,7 @@ class _Row(QWidget):
         self.title.setStyleSheet("font-weight:600;")             # i18n: skip (a style sheet)
         self.text = QLabel("—")                                  # i18n: skip (a placeholder dash)
         self.text.setWordWrap(True)
-        _tell_true_height(self.text)
+        tell_true_height(self.text)
         self.text.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         self.criterion = QLabel(criterion)
         self.criterion.setObjectName("pill")
@@ -81,37 +81,6 @@ def _fit_height(table: QTableWidget, max_rows: int = 12) -> None:
     table.setFixedHeight(h + 2)
 
 
-def _tell_true_height(w: QWidget) -> QWidget:
-    """Let `w` tell its layout the height it needs **at the width it actually gets**.
-
-    A word-wrapped label's sizeHint is measured at the width Qt would like to give it; when the
-    layout hands it less, the extra lines are simply cut off, because Qt asks `heightForWidth()`
-    only when the size policy says to. Every card on this page holds wrapped prose that is longer
-    in one language than the other — so every card, and every wrapping label, says to.
-    """
-    sp = w.sizePolicy()
-    sp.setHeightForWidth(True)
-    w.setSizePolicy(sp)
-    return w
-
-
-def _card(title: str, desc: str = "") -> Section:
-    """A Section that can grow to the height its wrapped text really needs.
-
-    A card is QSizePolicy.Maximum vertically, so its *maximum* height is its sizeHint — and a
-    layout's sizeHint adds up the children's sizeHints, which for wrapped prose is measured at
-    the width Qt would like, not the narrower width the card gets. The card is then capped
-    below what it needs and the last label loses a line (Korean and English wrap differently,
-    so it shows up in one language and not the other). Preferred lifts the cap; the stretch at
-    the bottom of the column still takes the leftover space, so nothing else moves.
-    """
-    s = Section(title, desc)
-    sp = s.sizePolicy()
-    sp.setVerticalPolicy(QSizePolicy.Preferred)
-    s.setSizePolicy(sp)
-    _tell_true_height(s)
-    _tell_true_height(s.desc)
-    return s
 
 
 def _hline() -> QFrame:
@@ -159,7 +128,7 @@ class DiagTab(QWidget):
         root.addWidget(scroll, 1)
 
         # ── gate verdict ───────────────────────────────────────────
-        gate = _card(tr("Gate verdict"),
+        gate = Section(tr("Gate verdict"),
                        tr("All four lines must be ○ for recommendations to open. "
                           "The right side is each requirement's criterion."))
         self.r1 = _Row(tr("① candidate count"), tr("candidates > budget"))
@@ -176,7 +145,7 @@ class DiagTab(QWidget):
             gate.add(r)
         self.verdict = QLabel()
         self.verdict.setWordWrap(True)
-        _tell_true_height(self.verdict)
+        tell_true_height(self.verdict)
         self.verdict.setStyleSheet(theme.card("plain"))
         gate.add(self.verdict)
         gate.add_link(self._help_link(tr("R² is negative?"), "r2"))     # requirement ②'s "why?"
@@ -193,7 +162,7 @@ class DiagTab(QWidget):
         bv.addLayout(cols)
 
         # ── left: the D gauge ──────────────────────────────────────
-        level = _card(tr("Discriminability D — which zone are you in"),
+        level = Section(tr("Discriminability D — which zone are you in"),
                         tr("The difference that changing conditions makes (σb), divided by the "
                            "wobble of re-measuring the same condition (σw). The larger it is, "
                            "the further condition differences rise above the noise."))
@@ -201,11 +170,11 @@ class DiagTab(QWidget):
         level.add(self.gauge)
         self.reading = QLabel("—")                               # i18n: skip (a placeholder dash)
         self.reading.setWordWrap(True)
-        _tell_true_height(self.reading)
+        tell_true_height(self.reading)
         level.add(self.reading)
         self.levels = QLabel()
         self.levels.setWordWrap(True)
-        _tell_true_height(self.levels)
+        tell_true_height(self.levels)
         self.levels.setTextFormat(Qt.RichText)
         self.levels.setText(self._levels_html())
         level.add(self.levels)
@@ -219,7 +188,7 @@ class DiagTab(QWidget):
         # ── full width, under both columns: the calculation ────────
         # Formula · prose · a five-column table do not fit in half of a 1024 px window —
         # this card gets the whole width, so nothing here is squeezed in either language.
-        calc = _card(tr("The calculation — where this number came from"),
+        calc = Section(tr("The calculation — where this number came from"),
                        tr("The general formula first, then the same formula with this data's values. "
                           "Unfold the per-condition table to see the raw material."))
         self.toggle = link_button(tr("Unfold the per-condition table ▾"))
@@ -231,7 +200,7 @@ class DiagTab(QWidget):
 
         self.calc_legend = QLabel()
         self.calc_legend.setWordWrap(True)
-        _tell_true_height(self.calc_legend)
+        tell_true_height(self.calc_legend)
         self.calc_legend.setStyleSheet(theme.card("info"))
         self.calc_legend.setVisible(False)
         calc.add(self.calc_legend)
@@ -260,7 +229,7 @@ class DiagTab(QWidget):
         calc.add(self.calc)
 
         # ── right: prescription · warning · terrain ────────────────
-        plan = _card(tr("Prescription — how many replicates"),
+        plan = Section(tr("Prescription — how many replicates"),
                        tr("For each target discriminability: replicates per condition, and how many "
                           "more measurements that costs. The recommended row is green."))
         self.plan = QTableWidget(0, 4)
@@ -285,7 +254,7 @@ class DiagTab(QWidget):
         plan.add(self.plan)
         self.plan_note = QLabel()
         self.plan_note.setWordWrap(True)
-        _tell_true_height(self.plan_note)
+        tell_true_height(self.plan_note)
         theme.set_role(self.plan_note, "desc")
         plan.add(self.plan_note)
         # A custom target can be tried directly. Rarely changed, so it folds away.
@@ -300,24 +269,24 @@ class DiagTab(QWidget):
         self.adv_pre.add_layout(trow)
         self.pre_text = QLabel("—")                              # i18n: skip (a placeholder dash)
         self.pre_text.setWordWrap(True)
-        _tell_true_height(self.pre_text)
+        tell_true_height(self.pre_text)
         self.adv_pre.add(self.pre_text)
         plan.add(self.adv_pre)
         right.addWidget(plan)
 
-        self.gwarn = _card(tr("Warning — one condition dominates D"))
+        self.gwarn = Section(tr("Warning — one condition dominates D"))
         self.warn_text = QLabel("—")                             # i18n: skip (a placeholder dash)
         self.warn_text.setWordWrap(True)
-        _tell_true_height(self.warn_text)
+        tell_true_height(self.warn_text)
         self.gwarn.add(self.warn_text)
         right.addWidget(self.gwarn)
 
-        ter = _card(tr("Terrain — is the response surface smooth"),
+        ter = Section(tr("Terrain — is the response surface smooth"),
                       tr("When even nearby conditions differ wildly (a large nugget), "
                          "the model has little to learn from."))
         self.terrain = QLabel("—")                               # i18n: skip (a placeholder dash)
         self.terrain.setWordWrap(True)
-        _tell_true_height(self.terrain)
+        tell_true_height(self.terrain)
         ter.add(self.terrain)
         right.addWidget(ter)
         right.addStretch(1)

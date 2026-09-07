@@ -23,7 +23,7 @@ from core.acquisition import ACQUISITIONS, make_acquisition
 from core.diagnostics import sensitivity
 from core.i18n import tr
 from . import theme
-from .widgets.section import PageHeader
+from .widgets.section import PageHeader, tell_true_height
 from core.surface import (curve_1d, format_condition, grid_2d, nearest_measured,
                           replicate_scatter, slice_defaults, to_real, trajectory)
 from .widgets.advanced import Advanced
@@ -34,19 +34,6 @@ from .widgets.plots import (C_AXIS, C_BAND, C_BEST, C_MEAN, C_POINT, C_RAW, C_RE
 GRID_N = 60
 DEBOUNCE_MS = 120
 
-
-def _tell_true_height(w: QWidget) -> QWidget:
-    """Let `w` tell its layout the height it needs **at the width it actually gets**.
-
-    A word-wrapped label's sizeHint is measured at the width Qt would like to give
-    it; hand it less and the extra lines are simply cut off, because Qt asks
-    `heightForWidth()` only when the size policy says to. Every caption here is
-    prose whose line count differs between English and Korean — so every one says to.
-    """
-    sp = w.sizePolicy()
-    sp.setHeightForWidth(True)
-    w.setSizePolicy(sp)
-    return w
 
 
 class ModelTab(QWidget):
@@ -79,13 +66,13 @@ class ModelTab(QWidget):
                              "that say how far to trust it."))
         root.addWidget(head)
 
-        self.banner = _tell_true_height(QLabel())
+        self.banner = tell_true_height(QLabel())
         self.banner.setWordWrap(True)
         self.banner.setVisible(False)
         root.addWidget(self.banner)
 
         bar = QHBoxLayout()
-        self.readout = _tell_true_height(QLabel())
+        self.readout = tell_true_height(QLabel())
         self.readout.setWordWrap(True)
         self.readout.setStyleSheet(theme.muted())
         bar.addWidget(self.readout, 1)
@@ -108,7 +95,7 @@ class ModelTab(QWidget):
         left = QVBoxLayout()
         self.canvas = Canvas(width=8.4, height=6.0)
         left.addWidget(self.canvas, 1)
-        self.surface_caption = _tell_true_height(QLabel())
+        self.surface_caption = tell_true_height(QLabel())
         self.surface_caption.setWordWrap(True)
         self.surface_caption.setStyleSheet(theme.small())
         left.addWidget(self.surface_caption)
@@ -141,7 +128,7 @@ class ModelTab(QWidget):
         cv.addLayout(row)
         self.slider_box = QVBoxLayout()
         cv.addLayout(self.slider_box)
-        self.cut_hint = _tell_true_height(QLabel())
+        self.cut_hint = tell_true_height(QLabel())
         self.cut_hint.setWordWrap(True)
         self.cut_hint.setStyleSheet(theme.muted())
         cv.addWidget(self.cut_hint)
@@ -154,7 +141,7 @@ class ModelTab(QWidget):
         # x label off the bottom edge — it keeps the height its own figure asks for
         self.sens_canvas.setMinimumHeight(self.sens_canvas.sizeHint().height())
         gsv.addWidget(self.sens_canvas)
-        self.sens_note = _tell_true_height(QLabel())
+        self.sens_note = tell_true_height(QLabel())
         self.sens_note.setWordWrap(True)
         self.sens_note.setStyleSheet(theme.muted())
         gsv.addWidget(self.sens_note)
@@ -168,7 +155,7 @@ class ModelTab(QWidget):
         cvv = QVBoxLayout(check)
         self.check_canvas = Canvas(width=9.0, height=6.4)
         cvv.addWidget(self.check_canvas, 1)
-        self.check_caption = _tell_true_height(QLabel(tr(
+        self.check_caption = tell_true_height(QLabel(tr(
             "Top left the trajectory, top right learnability (LOOCV), bottom left the replicate "
             "scatter — how far repeats of the same condition wobble — and bottom right the terrain "
             "roughness.")))

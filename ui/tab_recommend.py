@@ -35,25 +35,10 @@ from core.recommend import Locked, Recommendation, RecommendResult, recommend
 from core.surface import fmt_value
 from . import theme
 from .widgets.advanced import Advanced
-from .widgets.section import PageHeader, Section, link_button
+from .widgets.section import PageHeader, Section, link_button, wrapping
 
 MAX_BATCH = 10
 
-
-def _wrapping(label: QLabel) -> QLabel:
-    """A label that wraps **and says so to its layout.**
-
-    A plain `setWordWrap(True)` is not enough: a QLabel's size policy does not
-    advertise height-for-width, so a box layout asks for one line's height and
-    the second line is cut. Korean and English wrap at different places, so this
-    is the difference between a label that fits in one language and one that
-    fits in both.
-    """
-    label.setWordWrap(True)
-    policy = label.sizePolicy()
-    policy.setHeightForWidth(True)
-    label.setSizePolicy(policy)
-    return label
 
 
 class _AltTable(QTableWidget):
@@ -122,7 +107,7 @@ class RecommendTab(QWidget):
         scroll.setWidget(page)
         root.addWidget(scroll, 1)
 
-        self.status = _wrapping(QLabel())
+        self.status = wrapping(QLabel())
         self.status.setStyleSheet(theme.card())
         body.addWidget(self.status)
 
@@ -156,7 +141,7 @@ class RecommendTab(QWidget):
         prow.addWidget(self.method)
         prow.addStretch(1)
         self.adv.add_layout(prow)
-        self.method_why = _wrapping(QLabel())
+        self.method_why = wrapping(QLabel())
         self.method_why.setStyleSheet(theme.muted())
         self.adv.add(self.method_why)
         brow = QHBoxLayout()
@@ -196,10 +181,10 @@ class RecommendTab(QWidget):
         card_row.addLayout(self.card_grid)
         card_row.addStretch(1)
         self.card.add_layout(card_row)
-        self.card_meta = _wrapping(QLabel())
+        self.card_meta = wrapping(QLabel())
         theme.set_role(self.card_meta, "muted")
         self.card.add(self.card_meta)
-        self.card_flag = _wrapping(QLabel())
+        self.card_flag = wrapping(QLabel())
         self.card_flag.setStyleSheet(f"color:{theme.WARN};")
         self.card_flag.setVisible(False)
         self.card.add(self.card_flag)
@@ -222,7 +207,7 @@ class RecommendTab(QWidget):
         self.table.setVisible(False)
         body.addWidget(self.table)
 
-        self.note = _wrapping(QLabel())
+        self.note = wrapping(QLabel())
         self.note.setStyleSheet(theme.muted())
         body.addWidget(self.note)
 
