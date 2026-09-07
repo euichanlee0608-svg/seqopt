@@ -13,8 +13,9 @@ from core.acquisition import ExpectedImprovement
 from core.dataset import build
 from core.diagnostics import loocv_r2
 from core.spec import ObjSpec, VarSpec
-from core.surface import (curve_1d, format_condition, grid_2d, nearest_measured,
-                          replicate_scatter, slice_defaults, to_real, trajectory)
+from core.surface import (curve_1d, decimals, fmt_value, format_condition, grid_2d,
+                          nearest_measured, replicate_scatter, slice_defaults, to_real,
+                          trajectory)
 from core.surrogate import fit
 from tests.loaders import external, synthetic
 
@@ -50,6 +51,38 @@ def test_format_condition_respects_type(syn):
     assert "dwell" in txt and "s" in txt
     # integers get no decimal point
     assert ".0" not in txt.split("dwell")[1]
+
+
+# ══════════════════════════════════════════════════════════════════════
+# how precisely a value may be shown — the instrument decides, not the float
+# ══════════════════════════════════════════════════════════════════════
+@pytest.mark.parametrize("var,want", [
+    (VarSpec("a", "", "continuous", 0, 100, step=10.0), 0),
+    (VarSpec("a", "", "continuous", 0, 100, step=0.5), 1),
+    (VarSpec("a", "", "continuous", 0, 100, step=0.25), 2),
+    (VarSpec("a", "", "continuous", 0, 100, step=0.001), 3),
+    (VarSpec("a", "", "integer", 1, 9), 0),
+    (VarSpec("a", "", "categorical", levels=("x", "y")), 0),
+    (VarSpec("a", "", "continuous", 0, 1000), 0),        # no step → three figures of the span
+    (VarSpec("a", "", "continuous", 15, 95), 2),
+    (VarSpec("a", "", "continuous", 0, 1), 3),
+])
+def test_decimals_follow_the_declared_step(var, want):
+    assert decimals(var) == want
+
+
+def test_fmt_value_never_invents_precision():
+    """`89.0915 %` is a number no one can set on an instrument — the step says 2 decimals."""
+    v = VarSpec("P3HT content", "%", "continuous", 15, 95)
+    assert fmt_value(v, 89.09153) == "89.09"
+    assert fmt_value(VarSpec("t", "s", "continuous", 5, 60, step=0.5), 12.5) == "12.5"
+    assert fmt_value(VarSpec("n", "", "integer", 1, 9), 4.0) == "4"
+
+
+def test_fmt_value_of_a_categorical_is_its_level_name():
+    v = VarSpec("solvent", "", "categorical", levels=("CB", "DCB", "CF"))
+    assert fmt_value(v, 1.0) == "DCB"
+    assert fmt_value(v, 9.0) == "CF"            # out of range clamps rather than raising
 
 
 # ══════════════════════════════════════════════════════════════════════
