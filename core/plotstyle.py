@@ -95,7 +95,7 @@ def stamp_untrusted(fig, text: str) -> None:
     ov = fig.add_axes([0, 0, 1, 1], zorder=1000)
     ov.axis("off")
     ov.patch.set_alpha(0)
-    ov.text(0.5, 0.5, text, ha="center", va="center", transform=ov.transAxes,
+    ov.text(0.5, 0.5, text, ha="center", va="center", transform=ov.transAxes,  # i18n: skip
             fontsize=30, color="#d32f2f", alpha=0.22, rotation=24, weight="bold")
 
 

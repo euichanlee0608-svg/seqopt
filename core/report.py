@@ -23,6 +23,7 @@ from .acquisition import make_acquisition
 from .diagnostics import (D_THRESHOLD, NUGGET_THRESHOLD, DiscResult, Gate, LoocvResult,
                           NuggetResult, discriminability, loocv_r2, nugget_ratio)
 from .fonts import register_pdf_font
+from .i18n import tr
 from .plotstyle import (C_AXIS, C_BAND, C_BEST, C_MEAN, C_POINT, C_RAW, CMAP_EI,
                         CMAP_MU, CMAP_SD, apply_style)
 from .spec import Dataset, candidate_summary
@@ -71,89 +72,98 @@ def calculation_log(data: ReportData) -> str:
     add = L.append
 
     add("=" * 78)
-    add(f"{p.name} — full calculation disclosure")
+    add(tr("{name} — full calculation disclosure", name=p.name))
     add("=" * 78)
-    add(f"generated {datetime.now().astimezone().isoformat(timespec='seconds')}")
-    add(f"  conditions {ds.n_conditions_all} total · {ds.n_conditions} usable "
-        f"(excluded {ds.n_excluded_conditions}) · {ds.n_measurements} measurements")
-    add(f"  replicate distribution : {ds.rep_distribution}")
-    add(f"  objective : {p.objective.name} {'maximize' if p.objective.goal == 'max' else 'minimize'}"
-        f"{' · log10 transform' if p.objective.log else ''}")
+    add(tr("generated {ts}", ts=datetime.now().astimezone().isoformat(timespec='seconds')))
+    add(tr("  conditions {all} total · {usable} usable (excluded {excl}) · {meas} measurements",
+           all=ds.n_conditions_all, usable=ds.n_conditions, excl=ds.n_excluded_conditions,
+           meas=ds.n_measurements))
+    add(tr("  replicate distribution : {dist}", dist=ds.rep_distribution))
+    add(tr("  objective : {name} {goal}{log}", name=p.objective.name,
+           goal=tr("maximize") if p.objective.goal == 'max' else tr("minimize"),
+           log=tr(" · log10 transform") if p.objective.log else ""))
     add("")
 
     if d.sigma_w is None:
-        add("[step 1] within-condition spread sigma_w — NOT COMPUTABLE (no replicate measurements)")
-        add("         No assumed value is substituted. Measure the same condition at least twice.")
+        add(tr("[step 1] within-condition spread sigma_w — NOT COMPUTABLE (no replicate measurements)"))
+        add("         " + tr("No assumed value is substituted. Measure the same condition at least twice."))
     else:
-        add("[step 1] within-condition spread sigma_w — the wobble from re-measuring the same condition")
-        add(f"         {'condition':<28}{'n':>4}{'mean':>10}{'sample SD':>10}{'(n-1)*var':>13}")
+        add(tr("[step 1] within-condition spread sigma_w — the wobble from re-measuring the same condition"))
+        add(f"         {tr('condition'):<28}{'n':>4}{tr('mean'):>10}{tr('sample SD'):>10}{'(n-1)*var':>13}")
         for row, x in zip(d.table, ds.X):
             cond = " · ".join(f"{v:g}" for v in x)
             sd = "—" if row["sd"] is None else f"{row['sd']:.4f}"
             add(f"         {cond:<28}{row['n']:>4}{row['mean']:>10.4f}{sd:>10}{row['ss']:>13.6f}")
-        add(f"         {'total':<28}{'':>24}{d.total_ss:>13.6f}   (dof {d.total_df})")
-        add(f"         sigma_w = sqrt({d.total_ss:.6f} / {d.total_df}) = {d.sigma_w:.4f}")
+        add(f"         {tr('total'):<28}{'':>24}{d.total_ss:>13.6f}   " + tr("(dof {n})", n=d.total_df))
+        add(f"         sigma_w = sqrt({d.total_ss:.6f} / {d.total_df}) = {d.sigma_w:.4f}")  # i18n: skip
         add("")
-        add("[step 2] between-condition spread sigma_b — the difference that changing the condition makes")
-        add(f"         sample SD of the {ds.n_conditions} condition means")
-        add(f"         sigma_b = {d.sigma_b:.4f}   (grand mean {ds.y_mean.mean():.4f})")
+        add(tr("[step 2] between-condition spread sigma_b — the difference that changing the condition makes"))
+        add("         " + tr("sample SD of the {n} condition means", n=ds.n_conditions))
+        add("         " + tr("sigma_b = {b}   (grand mean {g})",
+                              b=f"{d.sigma_b:.4f}", g=f"{ds.y_mean.mean():.4f}"))
         add("")
-        add("[step 3] discriminability D = sigma_b / (sigma_w / sqrt(n))")
+        add(tr("[step 3] discriminability D = sigma_b / (sigma_w / sqrt(n))"))
         for n, v in d.D.items():
-            mark = "  <- current (single-replicate basis)" if n == 1 else ""
+            mark = "  " + tr("<- current (single-replicate basis)") if n == 1 else ""
             add(f"         n={n} : {d.sigma_b:.4f} / {d.sigma_w / np.sqrt(n):.4f} = {v:.2f}{mark}")
-        add("         note: values for larger n are projections — they hold only if sigma_w stays the same.")
+        add("         " + tr("note: values for larger n are projections — they hold only if sigma_w "
+                              "stays the same."))
         if d.ci_lo is not None:
             add("")
-            add("[step 3-1] how solid is this estimate")
-            add(f"         condition bootstrap, 4000 draws : D(n=1) 95% interval = [{d.ci_lo:.2f}, {d.ci_hi:.2f}]")
-            verdict = {"OK": "clears the threshold", "FAIL": "falls short of the threshold",
-                       "UNDECIDED": "the threshold sits inside the interval — cannot be settled"}[d.verdict]
-            add(f"         against threshold {D_THRESHOLD:g} : {verdict}")
+            add(tr("[step 3-1] how solid is this estimate"))
+            add("         " + tr("condition bootstrap, 4000 draws : D(n=1) 95% interval = [{lo}, {hi}]",
+                                  lo=f"{d.ci_lo:.2f}", hi=f"{d.ci_hi:.2f}"))
+            verdict = {"OK": tr("clears the threshold"), "FAIL": tr("falls short of the threshold"),
+                       "UNDECIDED": tr("the threshold sits inside the interval — cannot be settled")}[d.verdict]
+            add("         " + tr("against threshold {t} : {v}", t=f"{D_THRESHOLD:g}", v=verdict))
         if d.top_share is not None and d.top_condition is not None:
             top = " · ".join(f"{v:g}" for v in ds.X[d.top_condition])
-            add(f"         {d.top_share:.0f}% of the within-condition variance comes from one condition ({top}).")
+            add("         " + tr("{pct}% of the within-condition variance comes from one condition ({top}).",
+                                  pct=f"{d.top_share:.0f}", top=top))
             if d.D_drop_top is not None:
-                add(f"         dropping it gives sigma_w={d.sigma_w_drop_top:.4f} · "
-                    f"D(n=1)={d.D_drop_top:.2f}")
+                add("         " + tr("dropping it gives sigma_w={a} · D(n=1)={b}",
+                                      a=f"{d.sigma_w_drop_top:.4f}", b=f"{d.D_drop_top:.2f}"))
 
     if data.loocv is not None:
         r = data.loocv
         add("")
-        add("[step 4] surface learnability — LOOCV prediction of the condition means")
-        add(f"         leave one condition out, fit on the rest ({ds.n_conditions} conditions)")
-        add(f"         SS_res = {r.ss_res:.4f} · SS_tot = {r.ss_tot:.4f}")
+        add(tr("[step 4] surface learnability — LOOCV prediction of the condition means"))
+        add("         " + tr("leave one condition out, fit on the rest ({n} conditions)", n=ds.n_conditions))
+        add(f"         SS_res = {r.ss_res:.4f} · SS_tot = {r.ss_tot:.4f}")  # i18n: skip
         add(f"         R^2 = 1 - {r.ss_res:.4f}/{r.ss_tot:.4f} = {r.r2:+.3f}")
         if r.r2 <= 0:
-            add("         R^2 <= 0 means worse than always answering the overall mean.")
+            add("         " + tr("R^2 <= 0 means worse than always answering the overall mean."))
         if r.low_sample_warning:
-            add("         note: fewer than 8 conditions — low-sample warning")
+            add("         " + tr("note: fewer than 8 conditions — low-sample warning"))
 
     if data.nugget is not None:
         n = data.nugget
         add("")
-        add("[step 5] terrain roughness — semivariogram")
-        add(f"         nugget {n.nugget:.3f} / sill {n.sill:.3f} = nugget ratio {n.ratio:.3f}")
-        add(f"         against threshold {NUGGET_THRESHOLD} : "
-            f"{'rough surface' if n.rough else 'smooth surface'}")
+        add(tr("[step 5] terrain roughness — semivariogram"))
+        add("         " + tr("nugget {a} / sill {b} = nugget ratio {c}",
+                              a=f"{n.nugget:.3f}", b=f"{n.sill:.3f}", c=f"{n.ratio:.3f}"))
+        add("         " + tr("against threshold {t} : {v}", t=f"{NUGGET_THRESHOLD}",
+                              v=tr("rough surface") if n.rough else tr("smooth surface")))
         if n.noise_share is not None:
-            add(f"         {n.noise_share * 100:.0f}% of the visible variation is measurement wobble.")
+            add("         " + tr("{pct}% of the visible variation is measurement wobble.",
+                                  pct=f"{n.noise_share * 100:.0f}"))
 
     add("")
-    add("[gate verdict]")
+    add(tr("[gate verdict]"))
     g = data.gate
-    add(f"         ① evidence : {candidate_summary(p.inputs, p.constraint)} vs budget {p.budget_total} runs")
+    add("         " + tr("① evidence : {ev} vs budget {b} runs",
+                          ev=candidate_summary(p.inputs, p.constraint), b=p.budget_total))
     if p.constraint is not None:
-        add(f"         constraint : {p.constraint.describe()}")
-    for label, state in (("① candidate count", g.cond_count), ("② learnability", g.learnable),
-                         ("③ discriminability", g.discrim), ("④ replicates", g.replicates)):
+        add("         " + tr("constraint : {c}", c=p.constraint.describe()))
+    for label, state in ((tr("① candidate count"), g.cond_count), (tr("② learnability"), g.learnable),
+                         (tr("③ discriminability"), g.discrim), (tr("④ replicates"), g.replicates)):
         add(f"         {label}  {MARK.get(state, '—')}  ({state})")
-    add(f"         → recommendation {'LOCKED' if g.locked else 'available'}")
+    add("         " + tr("→ recommendation {r}", r=tr("LOCKED") if g.locked else tr("available")))
     for reason in g.reasons:
         add(f"           · {reason}")
     if data.gate_bypassed:
         add("")
-        add("         [caution] this report was force-generated with requirements unmet.")
+        add("         " + tr("[caution] this report was force-generated with requirements unmet."))
     return "\n".join(L)
 
 
