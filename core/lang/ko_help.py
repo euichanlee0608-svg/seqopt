@@ -82,7 +82,7 @@ KO: dict[str, str] = {
         "미달이면 진단 탭의 <b>처방</b> 대로 먼저 데이터를 고칩니다",
     "<h3>Diagnosing a spreadsheet you already have</h3>": "<h3>이미 있는 엑셀을 진단할 때</h3>",
     "<b>Data → import from file</b> and map the columns":
-        "<b>데이터 → 파일에서 가져오기</b> 로 열 매핑",
+        "<b>데이터 → 파일 가져오기</b> 로 열 매핑",
     "Read the verdict table on <b>Diagnose</b>": "<b>진단</b> 에서 판정표를 봅니다",
     "Keep the evidence as a PDF with <b>Report</b>": "<b>리포트</b> 로 근거를 PDF 로 남깁니다",
     "Help — the questions this tool is likely to raise": "도움말 — 이 도구에 대해 생길 만한 질문들",

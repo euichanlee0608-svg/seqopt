@@ -154,6 +154,12 @@ numbers are in `docs/bench_global.json`, the write-up in
 `tests/test_global.py` fails the day a candidate does beat EI — that is the
 signal to promote it.
 
+**Two languages.** Every string a user sees goes through `tr()`, and the
+Korean lives in `core/lang/ko_*.py`. How to add a string, and the tests that
+enforce it (`tests/test_i18n.py` — zero bare strings, zero missing Korean;
+`tests/test_layout.py` — zero clipped text in either language at either window
+size), are in the i18n section of `docs/ARCHITECTURE.md`.
+
 ```bash
 .venv/bin/python -m pytest tests -q
 ```

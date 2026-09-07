@@ -134,7 +134,7 @@ class SetupTab(QWidget):
         row = QHBoxLayout()
         add = QPushButton(tr("+ Add variable"))
         add.clicked.connect(self._add_var)
-        rm = QPushButton(tr("− Remove selected"))
+        rm = QPushButton(tr("− Remove"))
         rm.clicked.connect(self._del_var)
         self.autofill = QPushButton(tr("Fill ranges"))
         self.autofill.setToolTip(tr("Fills min/max from the measurements you already entered.\n"
@@ -188,6 +188,10 @@ class SetupTab(QWidget):
         row_c.addWidget(self.con_kind)
         self.con_total = QDoubleSpinBox(minimum=-1e9, maximum=1e9, decimals=4, value=100.0)
         self.con_total.setToolTip(tr("The total. For a composition, 100 (%) or 1."))
+        # The range gives the box a sixteen-digit size hint, which at 1024 wide (Windows fonts)
+        # pushes the page past the viewport. A total is "100" or "1": the box may shrink to
+        # that and grows back to its hint wherever there is room.
+        self.con_total.setMinimumWidth(theme.CONTROL_H * 4)
         self.con_total.valueChanged.connect(self._push)
         row_c.addWidget(self.con_total)
         row_c.addStretch(1)

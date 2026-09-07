@@ -42,7 +42,8 @@ def test_shots_hook_captures_every_tab_of_every_example(tmp_path):
     pngs = list(shots.rglob("*.png"))
     assert len(pngs) >= MIN_SHOTS, sorted(p.name for p in pngs)
     assert all(p.stat().st_size >= MIN_BYTES for p in pngs)
-    assert len((shots / "index.txt").read_text(encoding="utf-8").splitlines()) == 2
+    from ui.start_screen import example_files
+    assert len((shots / "index.txt").read_text(encoding="utf-8").splitlines()) == len(example_files())
     log = (tmp_path / ".seqopt" / "seqopt.log").read_text(encoding="utf-8")
     assert "ex1 closed" in log and "ex2 closed" in log
     assert f"captured {len(pngs)} screens" in log

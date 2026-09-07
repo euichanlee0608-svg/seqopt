@@ -28,6 +28,17 @@ def _english_by_default():
 
 
 @pytest.fixture
+def real_fonts(qapp):
+    """Text can only be measured where Qt has fonts. Its offscreen platform on Windows loads none:
+    every glyph becomes a placeholder box 2–3× wider than the real one, and a layout gate there
+    reports clipping no user sees (2026-09-07: 130 findings, all bogus). CI runs the gate on the
+    runner's real display instead — and refuses a skip."""
+    from PySide6.QtGui import QFontDatabase
+    if not QFontDatabase.families():
+        pytest.skip("Qt has no fonts on this platform (offscreen on Windows) — run on a real display")
+
+
+@pytest.fixture
 def korean():
     from core import i18n
     i18n.set_language("ko")

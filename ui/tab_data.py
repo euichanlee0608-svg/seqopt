@@ -65,11 +65,11 @@ class DataTab(QWidget):
         imp.clicked.connect(self.import_file)
         add = QPushButton(tr("+ Add row"))
         add.clicked.connect(self._add_row)
-        dele = QPushButton(tr("− Remove selected"))
+        dele = QPushButton(tr("− Remove"))
         dele.clicked.connect(self._del_rows)
-        paste = QPushButton(tr("Paste (Ctrl+V)"))
-        paste.setToolTip(tr("Copy a range in Excel, then press this. Tab- or comma-separated "
-                            "tables come in as they are."))
+        paste = QPushButton(tr("Paste"))
+        paste.setToolTip(tr("Copy a range in Excel, then press this (or Ctrl+V). Tab- or "
+                            "comma-separated tables come in as they are."))
         paste.clicked.connect(self.paste_clipboard)
         exp = QPushButton(tr("Export CSV"))
         exp.clicked.connect(self._export)

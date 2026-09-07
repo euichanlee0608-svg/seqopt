@@ -156,7 +156,7 @@ What enforces it — three tests, all red on a plain string:
 | test | fails when |
 |---|---|
 | `tests/test_i18n.py` (scanner `tests/i18n_scan.py`) | a user-visible literal is not wrapped in `tr()`; a key has no Korean; a Korean entry is stale; placeholders disagree; a "translation" is still English; a private-lab token leaks in |
-| `tests/test_layout.py` (`tests/clipcheck.py`) | any label, button, tab, column header, figure title or table is cut off — every tab of every bundled example, **en × ko × 1024×660 × 1366×768**. The `qapp` fixture applies `ui.theme` first: measured with Qt's default font the gate found nothing while the real font clipped |
+| `tests/test_layout.py` (`tests/clipcheck.py`) | any label, button, tab, column header, figure title or table is cut off — every tab of every bundled example, **en × ko × 1024×660 × 1366×768**. The `qapp` fixture applies `ui.theme` first: measured with Qt's default font the gate found nothing while the real font clipped. It measures only where Qt has fonts (`real_fonts` in `tests/conftest.py`): Windows offscreen has none and reports 2–3× widths, so CI runs this file on the runner's real display and refuses a skip. Only the catalogued examples (`ui.start_screen.EXAMPLES`) are walked — a lab's own project next to them gets its own cases in its own test file |
 | CI `windows-build` | the shipped exe is captured on a real Windows display in both languages (`seqopt-windows-shots/en`, `/ko`), 19 screens each |
 
 Adding a string therefore means: write it in English inside `tr()`, add the

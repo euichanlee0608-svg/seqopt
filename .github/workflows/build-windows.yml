@@ -29,6 +29,18 @@ jobs:
           QT_QPA_PLATFORM: offscreen
         run: python -m pytest tests -q
 
+      - name: Layout gate (real display)
+        # Qt's offscreen platform on Windows loads no fonts at all — every glyph is measured as a
+        # placeholder box 2–3× wider than the real one, and the layout gate reports clipping no
+        # user sees (2026-09-07: 130 findings, all bogus). So tests/test_layout.py skips itself
+        # where Qt has no fonts, and this step runs it on the runner's real display — where
+        # Malgun Gothic is measured exactly as on the user's PC — and refuses a skip.
+        run: |
+          python -m pytest tests/test_layout.py -q -p no:cacheprovider -rs | Tee-Object -FilePath layout_gate.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (Select-String -Path layout_gate.txt -Pattern "skipped" -Quiet) { Write-Host "the layout gate did not run"; exit 1 }
+        shell: pwsh
+
       - name: Build executable
         run: pyinstaller packaging/seqopt.spec --noconfirm --clean
 

@@ -17,20 +17,9 @@ from core.importer import apply_profile, preview
 from core.profile import ColumnMap, ImportProfile, guess_profile
 from core.project import Project
 from core.spec import ObjSpec, VarSpec
-from tests.loaders import DATA
+from tests.loaders import DATA, synthetic_profile
 
 XLSX = os.path.join(DATA, "synthetic_raman.xlsx")
-
-
-def synthetic_profile() -> ImportProfile:
-    """The reading rules for the synthetic spreadsheet — A power · B dwell · E response."""
-    cols = [ColumnMap("A", "input", "power", "W", "continuous"),
-            ColumnMap("B", "input", "dwell", "s", "integer"),
-            ColumnMap("C", "ignore"), ColumnMap("D", "ignore"),
-            ColumnMap("E", "response", "G/D ratio", "a.u.", "continuous"),
-            ColumnMap("F", "ignore")]
-    return ImportProfile(kind="xlsx", sheet=1, header_row=1, columns=cols,
-                         inherit_blank=True, exclude_zero=True)
 
 
 @pytest.fixture(scope="module")

@@ -514,7 +514,7 @@ class MainWindow(QMainWindow):
         if self._tab_model is not None:
             self._tab_model.set_loocv(payload["loocv"])
         self._apply_gate()
-        self.calc_time.setText(tr("✓ diagnosis done · learnability {t}s",
+        self.calc_time.setText(tr("✓ learnability {t}s",
                                   t=f"{payload['elapsed']:.2f}"))
         self.calc_time.setStyleSheet(theme.muted())
 

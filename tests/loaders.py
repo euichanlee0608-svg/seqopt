@@ -10,7 +10,9 @@ from __future__ import annotations
 import os
 
 from core.dataset import build
-from core.importer import group_rows, read_csv, read_xlsx
+from core.importer import apply_profile, group_rows, preview, read_csv, read_xlsx
+from core.profile import ColumnMap, ImportProfile
+from core.project import Project
 from core.spec import ObjSpec, VarSpec
 
 DATA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
@@ -38,6 +40,32 @@ def synthetic():
               VarSpec("dwell", "s", "integer", 3, 7)]
     obj = ObjSpec("G/D ratio", "a.u.", "max", log=False)
     return build(groups, inputs, obj, exclude_zero=True)
+
+
+def synthetic_profile() -> ImportProfile:
+    """The reading rules for the synthetic spreadsheet — A power · B dwell · E response."""
+    cols = [ColumnMap("A", "input", "power", "W", "continuous"),
+            ColumnMap("B", "input", "dwell", "s", "integer"),
+            ColumnMap("C", "ignore"), ColumnMap("D", "ignore"),
+            ColumnMap("E", "response", "G/D ratio", "a.u.", "continuous"),
+            ColumnMap("F", "ignore")]
+    return ImportProfile(kind="xlsx", sheet=1, header_row=1, columns=cols,
+                         inherit_blank=True, exclude_zero=True)
+
+
+def synthetic_project() -> Project:
+    """The same spreadsheet as the Project the GUI tests open. It locks — ② learnability FAIL."""
+    path = os.path.join(DATA, "synthetic_raman.xlsx")
+    keys, rows = preview(path, "xlsx", 1, limit=10 ** 9)
+    prof = synthetic_profile()
+    prof.columns = [c for c in prof.columns if c.key in keys]
+    ms, _ = apply_profile(rows, prof)
+    return Project(name="Synthetic G/D",
+                   inputs=[VarSpec("power", "W", "continuous", 150, 190, step=10.0),
+                           VarSpec("dwell", "s", "integer", 3, 7)],
+                   objective=ObjSpec("G/D ratio", "a.u.", "max"),
+                   budget_total=40, measurements=[dict(m) for m in ms],
+                   exclude_zero=True, import_profile=prof)
 
 
 def external(name: str):

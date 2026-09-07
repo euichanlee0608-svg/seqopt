@@ -134,7 +134,7 @@ class ModelTab(QWidget):
         cv.addWidget(self.cut_hint)
         sd.addWidget(self.cut_box)
 
-        gs = QGroupBox(tr("Sensitivity — which knob bites hardest"))
+        gs = QGroupBox(tr("Sensitivity — which knob matters"))
         gsv = QVBoxLayout(gs)
         self.sens_canvas = Canvas(width=2.6, height=2.0, dpi=100)
         # squeeze this figure and matplotlib gives up on the layout, dropping the
@@ -151,9 +151,22 @@ class ModelTab(QWidget):
         self.tabs.addTab(surf, tr("Surface"))
 
         # ── validation figures ─────────────────────────────────────
+        # Four panels in a 2×2 grid. With the banner and a two-line readout up (an unlearned
+        # surface at the 660 px minimum height) the page is left with ~180 px, and matplotlib
+        # squeezes each panel to a few pixels with its labels spilling out. So the figure keeps
+        # the height four readable panels need — its own size hint, 300 px — and the page scrolls.
+        # (The hint is also what the scroll area lays the page out with, so it must be the
+        # minimum, not the nominal 6 inches: the canvas then fills any taller viewport.)
+        check_scroll = QScrollArea()
+        check_scroll.setWidgetResizable(True)
+        check_scroll.setFrameShape(QFrame.NoFrame)
+        check_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         check = QWidget()
+        check_scroll.setWidget(check)
         cvv = QVBoxLayout(check)
-        self.check_canvas = Canvas(width=9.0, height=6.4)
+        cvv.setContentsMargins(0, 0, 6, 0)
+        self.check_canvas = Canvas(width=9.0, height=2.75)
+        self.check_canvas.setMinimumHeight(self.check_canvas.sizeHint().height())
         cvv.addWidget(self.check_canvas, 1)
         self.check_caption = tell_true_height(QLabel(tr(
             "Top left the trajectory, top right learnability (LOOCV), bottom left the replicate "
@@ -162,7 +175,7 @@ class ModelTab(QWidget):
         self.check_caption.setWordWrap(True)
         self.check_caption.setStyleSheet(theme.small())
         cvv.addWidget(self.check_caption)
-        self.tabs.addTab(check, tr("Validation"))
+        self.tabs.addTab(check_scroll, tr("Validation"))
 
         root.addWidget(self.tabs, 1)
 

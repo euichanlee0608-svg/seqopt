@@ -25,7 +25,7 @@ from core.i18n import tr
 from . import theme
 from .widgets.section import PageHeader
 
-TEST_COUNT = 358      # number of tests under tests/ — tests/test_help.py checks it against the real collected count
+TEST_COUNT = 360      # number of tests under tests/ — tests/test_help.py checks it against the real collected count
 
 
 @dataclass

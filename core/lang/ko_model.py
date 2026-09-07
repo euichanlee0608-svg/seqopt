@@ -136,7 +136,7 @@ KO: dict[str, str] = {
         '모델이 본 지형과, 그 모델을 얼마나 믿을 수 있는지 보여 주는 검증 그림입니다.',
     'Slice':
         '절단면',
-    'Sensitivity — which knob bites hardest':
+    'Sensitivity — which knob matters':
         '민감도 — 어느 손잡이가 세게 듣는가',
     'Surface':
         '응답면',
