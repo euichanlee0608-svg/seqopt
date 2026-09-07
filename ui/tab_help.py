@@ -610,7 +610,8 @@ _CSS = f"""
         border:1px solid {theme.BORDER}; font-weight:600; }}
   td {{ padding:6px 8px; border:1px solid {theme.BORDER}; vertical-align:top; }}
   pre {{ background:{theme.SURFACE}; border:1px solid {theme.BORDER}; border-radius:6px;
-         padding:10px; font-family:{theme.MONO_FAMILY}; font-size:12px; margin:8px 0; }}
+         padding:10px; font-family:{theme.MONO_FAMILY}; font-size:12px; margin:8px 0;
+         white-space:pre-wrap; }}
   code {{ background:{theme.SURFACE}; padding:1px 4px; border-radius:3px;
           font-family:{theme.MONO_FAMILY}; }}
   .src {{ color:{theme.TEXT_MUTED}; font-size:12px; }}
