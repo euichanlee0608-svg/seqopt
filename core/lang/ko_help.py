@@ -530,4 +530,157 @@ KO: dict[str, str] = {
     "is sometimes exactly the right move. But it is always marked.":
         "<b>막지는 않습니다</b> — 범위를 넓혀서 그 바깥을 측정하는 것이 오히려 옳은 선택일 때도 "
         "있기 때문입니다. 다만 항상 표시됩니다.",
+    "What is it computing inside": "안에서 무슨 계산을 하나요",
+    "logic algorithm GP kernel EI principle formulas": "로직 알고리즘 GP 커널 EI 원리 수식",
+    "<h3>In one line</h3>": "<h3>한 줄로</h3>",
+    "From the measured conditions it estimates the <b>response surface</b> "
+    "(input → output), with a model that also reports its own "
+    "<b>uncertainty</b>. Then \"how much would measuring here teach\" is "
+    "scored, and the highest scorer wins.":
+        "측정한 조건들로부터 <b>응답면</b>(입력 → 출력)을 추정하되, 스스로의 <b>불확실성</b>도 함께 "
+        "보고하는 모델을 씁니다. 그다음 ‘여기를 재면 얼마나 배우게 될까’를 점수로 매겨 가장 높은 "
+        "점수를 받은 곳이 이깁니다.",
+    "<h3>1. The surrogate — a Gaussian process</h3>": "<h3>1. 대리모델 — 가우시안 프로세스</h3>",
+    "<b>Matern ν=2.5</b> — smooth but not overly smooth. A common fit for experimental surfaces":
+        "<b>Matern ν=2.5</b> — 매끄럽지만 너무 매끄럽지는 않은 곡면. 실험 응답면에 흔히 맞습니다",
+    "<b>ARD</b> — one length scale per variable. The sensitivity view comes from here":
+        "<b>ARD</b> — 변수마다 길이척도를 따로 둡니다. 민감도 보기가 여기서 나옵니다",
+    "<b>WhiteKernel</b> — absorbs measurement noise. It earns its keep once replicates exist":
+        "<b>WhiteKernel</b> — 측정 잡음을 흡수합니다. 반복 측정이 있어야 제 몫을 합니다",
+    "The model learns <b>condition means</b>. Replicates feed discriminability (gate ③)":
+        "모델이 학습하는 대상은 <b>조건 평균</b>입니다. 반복 측정은 판별력(관문 ③)에 쓰입니다",
+    "<h3>2. The acquisition — choosing where to measure next</h3>": "<h3>2. 획득함수 — 다음에 잴 곳 고르기</h3>",
+    "<pre>EI  = (μ − best)·Φ(z) + σ·φ(z),   z = (μ − best)/σ\n"
+    "UCB = μ + b·σ\n"
+    "TS  = one posterior draw, take its maximum</pre>":
+        "<pre>EI  = (μ − best)·Φ(z) + σ·φ(z),   z = (μ − best)/σ\n"
+        "UCB = μ + b·σ\n"
+        "TS  = 사후분포에서 뽑은 함수 하나의 최댓값</pre>",
+    "<b>best is always the best measured value.</b> Use a true or corrected "
+    "value and the choice no longer matches what a researcher would actually do.":
+        "<b>best 는 언제나 실제로 측정한 값 중 최선</b>입니다. 참값이나 보정값을 쓰면 "
+        "실제 연구자가 할 선택과 달라집니다.",
+    "<h3>3. The diagnostics — what only this tool does</h3>": "<h3>3. 진단 — 이 도구만 하는 것</h3>",
+    "<pre>σ<sub>w</sub> = √( Σ(n−1)·var(replicates) / Σ(n−1) )    measurement wobble\n"
+    "σ<sub>b</sub> = std( condition means , ddof=1 )         between-condition difference\n"
+    "D(n) = σ<sub>b</sub> / (σ<sub>w</sub>/√n)                        discriminability\n\n"
+    "R² = 1 − SS_res/SS_tot   (per-condition LOOCV, refit per fold)\n"
+    "nugget ratio = nugget / sill   (semivariogram)</pre>":
+        "<pre>σ<sub>w</sub> = √( Σ(n−1)·var(replicates) / Σ(n−1) )    측정 흔들림\n"
+        "σ<sub>b</sub> = std( condition means , ddof=1 )         조건 간 차이\n"
+        "D(n) = σ<sub>b</sub> / (σ<sub>w</sub>/√n)                        판별력\n\n"
+        "R² = 1 − SS_res/SS_tot   (조건별 LOOCV, 폴드마다 재학습)\n"
+        "nugget ratio = nugget / sill   (세미베리오그램)</pre>",
+    "Discriminability comes with a 95% interval from a <b>4000-draw "
+    "condition bootstrap</b>. When the interval straddles 1.0, the verdict "
+    "is \"undecided\".":
+        "판별력은 <b>조건 단위 부트스트랩 4000회</b>로 낸 95% 구간과 함께 나옵니다. "
+        "구간이 1.0 을 걸치면 판정은 ‘판정불가’입니다.",
+    "Has it been validated": "검증은 된 건가요",
+    "validation trust tests reproduce evidence measured": "검증 신뢰 테스트 재현 근거 측정",
+    "<h3>How far the validation goes</h3>": "<h3>검증이 어디까지 됐나</h3>",
+    "part": "부분",
+    "status": "상태",
+    "evidence": "근거",
+    "<b>diagnostic calculations</b><br>discriminability · learnability · nugget":
+        "<b>진단 계산</b><br>판별력 · 학습가능성 · 너깃비",
+    "<b>validated</b>": "<b>검증됨</b>",
+    "the test suite pins the numbers the original validation scripts "
+    "produced, to within 1e-3; the public-dataset expectation file "
+    "(verify_terrain.json) ships in this repo":
+        "테스트가 원래의 검증 스크립트가 낸 값들을 오차 1e-3 이내로 고정합니다. "
+        "공개 데이터셋의 기대값 파일(verify_terrain.json)이 이 레포에 함께 있습니다",
+    "<b>the gate verdict</b>": "<b>관문 판정</b>",
+    "the same yardstick applied to four datasets (one lab, three public) "
+    "reproduced the original analysis' split":
+        "같은 잣대를 데이터셋 4개(실험 데이터 1개 · 공개 데이터셋 3개)에 적용했더니 "
+        "원래 분석과 같은 판정으로 나뉘었습니다",
+    "<b>single recommendations (EI · GP)</b>": "<b>단일 추천 (EI · GP)</b>",
+    "the global-optimum hit rate within a 40-run budget was actually measured on "
+    "8 standard test functions × 10 seeds "
+    "(multimodal average {multi}). The result file "
+    "ships in the repo, and a test checks the numbers on screen against it":
+        "40회 예산 안의 전역 최적 도달률을 표준 시험함수 8개 × 시드 10개에서 실제로 측정했습니다 "
+        "(다봉 평균 {multi}). 결과 파일이 레포에 있고, 화면의 숫자가 그 파일과 일치하는지 "
+        "테스트가 확인합니다",
+    "<b>four global-search alternatives</b>": "<b>전역 탐색 대안 4종</b>",
+    "<b>no gain, confirmed</b>": "<b>이득 없음, 확인됨</b>",
+    "MES · exploration mixing · GP-UCB · Thompson compared under the same conditions. "
+    "None beat EI on the multimodal functions, so none went on screen "
+    "(see «Which of the three methods»)":
+        "MES · 탐색을 섞은 EI · GP-UCB 일정 · Thompson 을 같은 조건에서 비교했습니다. "
+        "다봉 함수에서 EI 를 이긴 것이 하나도 없어 화면에 올리지 않았습니다 "
+        "(«고르는 방식 셋 중 뭘 써야 하나요» 참고)",
+    "<b>sum constraint · grid candidates</b>": "<b>합 제약 · 격자 후보</b>",
+    "tests check that initial designs and recommendations land only on the "
+    "constraint plane and on the grid":
+        "초기 설계와 추천이 제약 평면 위, 그리고 격자 위에만 놓이는지 테스트로 확인합니다",
+    "batch recommendations": "배치 추천",
+    "<b>not validated</b>": "<b>검증되지 않음</b>",
+    "only checked that distinct points come out. Whether batches beat "
+    "sequential picking was never measured":
+        "서로 다른 점이 나오는지만 확인했습니다. 배치가 순차 추천보다 나은지는 측정한 적이 없습니다",
+    "the random-forest surrogate": "랜덤 포레스트 대리모델",
+    "its uncertainty calibration was never checked. Comparison only":
+        "불확실성 보정이 맞는지 확인한 적이 없습니다. 비교용으로만 씁니다",
+    "<h3>Numbers pinned by the tests (public datasets)</h3>": "<h3>테스트로 고정된 수치 (공개 데이터셋)</h3>",
+    "item": "항목",
+    "value": "값",
+    "external discriminability D": "외부 데이터셋 판별력 D",
+    "terrain nugget ratios": "지형 너깃비",
+    "The lab dataset the study was run for is <b>not distributed</b> with "
+    "this repository; the numbers quoted in this help (R² = −0.272, "
+    "D = 1.03 [0.49, 1.80], noise share 95%) are that study's published "
+    "aggregates.":
+        "이 연구에 쓰인 실험 데이터는 <b>이 저장소에 포함되어 있지 않습니다</b>. "
+        "이 도움말에 인용된 수치(R² = −0.272, D = 1.03 [0.49, 1.80], 잡음 비중 95%)는 "
+        "그 연구에서 발표한 집계값입니다.",
+    "<h3>Held in place by machines</h3>": "<h3>기계로 고정돼 있습니다</h3>",
+    "The test suite — <b>{n} tests</b> — re-verifies these values on every "
+    "run. Change the calculation and the tests break — that is the tripwire.":
+        "테스트 <b>{n}개</b>가 위 값들을 매번 다시 확인합니다. "
+        "계산 방식을 바꾸면 테스트가 깨집니다 — 그것이 안전장치입니다.",
+    "The Windows executable is only built <b>after the tests pass</b>. "
+    "A program that misjudges must never get packaged.":
+        "윈도우 실행파일도 <b>테스트를 통과해야만</b> 빌드됩니다. "
+        "잘못 판정하는 프로그램이 배포되어서는 안 되기 때문입니다.",
+    "<h3>What honestly was not done</h3>": "<h3>솔직히 못 한 것</h3>",
+    "Whether batch recommendations beat sequential ones was <b>never measured</b>":
+        "배치 추천이 순차 추천보다 나은지 <b>측정한 적이 없습니다</b>",
+    "The extrapolation margin of 0.02 was <b>chosen without evidence</b>":
+        "외삽 여유 0.02 는 <b>근거 없이 정한 값</b>입니다",
+    "Of the four gate thresholds, only <b>R² > 0</b> has a hard basis. "
+    "The discriminability 1.0 is borrowed from other fields, so it is "
+    "safest in \"A vs B\" comparisons":
+        "관문 임계값 4개 중 단단한 근거가 있는 것은 <b>R² > 0 하나</b>뿐입니다. "
+        "판별력 1.0 은 다른 분야에서 빌려온 값이라 ‘A 대 B’ 비교에 쓰는 것이 가장 안전합니다",
+    "The global-search benchmark uses <b>synthetic test functions</b>, not real device terrain":
+        "전역 탐색 벤치마크는 <b>합성 시험함수</b>를 씁니다. 실제 소자 지형이 아닙니다",
+    "The stopping-rule history resets when the program restarts":
+        "정지 규칙 이력은 프로그램을 다시 시작하면 초기화됩니다",
+    "Can I trust these numbers": "이 숫자를 믿어도 되나요",
+    "validation trust evidence tests reproduce": "검증 신뢰 근거 테스트 재현",
+    "<h3>Three ways to check</h3>": "<h3>세 가지로 확인할 수 있습니다</h3>",
+    "<b>Diagnose tab → unfold the calculation</b> — per-condition n, mean, "
+    "SD and contribution are all visible, and the σw·σb·D in the box "
+    "below come straight from that table":
+        "<b>진단 탭 → 계산 과정 펼치기</b> — 조건별 n·평균·SD·기여도가 모두 보이고, "
+        "아래 상자의 σw·σb·D 는 그 표에서 바로 나옵니다",
+    "<b>Report → calculation log</b> — every number's formula and "
+    "intermediate values, saved as text":
+        "<b>리포트 → 계산 로그</b> — 모든 수치의 산출식과 중간값을 텍스트로 저장합니다",
+    "<b>Report → reproduction script</b> — one file that produces the same "
+    "numbers again. Half a year later, \"where did this number come "
+    "from\" still has an answer":
+        "<b>리포트 → 재현 스크립트</b> — 파일 하나로 같은 숫자를 다시 낼 수 있습니다. "
+        "반년 뒤 ‘이 숫자가 어디서 나왔나’ 라는 질문에도 답할 수 있습니다",
+    "<h3>Machine-checked</h3>": "<h3>기계 검증</h3>",
+    "The computation core is pinned by tests that reproduce the original "
+    "validation scripts' values to within 1e-3 (the external datasets' "
+    "D values and terrain statistics among them). {n} tests in all.":
+        "계산 핵심부는 원래의 검증 스크립트가 낸 값들을 오차 1e-3 이내로 재현하도록 테스트로 "
+        "고정되어 있습니다 (그중에는 외부 데이터셋의 D 값과 지형 통계도 포함됩니다). "
+        "테스트는 모두 {n}개입니다.",
+    "So <b>changing the calculation breaks the tests.</b> That is the tripwire.":
+        "그래서 <b>계산 방식을 바꾸면 테스트가 깨집니다.</b> 그것이 안전장치입니다.",
 }

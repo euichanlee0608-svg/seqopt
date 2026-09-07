@@ -431,105 +431,106 @@ def topics() -> list[Topic]:
           code=["core/recommend.py: _axis_bounds()"]),  # i18n: skip
 
     # ── trust ──────────────────────────────────────────────────────
-    Topic("logic", "What is it computing inside", tags="logic algorithm GP kernel EI principle formulas",
-          body="<h3>In one line</h3>" +
-          _p("From the measured conditions it estimates the <b>response surface</b> "
-             "(input → output), with a model that also reports its own "
-             "<b>uncertainty</b>. Then \"how much would measuring here teach\" is "
-             "scored, and the highest scorer wins.") +
-          "<h3>1. The surrogate — a Gaussian process</h3>" +
-          "<pre>ConstantKernel × Matern(ν=2.5, ARD) + WhiteKernel</pre>" +
-          _ul("<b>Matern ν=2.5</b> — smooth but not overly smooth. A common fit for experimental surfaces",
-              "<b>ARD</b> — one length scale per variable. The sensitivity view comes from here",
-              "<b>WhiteKernel</b> — absorbs measurement noise. It earns its keep once replicates exist",
-              "The model learns <b>condition means</b>. Replicates feed discriminability (gate ③)") +
-          "<h3>2. The acquisition — choosing where to measure next</h3>" +
-          "<pre>EI  = (μ − best)·Φ(z) + σ·φ(z),   z = (μ − best)/σ\n"
-          "UCB = μ + b·σ\n"
-          "TS  = one posterior draw, take its maximum</pre>" +
-          _p("<b>best is always the best measured value.</b> Use a true or corrected "
-             "value and the choice no longer matches what a researcher would actually do.") +
-          "<h3>3. The diagnostics — what only this tool does</h3>" +
-          "<pre>σ<sub>w</sub> = √( Σ(n−1)·var(replicates) / Σ(n−1) )    measurement wobble\n"
-          "σ<sub>b</sub> = std( condition means , ddof=1 )         between-condition difference\n"
-          "D(n) = σ<sub>b</sub> / (σ<sub>w</sub>/√n)                        discriminability\n\n"
-          "R² = 1 − SS_res/SS_tot   (per-condition LOOCV, refit per fold)\n"
-          "nugget ratio = nugget / sill   (semivariogram)</pre>" +
-          _p("Discriminability comes with a 95% interval from a <b>4000-draw "
-             "condition bootstrap</b>. When the interval straddles 1.0, the verdict "
-             "is \"undecided\"."),
-          code=["core/surrogate.py", "core/acquisition.py", "core/diagnostics.py"]),
+    Topic("logic", tr("What is it computing inside"), tags=tr("logic algorithm GP kernel EI principle formulas"),  # i18n: skip
+          body=tr("<h3>In one line</h3>") +
+          _p(tr("From the measured conditions it estimates the <b>response surface</b> "
+                "(input → output), with a model that also reports its own "
+                "<b>uncertainty</b>. Then \"how much would measuring here teach\" is "
+                "scored, and the highest scorer wins.")) +
+          tr("<h3>1. The surrogate — a Gaussian process</h3>") +
+          "<pre>ConstantKernel × Matern(ν=2.5, ARD) + WhiteKernel</pre>" +  # i18n: skip
+          _ul(tr("<b>Matern ν=2.5</b> — smooth but not overly smooth. A common fit for experimental surfaces"),
+              tr("<b>ARD</b> — one length scale per variable. The sensitivity view comes from here"),
+              tr("<b>WhiteKernel</b> — absorbs measurement noise. It earns its keep once replicates exist"),
+              tr("The model learns <b>condition means</b>. Replicates feed discriminability (gate ③)")) +
+          tr("<h3>2. The acquisition — choosing where to measure next</h3>") +
+          tr("<pre>EI  = (μ − best)·Φ(z) + σ·φ(z),   z = (μ − best)/σ\n"
+             "UCB = μ + b·σ\n"
+             "TS  = one posterior draw, take its maximum</pre>") +
+          _p(tr("<b>best is always the best measured value.</b> Use a true or corrected "
+                "value and the choice no longer matches what a researcher would actually do.")) +
+          tr("<h3>3. The diagnostics — what only this tool does</h3>") +
+          tr("<pre>σ<sub>w</sub> = √( Σ(n−1)·var(replicates) / Σ(n−1) )    measurement wobble\n"
+             "σ<sub>b</sub> = std( condition means , ddof=1 )         between-condition difference\n"
+             "D(n) = σ<sub>b</sub> / (σ<sub>w</sub>/√n)                        discriminability\n\n"
+             "R² = 1 − SS_res/SS_tot   (per-condition LOOCV, refit per fold)\n"
+             "nugget ratio = nugget / sill   (semivariogram)</pre>") +
+          _p(tr("Discriminability comes with a 95% interval from a <b>4000-draw "
+                "condition bootstrap</b>. When the interval straddles 1.0, the verdict "
+                "is \"undecided\".")),
+          code=["core/surrogate.py", "core/acquisition.py", "core/diagnostics.py"]),  # i18n: skip
 
-    Topic("verified", "Has it been validated", tags="validation trust tests reproduce evidence measured",
-          body="<h3>How far the validation goes</h3>" +
-          _table(["part", "status", "evidence"], [
-              ["<b>diagnostic calculations</b><br>discriminability · learnability · nugget",
-               "<b>validated</b>",
-               "the test suite pins the numbers the original validation scripts "
-               "produced, to within 1e-3; the public-dataset expectation file "
-               "(verify_terrain.json) ships in this repo"],
-              ["<b>the gate verdict</b>", "<b>validated</b>",
-               "the same yardstick applied to four datasets (one lab, three public) "
-               "reproduced the original analysis' split"],
-              ["<b>single recommendations (EI · GP)</b>", "<b>validated</b>",
-               "the global-optimum hit rate within a 40-run budget was actually measured on "
-               "8 standard test functions × 10 seeds "
-               f"(multimodal average {_pct(BENCH_CLAIMS['multimodal_hit'])}). The result file "
-               "ships in the repo, and a test checks the numbers on screen against it"],
-              ["<b>four global-search alternatives</b>", "<b>no gain, confirmed</b>",
-               "MES · exploration mixing · GP-UCB · Thompson compared under the same conditions. "
-               "None beat EI on the multimodal functions, so none went on screen "
-               "(see «Which of the three methods»)"],
-              ["<b>sum constraint · grid candidates</b>", "<b>validated</b>",
-               "tests check that initial designs and recommendations land only on the "
-               "constraint plane and on the grid"],
-              ["batch recommendations", "<b>not validated</b>",
-               "only checked that distinct points come out. Whether batches beat "
-               "sequential picking was never measured"],
-              ["the random-forest surrogate", "<b>not validated</b>",
-               "its uncertainty calibration was never checked. Comparison only"],
+    Topic("verified", tr("Has it been validated"), tags=tr("validation trust tests reproduce evidence measured"),  # i18n: skip
+          body=tr("<h3>How far the validation goes</h3>") +
+          _table([tr("part"), tr("status"), tr("evidence")], [
+              [tr("<b>diagnostic calculations</b><br>discriminability · learnability · nugget"),
+               tr("<b>validated</b>"),
+               tr("the test suite pins the numbers the original validation scripts "
+                  "produced, to within 1e-3; the public-dataset expectation file "
+                  "(verify_terrain.json) ships in this repo")],
+              [tr("<b>the gate verdict</b>"), tr("<b>validated</b>"),
+               tr("the same yardstick applied to four datasets (one lab, three public) "
+                  "reproduced the original analysis' split")],
+              [tr("<b>single recommendations (EI · GP)</b>"), tr("<b>validated</b>"),
+               tr("the global-optimum hit rate within a 40-run budget was actually measured on "
+                  "8 standard test functions × 10 seeds "
+                  "(multimodal average {multi}). The result file "
+                  "ships in the repo, and a test checks the numbers on screen against it",
+                  multi=_pct(BENCH_CLAIMS['multimodal_hit']))],
+              [tr("<b>four global-search alternatives</b>"), tr("<b>no gain, confirmed</b>"),
+               tr("MES · exploration mixing · GP-UCB · Thompson compared under the same conditions. "
+                  "None beat EI on the multimodal functions, so none went on screen "
+                  "(see «Which of the three methods»)")],
+              [tr("<b>sum constraint · grid candidates</b>"), tr("<b>validated</b>"),
+               tr("tests check that initial designs and recommendations land only on the "
+                  "constraint plane and on the grid")],
+              [tr("batch recommendations"), tr("<b>not validated</b>"),
+               tr("only checked that distinct points come out. Whether batches beat "
+                  "sequential picking was never measured")],
+              [tr("the random-forest surrogate"), tr("<b>not validated</b>"),
+               tr("its uncertainty calibration was never checked. Comparison only")],
           ]) +
-          "<h3>Numbers pinned by the tests (public datasets)</h3>" +
-          _table(["item", "value"], [
-              ["external discriminability D", "P3HT-CNT 6.76 · AgNP 4.28 · Perovskite 1.82"],
-              ["terrain nugget ratios", "P3HT-CNT 0.082 · AgNP 0.032 · Perovskite 0.404"],
+          tr("<h3>Numbers pinned by the tests (public datasets)</h3>") +
+          _table([tr("item"), tr("value")], [
+              [tr("external discriminability D"), "P3HT-CNT 6.76 · AgNP 4.28 · Perovskite 1.82"],  # i18n: skip
+              [tr("terrain nugget ratios"), "P3HT-CNT 0.082 · AgNP 0.032 · Perovskite 0.404"],  # i18n: skip
           ]) +
-          _p("The lab dataset the study was run for is <b>not distributed</b> with "
-             "this repository; the numbers quoted in this help (R² = −0.272, "
-             "D = 1.03 [0.49, 1.80], noise share 95%) are that study's published "
-             "aggregates.") +
-          "<h3>Held in place by machines</h3>" +
-          _p(f"The test suite — <b>{TEST_COUNT} tests</b> — re-verifies these values on every "
-             "run. Change the calculation and the tests break — that is the tripwire.",
-             "The Windows executable is only built <b>after the tests pass</b>. "
-             "A program that misjudges must never get packaged.") +
-          "<h3>What honestly was not done</h3>" +
-          _ul("Whether batch recommendations beat sequential ones was <b>never measured</b>",
-              "The extrapolation margin of 0.02 was <b>chosen without evidence</b>",
-              "Of the four gate thresholds, only <b>R² > 0</b> has a hard basis. "
-              "The discriminability 1.0 is borrowed from other fields, so it is "
-              "safest in \"A vs B\" comparisons",
-              "The global-search benchmark uses <b>synthetic test functions</b>, not real device terrain",
-              "The stopping-rule history resets when the program restarts"),
+          _p(tr("The lab dataset the study was run for is <b>not distributed</b> with "
+                "this repository; the numbers quoted in this help (R² = −0.272, "
+                "D = 1.03 [0.49, 1.80], noise share 95%) are that study's published "
+                "aggregates.")) +
+          tr("<h3>Held in place by machines</h3>") +
+          _p(tr("The test suite — <b>{n} tests</b> — re-verifies these values on every "
+                "run. Change the calculation and the tests break — that is the tripwire.", n=TEST_COUNT),
+             tr("The Windows executable is only built <b>after the tests pass</b>. "
+                "A program that misjudges must never get packaged.")) +
+          tr("<h3>What honestly was not done</h3>") +
+          _ul(tr("Whether batch recommendations beat sequential ones was <b>never measured</b>"),
+              tr("The extrapolation margin of 0.02 was <b>chosen without evidence</b>"),
+              tr("Of the four gate thresholds, only <b>R² > 0</b> has a hard basis. "
+                 "The discriminability 1.0 is borrowed from other fields, so it is "
+                 "safest in \"A vs B\" comparisons"),
+              tr("The global-search benchmark uses <b>synthetic test functions</b>, not real device terrain"),
+              tr("The stopping-rule history resets when the program restarts")),
           code=["docs/ARCHITECTURE.md", "tests/test_diagnostics.py", "tests/data/verify_terrain.json",
-                "docs/bench_global.json"]),
+                "docs/bench_global.json"]),  # i18n: skip
 
-    Topic("trust", "Can I trust these numbers", tags="validation trust evidence tests reproduce",
-          body="<h3>Three ways to check</h3>" +
-          _ul("<b>Diagnose tab → unfold the calculation</b> — per-condition n, mean, "
-              "SD and contribution are all visible, and the σw·σb·D in the box "
-              "below come straight from that table",
-              "<b>Report → calculation log</b> — every number's formula and "
-              "intermediate values, saved as text",
-              "<b>Report → reproduction script</b> — one file that produces the same "
-              "numbers again. Half a year later, \"where did this number come "
-              "from\" still has an answer") +
-          "<h3>Machine-checked</h3>" +
-          _p("The computation core is pinned by tests that reproduce the original "
-             "validation scripts' values to within 1e-3 (the external datasets' "
-             f"D values and terrain statistics among them). {TEST_COUNT} tests in all.",
-             "So <b>changing the calculation breaks the tests.</b> That is the tripwire."),
-          code=["tests/test_diagnostics.py", "tests/data/verify_terrain.json"]),
+    Topic("trust", tr("Can I trust these numbers"), tags=tr("validation trust evidence tests reproduce"),  # i18n: skip
+          body=tr("<h3>Three ways to check</h3>") +
+          _ul(tr("<b>Diagnose tab → unfold the calculation</b> — per-condition n, mean, "
+                 "SD and contribution are all visible, and the σw·σb·D in the box "
+                 "below come straight from that table"),
+              tr("<b>Report → calculation log</b> — every number's formula and "
+                 "intermediate values, saved as text"),
+              tr("<b>Report → reproduction script</b> — one file that produces the same "
+                 "numbers again. Half a year later, \"where did this number come "
+                 "from\" still has an answer")) +
+          tr("<h3>Machine-checked</h3>") +
+          _p(tr("The computation core is pinned by tests that reproduce the original "
+                "validation scripts' values to within 1e-3 (the external datasets' "
+                "D values and terrain statistics among them). {n} tests in all.", n=TEST_COUNT),
+             tr("So <b>changing the calculation breaks the tests.</b> That is the tripwire.")),
+          code=["tests/test_diagnostics.py", "tests/data/verify_terrain.json"]),  # i18n: skip
 
     Topic("slow", "The learnability computation is slow", tags="slow speed performance LOOCV background",
           body=_p("It is. LOOCV refits the model once per condition — "
