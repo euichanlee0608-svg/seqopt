@@ -119,6 +119,7 @@ newest request survives (`DiagnosticsRunner`).
 | import matplotlib before the window shows | the font-cache scan froze startup for 100+ s (measured) |
 | repaint hidden tabs / whole tables per keystroke | 972 ms per edited cell before the fix, 1 ms after |
 | auto-update a regression expectation | that is how regressions get through — say what changed first |
+| print an internal response value (log10, negated for a min goal) on a screen or figure | the model works in internal coordinates; the user reads S/cm. `fmt_response` / `fmt_prediction` (`core/surface.py`) and `ObjSpec.to_plot` + `plot_label()` are the only way out — "best measured so far 2.931" beside a data table reading 853 S/cm was a shipped defect |
 
 ## 6. Two languages — English is the key, Korean is the catalog
 
@@ -155,7 +156,7 @@ What enforces it — three tests, all red on a plain string:
 | test | fails when |
 |---|---|
 | `tests/test_i18n.py` (scanner `tests/i18n_scan.py`) | a user-visible literal is not wrapped in `tr()`; a key has no Korean; a Korean entry is stale; placeholders disagree; a "translation" is still English; a private-lab token leaks in |
-| `tests/test_layout.py` (`tests/clipcheck.py`) | any label, button, tab, column header, figure title or table is cut off — every tab of every bundled example, **en × ko × 1024×660 × 1366×768** |
+| `tests/test_layout.py` (`tests/clipcheck.py`) | any label, button, tab, column header, figure title or table is cut off — every tab of every bundled example, **en × ko × 1024×660 × 1366×768**. The `qapp` fixture applies `ui.theme` first: measured with Qt's default font the gate found nothing while the real font clipped |
 | CI `windows-build` | the shipped exe is captured on a real Windows display in both languages (`seqopt-windows-shots/en`, `/ko`), 19 screens each |
 
 Adding a string therefore means: write it in English inside `tr()`, add the

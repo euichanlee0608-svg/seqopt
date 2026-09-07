@@ -325,4 +325,4 @@ def candidate_summary(inputs: list[VarSpec], constraint: SumConstraint | None = 
     body = " × ".join(parts)
     if constraint is not None:
         body += tr(", within constraint {what}", what=constraint.describe())
-    return tr("{n} candidate conditions ({parts})", n=n, parts=body)
+    return tr("{n} candidate conditions ({parts})", n=f"{n:,}", parts=body)
