@@ -85,7 +85,7 @@ def _install_crash_log() -> Path:
                 box = QMessageBox()
                 box.setIcon(QMessageBox.Critical)
                 box.setWindowTitle(tr("Something went wrong"))
-                box.setText(f"{exc_type.__name__}: {exc}")                       # i18n: skip (a Python exception)
+                box.setText(f"{exc_type.__name__}: {exc}")     # Python's own words, in any language
                 box.setInformativeText(tr(
                     "The details were written to the file below. "
                     "Send that file and this can be fixed.\n\n{log}", log=log))
