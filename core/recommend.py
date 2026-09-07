@@ -22,9 +22,10 @@ from .acquisition import (Pick, batch_picks, best_of, make_acquisition, maximise
                           prepare, should_stop, unmeasured)
 from .design import feasible_unit, maximin_lhs, snap_to_constraint
 from .diagnostics import Gate
+from .i18n import tr
 from .protocols import Acquisition, Surrogate
 from .spec import Dataset, SumConstraint, VarSpec
-from .surface import format_condition, to_real
+from .surface import decimals, fmt_value, format_condition, to_real   # noqa: F401 — decimals/fmt_value are this module's public precision helpers
 from .surrogate import DEFAULT_SURROGATE, SURROGATES, fit
 
 CANDIDATE_POOL = 4000
@@ -82,7 +83,7 @@ class Locked:
 
     @property
     def headline(self) -> str:
-        return "The requirements were not met, so no recommendation is given."
+        return tr("The requirements were not met, so no recommendation is given.")
 
 
 RecommendResult = Recommendation | Locked
@@ -196,9 +197,9 @@ def recommend(ds: Dataset, inputs: list[VarSpec], gate: Gate, *,
     suggestions = [_to_suggestion(p, ds, inputs, constraint) for p in picks]
     warnings: list[str] = []
     if any(s.extrapolated for s in suggestions):
-        warnings.append("A suggestion lies outside the measured range — the model has never learned what is out there.")
+        warnings.append(tr("A suggestion lies outside the measured range — the model has never learned what is out there."))
     if not pool.size:
-        warnings.append("No unmeasured candidates remain. Widen the design range or close out the budget.")
+        warnings.append(tr("No unmeasured candidates remain. Widen the design range or close out the budget."))
 
     history = list(acq_history or [])
     acq_max = max((s.acq_value for s in suggestions), default=0.0)
@@ -207,12 +208,12 @@ def recommend(ds: Dataset, inputs: list[VarSpec], gate: Gate, *,
     return Recommendation(
         suggestions=suggestions,
         acquisition_label=acq.describe(),
-        surrogate_label=SURROGATES.label_of(surrogate_name),
+        surrogate_label=tr(SURROGATES.label_of(surrogate_name)),
         best_measured=best_measured,
         response_range=response_range,
         stop_advised=stop,
-        stop_reason=("The maximum acquisition value has stayed below 1% of the response range "
-                     "3 times in a row — there is almost nothing left to gain by measuring more."
+        stop_reason=(tr("The maximum acquisition value has stayed below 1% of the response range "
+                        "3 times in a row — there is almost nothing left to gain by measuring more.")
                      if stop else ""),
         gate_bypassed=bool(gate.locked and override),
         warnings=warnings,

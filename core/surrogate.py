@@ -40,7 +40,7 @@ class GaussianProcessSurrogate:
     WhiteKernel absorbs it.
     """
 
-    label = "Gaussian process (Matern · ARD)"
+    label = "Gaussian process (Matern · ARD)"        # i18n: key — translated where shown (recommend(): tr(label_of(...)))
 
     def __init__(self, n_restarts: int = 2):
         self.n_restarts = n_restarts
@@ -97,7 +97,7 @@ class GaussianProcessSurrogate:
     @property
     def _raw(self) -> GaussianProcessRegressor:
         if self._model is None:
-            raise RuntimeError("Not fitted yet — call fit() first")
+            raise RuntimeError("Not fitted yet — call fit() first")      # i18n: skip
         return self._model
 
 
@@ -110,7 +110,7 @@ class RandomForestSurrogate:
     sensitivity view (F-33) is not shown — and the screen says so plainly.
     """
 
-    label = "Random forest (for comparison)"
+    label = "Random forest (for comparison)"         # i18n: key
 
     def __init__(self, n_estimators: int = 300):
         self.n_estimators = n_estimators

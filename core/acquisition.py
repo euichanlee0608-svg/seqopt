@@ -22,6 +22,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.stats import norm
 
+from .i18n import tr
 from .protocols import Acquisition, Surrogate
 from .registry import Registry
 
@@ -81,8 +82,10 @@ class ExpectedImprovement:
     docs/GLOBAL_SEARCH.md). That is why it is the default.
     """
 
-    label = "Default — expected improvement (EI)"
-    when = ("Use this in most cases. It scores each candidate by how much it is "
+    # class attributes are read at import time, so they stay English here and are
+    # translated where they are shown (`tr(cls.label)` on the Recommend tab)
+    label = "Default — expected improvement (EI)"                                  # i18n: key
+    when = ("Use this in most cases. It scores each candidate by how much it is "   # i18n: key
             "expected to beat the best so far.")
     supports_continuous = True
 
@@ -94,7 +97,7 @@ class ExpectedImprovement:
         return (mean - best) * norm.cdf(z) + std * norm.pdf(z)
 
     def describe(self) -> str:
-        return "EI (expected improvement)"
+        return tr("EI (expected improvement)")
 
 
 @ACQUISITIONS.register("UCB")
@@ -109,8 +112,8 @@ class UpperConfidenceBound:
     """
 
     beta: float = 2.0
-    label = "Explore wider — upper confidence bound (UCB)"
-    when = ("When the terrain is still unknown. Looks harder at uncertain regions. "
+    label = "Explore wider — upper confidence bound (UCB)"                        # i18n: key
+    when = ("When the terrain is still unknown. Looks harder at uncertain regions. "   # i18n: key
             "Pushing too far backfires — raising b from 1 to 4 dropped the "
             "global-optimum hit rate from 90% to 61% in the validation study.")
     supports_continuous = True
@@ -121,7 +124,7 @@ class UpperConfidenceBound:
         return mean + self.beta * std
 
     def describe(self) -> str:
-        return f"UCB (b = {self.beta:g})"
+        return tr("UCB (b = {b})", b=f"{self.beta:g}")
 
 
 @ACQUISITIONS.register("Thompson")
@@ -133,8 +136,8 @@ class ThompsonSampling:
     enumeration only.
     """
 
-    label = "Diversify — Thompson sampling"
-    when = ("When you receive several suggestions at once. Each draw picks a "
+    label = "Diversify — Thompson sampling"                                       # i18n: key
+    when = ("When you receive several suggestions at once. Each draw picks a "        # i18n: key
             "different place, so candidates do not pile up in one spot. "
             "Running alone, the default (EI) is better.")
     supports_continuous = False
@@ -144,7 +147,7 @@ class ThompsonSampling:
         return model.sample(X, rng or np.random.default_rng())
 
     def describe(self) -> str:
-        return "Thompson sampling"
+        return tr("Thompson sampling")
 
 
 def make_acquisition(name: str = DEFAULT_ACQUISITION, **kwargs) -> Acquisition:
@@ -168,7 +171,7 @@ def best_of(model: Surrogate, acquisition: Acquisition, candidates: np.ndarray,
             best: float, rng: np.random.Generator | None = None) -> Pick:
     """The single highest-scoring candidate in the list."""
     if len(candidates) == 0:
-        raise ValueError("The candidate list is empty")
+        raise ValueError("The candidate list is empty")                                   # i18n: skip
     values = acquisition.score(model, candidates, best, rng)
     k = int(np.argmax(values))
     mean, std = model.predict(candidates[k:k + 1])
@@ -188,7 +191,7 @@ def maximise_continuous(model: Surrogate, acquisition: Acquisition, best: float,
     """
     if not acquisition.supports_continuous:
         raise ValueError(
-            f"{acquisition.label} does not support continuous optimization — enumerate candidates instead")
+            f"{acquisition.label} does not support continuous optimization — enumerate candidates instead")   # i18n: skip
 
     from .design import maximin_lhs
     bounds = np.asarray(bounds, dtype=float)

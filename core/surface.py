@@ -10,7 +10,9 @@ original units for display with `to_real()`.
 """
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from decimal import Decimal
 
 import numpy as np
 
@@ -127,9 +129,33 @@ def nearest_measured(ds: Dataset, xn: np.ndarray) -> int:
     return int(np.argmin(np.linalg.norm(ds.XN - np.asarray(xn), axis=1)))
 
 
+def decimals(var: VarSpec) -> int:
+    """How many decimals a value of this variable is shown with.
+
+    The declared step decides (0.5 → 1, 0.25 → 2, 10 → 0); an integer or
+    categorical variable gets none; otherwise the range does — three
+    significant figures of the span (0–100 → 1, 0–1 → 3, 0–1000 → 0),
+    capped at 6. A suggestion is shown at the precision the instrument can
+    be set to, never as 89.0915 %.
+    """
+    if var.type != "continuous":
+        return 0
+    if var.step is not None:
+        exponent = Decimal(f"{var.step:.10g}").normalize().as_tuple().exponent
+        return int(min(6, max(0, -exponent)))
+    return int(min(6, max(0, 3 - math.floor(math.log10(var.hi - var.lo)))))
+
+
+def fmt_value(var: VarSpec, x: float) -> str:
+    """One value in the precision of `decimals()`; a categorical shows its level name."""
+    if var.type == "categorical":
+        k = int(min(max(round(float(x)), 0), len(var.levels) - 1))
+        return var.levels[k]
+    return f"{float(x):.{decimals(var)}f}"
+
+
 def format_condition(x_real: np.ndarray, inputs: list[VarSpec]) -> str:
     parts = []
     for v, x in zip(inputs, x_real):
-        val = f"{x:.0f}" if v.type == "integer" else f"{x:g}"
-        parts.append(f"{v.name} {val}{(' ' + v.unit) if v.unit else ''}")
+        parts.append(f"{v.name} {fmt_value(v, x)}{(' ' + v.unit) if v.unit else ''}")
     return " · ".join(parts)
