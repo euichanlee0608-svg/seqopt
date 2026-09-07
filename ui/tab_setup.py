@@ -293,6 +293,7 @@ class SetupTab(QWidget):
         p = self.project
         self._loading = True
         self.name.setText(p.name)
+        self.name.setCursorPosition(0)   # a long name shows its start, not its tail
         self.obj_name.setText(p.objective.name)
         self.obj_unit.setText(p.objective.unit)
         self.goal.setCurrentIndex(0 if p.objective.goal == "max" else 1)
