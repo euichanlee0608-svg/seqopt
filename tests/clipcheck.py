@@ -14,6 +14,8 @@ A widget where cutting is the design (a table cell elided on purpose) opts out w
 """
 from __future__ import annotations
 
+import sys
+
 from PySide6.QtCore import QPoint, Qt
 from PySide6.QtWidgets import (QAbstractButton, QAbstractScrollArea, QComboBox, QGroupBox, QHeaderView,
                                QLabel, QListWidget, QTableWidget, QTabBar, QWidget)
@@ -133,7 +135,11 @@ def _figure_clipped(canvas) -> list[str]:
 
 def clipped_texts(win: QWidget) -> list[str]:
     """Every clipped piece of text in the shown window right now — empty means all text is visible."""
-    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+    # a canvas can only exist once the app has imported matplotlib — importing the
+    # backend first ourselves trips matplotlib's circular import (and the app's rule
+    # of not loading matplotlib before the window)
+    qtagg = sys.modules.get("matplotlib.backends.backend_qtagg")
+    FigureCanvasQTAgg = qtagg.FigureCanvasQTAgg if qtagg else ()
     out: list[str] = []
     for w in win.findChildren(QWidget):
         if not w.isVisible() or _ok(w):
