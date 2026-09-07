@@ -72,8 +72,8 @@ KO: dict[str, str] = {
         '조건값 + 권장 반복 횟수 + 제안 근거를 표로 저장합니다.',
     '<b style=\'color:{c}\'>{headline}</b><ul style=\'margin:6px 0\'>{reasons}</ul>Follow the prescription on the Diagnose tab first. If you must proceed anyway, turn on "Force a recommendation" above — the result will carry the mark.':
         "<b style='color:{c}'>{headline}</b><ul style='margin:6px 0'>{reasons}</ul>진단 탭의 처방을 먼저 따르세요. 그래도 진행해야 한다면 위의 ‘요건 미달이어도 강제로 추천받기’ 를 켜면 되지만, 그 결과에는 표시가 남습니다.",
-    'predicted {mean} ± {sd} · acquisition {acq} · suggested reps ×{n}':
-        '예측 {mean} ± {sd} · 획득값 {acq} · 권장 반복 ×{n}',
+    'predicted {pred} · acquisition {acq} · suggested reps ×{n}':
+        '예측 {pred} · 획득값 {acq} · 권장 반복 ×{n}',
     '<b>1 condition suggested.</b>':
         '<b>조건 1개를 제안합니다.</b>',
     '<b>{n} conditions suggested.</b>':
@@ -92,8 +92,8 @@ KO: dict[str, str] = {
         '요건 미달 상태입니다',
     'There is no evidence this data can support a recommendation.\n\nProceed anyway and the results and the report will be marked "generated with requirements unmet".':
         '이 데이터로는 추천을 믿을 근거가 없습니다.\n\n그래도 진행하면 결과와 리포트에 ‘요건 미달 상태에서 생성됨’ 이 표시됩니다.',
-    'suggested · {acq} · predicted {mean}±{sd}':
-        '추천 · {acq} · 예측 {mean}±{sd}',
+    'suggested · {acq} · predicted {pred}':
+        '추천 · {acq} · 예측 {pred}',
     'Export instruction sheet':
         '지시서 내보내기',
     'Exported':
@@ -102,12 +102,20 @@ KO: dict[str, str] = {
         '{path}\n\n측정한 뒤 값을 채워 넣으세요.',
     'outside measured range':
         '실측 범위 밖',
+    '≈ {value} (log10 {mean} ± {sd})':
+        '≈ {value} (log10 값 {mean} ± {sd})',
     'predicted':
         '예측',
     'predicted mean':
         '예측 평균',
+    'predicted mean (log10)':
+        '예측 평균 (log10)',
     'uncertainty σ':
         '불확실성 σ',
+    'uncertainty σ (log10)':
+        '불확실성 σ (log10)',
+    'σ (log10)':
+        'σ (log10)',
     'acq.':
         '획득값',
     'acq. value':

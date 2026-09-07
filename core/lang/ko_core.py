@@ -9,7 +9,9 @@ KO: dict[str, str] = {
         "모르는 프로젝트 파일 버전입니다: {found} (이 프로그램이 쓰는 버전은 {ours} 입니다)",
     "No point satisfying the constraint {what} could be found": "제약 {what} 을 만족하는 점을 찾지 못했습니다",
 
-    # ── core/spec.py — variable and sum-constraint validation ─────────────
+    # ── core/spec.py — the objective in plot space · variable and sum-constraint validation ──
+    "log10 {name}": "{name}의 log10",
+    "log10\n{name}": "{name}의\nlog10",
     "{name}: a categorical variable needs levels": "{name}: 범주형 변수에는 값 목록이 필요합니다",
     "{name}: min and max are required": "{name}: 최소·최대가 필요합니다",
     "{name}: min ({lo}) must be < max ({hi})": "{name}: 최소({lo}) < 최대({hi}) 여야 합니다",

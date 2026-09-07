@@ -427,11 +427,19 @@ class DiagTab(QWidget):
         except Exception:                            # noqa: BLE001
             labels = [str(r["index"]) for r in d.table]
 
+        # the condition means are internal (negated for a min goal, log10 when asked
+        # for); σ and (n−1)·var are magnitudes and do not move, so only the mean is
+        # handed back to the user's frame — and the header says when it is a log
+        obj = self.project.objective
+        head = self.calc.horizontalHeaderItem(2)
+        if head is not None:
+            head.setText(tr("mean\n(log10)") if obj.log else tr("mean"))
+
         self.calc.setRowCount(len(d.table))
         top = d.top_condition
         for i, r in enumerate(d.table):
             cells = [labels[i] if i < len(labels) else "?",       # i18n: skip (values, not words)
-                     str(r["n"]), f"{r['mean']:.4f}",
+                     str(r["n"]), f"{obj.to_plot(r['mean']):.4f}",
                      "—" if r["sd"] is None else f"{r['sd']:.4f}", f"{r['ss']:.6f}"]
             for c, txt in enumerate(cells):
                 it = QTableWidgetItem(txt)

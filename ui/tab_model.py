@@ -354,7 +354,7 @@ class ModelTab(QWidget):
         acq = self.acquisition()
         kind = acq.describe().split()[0]
         best = self._best()
-        obj = self.project.objective.name
+        obj = self.project.objective          # the spec, not its name — the figures undo the sign
 
         if d == 1:
             self._plot_1d(fig, best, acq, kind, obj)
@@ -370,15 +370,18 @@ class ModelTab(QWidget):
         c = curve_1d(self.model, self.ds, best, acq)
         ax1, ax2 = fig.subplots(2, 1, height_ratios=[2.2, 1], sharex=True)
 
-        ax1.fill_between(c.x_real, c.mu - 2 * c.sd, c.mu + 2 * c.sd,
+        # everything on this axis is drawn in plot space: the sign is undone, the
+        # log stays (the band is symmetric only there) and the label says so
+        mu = obj.to_plot(c.mu)
+        ax1.fill_between(c.x_real, mu - 2 * c.sd, mu + 2 * c.sd,
                          color=C_BAND, alpha=0.45, lw=0, label="μ ± 2σ")
-        ax1.plot(c.x_real, c.mu, color=C_MEAN, lw=2, label=tr("predicted mean μ"))
+        ax1.plot(c.x_real, mu, color=C_MEAN, lw=2, label=tr("predicted mean μ"))
         for x, v in zip(self.ds.X[:, 0], self.ds.reps):
-            ax1.scatter([x] * len(v), v, s=26, c=C_POINT, edgecolors="white",
+            ax1.scatter([x] * len(v), obj.to_plot(v), s=26, c=C_POINT, edgecolors="white",
                         linewidths=0.6, zorder=5)
         bi = int(np.argmax(self.ds.y_mean))
-        mark_best(ax1, self.ds.X[bi, 0], self.ds.y_mean[bi])
-        ax1.set_ylabel(obj)
+        mark_best(ax1, self.ds.X[bi, 0], obj.to_plot(self.ds.y_mean[bi]))
+        ax1.set_ylabel(obj.plot_label())
         ax1.set_title(tr("Response surface — measured points and the uncertainty around them"))
         ax1.legend(loc="best", ncols=2)
 
@@ -411,7 +414,8 @@ class ModelTab(QWidget):
 
         # a title cannot wrap and these panels are ~100 px wide: the symbol names
         # the panel, the caption under the figure carries the sentence
-        panels = [("μ", g.mu, CMAP_MU), ("σ", g.sd, CMAP_SD), (kind, g.ei, CMAP_EI)]
+        panels = [("μ", obj.to_plot(g.mu), CMAP_MU, obj.plot_label()),
+                  ("σ", g.sd, CMAP_SD, None), (kind, g.ei, CMAP_EI, None)]
         caption = [tr("μ predicted mean · σ uncertainty, darker is less known · "
                       "{kind} where to measure next", kind=kind)]
         if d == 2:
@@ -419,9 +423,11 @@ class ModelTab(QWidget):
         self.surface_caption.setText(" ".join(caption))
         on_slice = self._points_on_slice(i, j)
 
-        for ax, (title, Z, cmap) in zip(axes, panels):
+        for ax, (title, Z, cmap, bar_label) in zip(axes, panels):
             im = ax.imshow(Z, origin="lower", extent=extent, aspect="auto", cmap=cmap)
-            ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+            bar = ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
+            if bar_label:                       # only μ carries the response's own name
+                bar.set_label(bar_label, fontsize=7)
             if len(on_slice):
                 ax.scatter(self.ds.X[on_slice, i], self.ds.X[on_slice, j], s=22,
                            c=C_POINT, edgecolors="white", linewidths=0.6, zorder=5)
@@ -445,14 +451,15 @@ class ModelTab(QWidget):
 
     def _plot_3d(self, ax, g, obj) -> None:
         X, Y = np.meshgrid(g.x_real, g.y_real)
-        ax.plot_surface(X, Y, g.mu, cmap=CMAP_MU, alpha=0.85, linewidth=0,
+        ax.plot_surface(X, Y, obj.to_plot(g.mu), cmap=CMAP_MU, alpha=0.85, linewidth=0,
                         antialiased=True, rstride=2, cstride=2)
         i, j = g.axis_i, g.axis_j
-        ax.scatter(self.ds.X[:, i], self.ds.X[:, j], self.ds.y_mean,
+        y_mean = obj.to_plot(self.ds.y_mean)
+        ax.scatter(self.ds.X[:, i], self.ds.X[:, j], y_mean,
                    s=18, c=C_POINT, depthshade=False)
         # residual drop lines — how far each measured point sits off the surface (F-31)
         pred, _ = self.model.predict(self.ds.XN)
-        for a, b, y, p in zip(self.ds.X[:, i], self.ds.X[:, j], self.ds.y_mean, pred):
+        for a, b, y, p in zip(self.ds.X[:, i], self.ds.X[:, j], y_mean, obj.to_plot(pred)):
             ax.plot([a, a], [b, b], [y, p], color=C_RESIDUAL, lw=0.7)
         ax.set_xlabel(self._axis_label(i), labelpad=-4)
         ax.set_ylabel(self._axis_label(j), labelpad=-4)
@@ -561,7 +568,7 @@ class ModelTab(QWidget):
         ax.step(n, run, where="post", color=C_MEAN, lw=1.8)
         ax.scatter(n, run, s=12, c=C_MEAN, zorder=4)
         ax.set_xlabel(tr("measurements (cumulative)"))
-        ax.set_ylabel(self.project.objective.name)
+        ax.set_ylabel(self.project.objective.plot_label(stacked=True))
         ax.set_title(tr("Trajectory — best measured value so far"))
 
     def _plot_loocv(self, ax) -> None:
@@ -570,8 +577,9 @@ class ModelTab(QWidget):
                     ha="center", va="center", color="#888")            # i18n: skip
             ax.axis("off")
             return
-        y = self.ds.y_mean
-        p = self.loocv.pred
+        obj = self.project.objective
+        y = obj.to_plot(self.ds.y_mean)
+        p = obj.to_plot(self.loocv.pred)
         ax.scatter(y, p, s=30, c=C_POINT, edgecolors="white", linewidths=0.6, zorder=5)
         lim = [min(y.min(), p.min()), max(y.max(), p.max())]
         ax.plot(lim, lim, color=C_AXIS, lw=1, label=tr("perfect prediction"))
@@ -582,12 +590,14 @@ class ModelTab(QWidget):
         ax.legend(loc="best")
 
     def _plot_replicates(self, ax) -> None:
+        obj = self.project.objective
         order, reps, means = replicate_scatter(self.ds)
         for k, v in enumerate(reps):
-            ax.scatter([k] * len(v), v, s=22, c=C_RAW, zorder=3)
-        ax.plot(range(len(means)), means, color=C_MEAN, lw=1.4, zorder=4, label=tr("condition mean"))
+            ax.scatter([k] * len(v), obj.to_plot(v), s=22, c=C_RAW, zorder=3)
+        ax.plot(range(len(means)), obj.to_plot(means), color=C_MEAN, lw=1.4, zorder=4,
+                label=tr("condition mean"))
         ax.set_xlabel(tr("condition (sorted by mean)"))
-        ax.set_ylabel(self.project.objective.name)
+        ax.set_ylabel(obj.plot_label(stacked=True))
         ax.set_title(tr("Replicate scatter"))       # the sentence is in the caption below
         ax.legend(loc="best")
 
