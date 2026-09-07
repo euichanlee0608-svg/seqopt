@@ -58,7 +58,7 @@ class DataTab(QWidget):
         root.addWidget(head)
 
         bar = QHBoxLayout()
-        imp = QPushButton(tr("Import from file…"))
+        imp = QPushButton(tr("Import file…"))
         imp.setProperty("primary", True)
         imp.setToolTip(tr("Opens an Excel/CSV file and lets you assign what each column means.\n"
                           "The assignment is saved with the project, so the next file reads in one step."))
@@ -77,13 +77,17 @@ class DataTab(QWidget):
             bar.addWidget(w)
 
         bar.addSpacing(16)
-        self.hide_excluded = QCheckBox(tr("Hide excluded rows"))
+        self.hide_excluded = QCheckBox(tr("Hide excluded"))
         self.hide_excluded.stateChanged.connect(self.reload)
         bar.addWidget(self.hide_excluded)
         bar.addStretch(1)
         root.addLayout(bar)
 
         self.table = QTableWidget(0, 0, alternatingRowColors=True)
+        # One column per variable plus response, exclude and note: with five or more variables
+        # the grid is meant to scroll sideways rather than squeeze the numbers. The column
+        # headers are still measured — only the table's own width is exempt.
+        self.table.setProperty("clip_ok", True)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.table.itemChanged.connect(self._on_edit)
         self.table.verticalHeader().setDefaultSectionSize(theme.ROW_HEIGHT)

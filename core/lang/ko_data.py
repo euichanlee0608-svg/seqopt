@@ -31,7 +31,7 @@ KO: dict[str, str] = {
         "장비가 실제로 맞출 수 있는 간격 (연속형만). 예: 전원이 10 W 단위로만 돌아가면 10.\n비우면 아무 값이나 고를 수 있는 것으로 봅니다 (후보 무한).\n요건 ① 은 이 간격으로 센 후보 수를 예산과 비교합니다.",
     "+ Add variable": "+ 변수 추가",
     "− Remove selected": "− 선택 삭제",
-    "Fill ranges from data": "데이터에서 범위 채우기",
+    "Fill ranges": "범위 채우기",
     "Fills min/max from the measurements you already entered.\nTyping them by hand is tedious, and a typo sends the\nrecommendation somewhere absurd.":
         "이미 넣은 측정값의 최소·최대로 범위를 채웁니다.\n손으로 하나씩 적는 것은 성가시고, 잘못 적으면\n추천이 엉뚱한 곳으로 갑니다.",
     # --- ui/tab_setup.py — sum constraint ---
@@ -106,7 +106,7 @@ KO: dict[str, str] = {
     "Data — enter what you measured": "데이터 — 잰 값을 넣습니다",
     "One row is one measurement. The same condition on several rows counts automatically as replicates.":
         "한 행이 측정 한 번입니다. 같은 조건을 여러 행에 넣으면 자동으로 반복 측정으로 셉니다.",
-    "Import from file…": "파일에서 가져오기…",
+    "Import file…": "파일에서 가져오기…",
     "Opens an Excel/CSV file and lets you assign what each column means.\nThe assignment is saved with the project, so the next file reads in one step.":
         "엑셀·CSV 를 열고 어떤 열이 무엇인지 지정합니다.\n지정한 규칙은 프로젝트에 저장돼 다음에는 한 번에 읽힙니다.",
     "+ Add row": "+ 행 추가",
@@ -114,7 +114,7 @@ KO: dict[str, str] = {
     "Copy a range in Excel, then press this. Tab- or comma-separated tables come in as they are.":
         "엑셀에서 범위를 복사한 뒤 누르세요. 탭·쉼표로 나뉜 표를 그대로 받습니다.",
     "Export CSV": "CSV 내보내기",
-    "Hide excluded rows": "제외한 행 숨기기",
+    "Hide excluded": "제외한 행 숨기기",
     "exclude": "제외",
     "excluded": "제외함",
     "note": "메모",
