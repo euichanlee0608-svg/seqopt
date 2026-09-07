@@ -126,24 +126,6 @@ class RecommendTab(QWidget):
         self.status.setStyleSheet(theme.card())
         body.addWidget(self.status)
 
-        # The picking method — not hidden. Named plainly so the single default suffices.
-        pick = Section(tr("How the next candidate is chosen"))
-        pv = pick.body
-        prow = QHBoxLayout()
-        self.method = QComboBox()
-        for name, cls in ACQUISITIONS:
-            self.method.addItem(tr(getattr(cls, "label", name)), name)
-        self.method.setMinimumWidth(280)
-        self.method.currentIndexChanged.connect(self._on_method)
-        prow.addWidget(self.method)
-        prow.addStretch(1)
-        pv.addLayout(prow)
-        self.method_why = _wrapping(QLabel())
-        self.method_why.setStyleSheet(theme.muted())
-        pv.addWidget(self.method_why)
-        self.pick_box = pick
-        body.addWidget(pick)
-
         bar = QHBoxLayout()
         self.run = QPushButton(tr("Recommend next candidates"))
         self.run.setProperty("primary", True)
@@ -160,9 +142,23 @@ class RecommendTab(QWidget):
         bar.addStretch(1)
         body.addLayout(bar)
 
-        # One at a time is the default. Whether batches beat sequential picking
-        # has not been validated — so it does not get a prominent spot.
-        self.adv = Advanced(summary=tr("1 suggestion at a time"))
+        # EI, one at a time, is the default — the method and the batch size fold
+        # away so the first thing under the button is the condition to measure.
+        # (Whether batches beat sequential picking has not been validated.)
+        self.adv = Advanced()
+        prow = QHBoxLayout()
+        prow.addWidget(QLabel(tr("Picking method")))
+        self.method = QComboBox()
+        for name, cls in ACQUISITIONS:
+            self.method.addItem(tr(getattr(cls, "label", name)), name)
+        self.method.setMinimumWidth(280)
+        self.method.currentIndexChanged.connect(self._on_method)
+        prow.addWidget(self.method)
+        prow.addStretch(1)
+        self.adv.add_layout(prow)
+        self.method_why = _wrapping(QLabel())
+        self.method_why.setStyleSheet(theme.muted())
+        self.adv.add(self.method_why)
         brow = QHBoxLayout()
         brow.addWidget(QLabel(tr("At a time")))
         self.batch = QSpinBox(minimum=1, maximum=MAX_BATCH, value=1)
@@ -184,6 +180,7 @@ class RecommendTab(QWidget):
         bl.addWidget(self.beta)
         bl.addStretch(1)
         self.adv.add(self.beta_row)
+        self.adv.set_summary(self._summary_text())
         body.addWidget(self.adv)
 
         # ── the one to act on ──────────────────────────────────────
@@ -258,7 +255,8 @@ class RecommendTab(QWidget):
 
     def _summary_text(self) -> str:
         n = self.batch.value()
-        parts = [tr("1 suggestion at a time") if n == 1 else tr("{n} suggestions at a time", n=n)]
+        parts = [self.method.currentText(),
+                 tr("1 suggestion at a time") if n == 1 else tr("{n} suggestions at a time", n=n)]
         if self.method.currentData() == "UCB":
             parts.append(f"b = {self.beta.value():g}")
         return " · ".join(parts)
@@ -283,7 +281,7 @@ class RecommendTab(QWidget):
         self.run.setEnabled(dataset is not None and gate is not None)
         # While locked there is nothing to choose — pull the eye to the verdict instead
         locked = gate is not None and gate.locked
-        self.pick_box.setEnabled(not locked or self.override.isChecked())
+        self.adv.setEnabled(not locked or self.override.isChecked())
         if gate is not None and not gate.locked:
             self.override.setChecked(False)
         self.override.setVisible(bool(gate is not None and gate.locked))
@@ -472,7 +470,7 @@ class RecommendTab(QWidget):
         self.export.setEnabled(on)
 
     def _on_override(self) -> None:
-        self.pick_box.setEnabled(
+        self.adv.setEnabled(
             self.gate is None or not self.gate.locked or self.override.isChecked())
         self.override_changed.emit(self.override.isChecked())
         if self.override.isChecked():

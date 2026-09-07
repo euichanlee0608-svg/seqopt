@@ -38,8 +38,8 @@ KO: dict[str, str] = {
         '진단 요건을 통과했을 때만 엽니다. 추천은 조건값과 권장 반복 횟수, 그 근거로 나옵니다.',
     'It is locked — can I not just use it anyway?':
         '잠겼는데 그냥 쓰면 안 되나요?',
-    'How the next candidate is chosen':
-        '다음 후보를 어떻게 고를까',
+    'Picking method':
+        '고르는 방법',
     'Recommend next candidates':
         '다음 후보 추천',
     'Force a recommendation despite unmet requirements':
