@@ -113,4 +113,39 @@ KO: dict[str, str] = {
     "measurements (cumulative)": "측정 횟수 (누적)",
     "Trajectory — best measured value so far": "궤적 — 지금까지의 최선 측정값",
     "Trajectory": "궤적",
+
+    # --- write_pdf ---
+    "Sequential-optimization diagnostic report · generated {ts}": "순차 최적화 진단 리포트 · 생성 {ts}",
+    "CAUTION — generated with requirements unmet. "
+    "The recommendations in this report lack supporting evidence.":
+        "주의 — 요건 미달 상태에서 생성됨. 이 리포트의 추천은 근거가 부족합니다.",
+    "Gate verdict": "요건 판정",
+    "requirement": "요건",
+    "verdict": "판정",
+    "evidence": "근거",
+    "not computed": "계산 안 됨",
+    "candidate count": "후보 수",
+    "{a} vs budget {b}": "{a} vs 예산 {b}",
+    "surface learnability": "응답면 학습가능성",
+    "discriminability": "판별력",
+    "no replicates — not computable": "반복이 없어 계산 불가",
+    "replicates": "반복 측정",
+    "conditions with replicates {a}/{b}": "반복 있는 조건 {a}/{b}",
+    "<b>Recommendation LOCKED</b> — ": "<b>추천 잠김</b> — ",
+    "<b>Requirements met</b> — next-candidate recommendation is available.":
+        "<b>요건 통과</b> — 다음 후보 추천을 쓸 수 있습니다.",
+    "Raw data": "원자료",
+    "conditions (usable / total)": "조건 수 (유효 / 전체)",
+    "measurements": "측정 횟수",
+    "replicate distribution": "반복 분포",
+    "objective": "목표",
+    " · step ": " · 간격 ",
+    "inputs": "입력 변수",
+    "constraint": "제약",
+    "Figures": "그림",
+    "Calculation log": "계산 과정",
+    "Where every number on screen came from, written out. It must be followable by hand.":
+        "화면의 모든 숫자가 어디서 나왔는지 그대로 적는다. 손으로 따라갈 수 있어야 한다.",
+    "REQUIREMENTS UNMET": "요건 미달",
+    "{name} — diagnostic report": "{name} — 진단 리포트",
 }
