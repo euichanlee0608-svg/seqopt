@@ -16,14 +16,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from core.i18n import tr
+
 # Screen order and the conditions for each screen to open
 SETUP, DATA, DIAG, MODEL, RECOMMEND, REPORT, HELP = range(7)
 
+# The four steps of the flow. Only the index is read today (`main_window._refresh_guidance`
+# marks these rows done/next); the name and the one-line description are translation keys,
+# looked up with `tr()` wherever a screen shows them.
 STEPS = [
-    (SETUP, "Setup", "Define the variables and the objective"),
-    (DATA, "Data", "Enter your measurements"),
-    (DIAG, "Diagnose", "See whether this data can be used"),
-    (RECOMMEND, "Recommend", "Get the next condition to measure"),
+    (SETUP, "Setup", "Define the variables and the objective"),          # i18n: key
+    (DATA, "Data", "Enter your measurements"),                           # i18n: key
+    (DIAG, "Diagnose", "See whether this data can be used"),             # i18n: key
+    (RECOMMEND, "Recommend", "Get the next condition to measure"),       # i18n: key
 ]
 
 
@@ -64,31 +69,35 @@ def assess(project, dataset, gate) -> Readiness:
         HELP: True,
     }
     reason = {
-        DATA: "Define your input variables on the Setup tab first.",
-        DIAG: "Diagnosis needs at least 2 conditions. Enter measurements on the Data tab.",
-        MODEL: "Drawing the response surface needs at least 3 conditions.",
-        RECOMMEND: "Recommendations become available once diagnosis has run.",
-        REPORT: "A report needs at least one measurement.",
+        DATA: tr("Define your input variables on the Setup tab first."),
+        DIAG: tr("Diagnosis needs at least 2 conditions. Enter measurements on the Data tab."),
+        MODEL: tr("Drawing the response surface needs at least 3 conditions."),
+        RECOMMEND: tr("Recommendations become available once diagnosis has run."),
+        REPORT: tr("A report needs at least one measurement."),
     }
 
     # Where the user should be right now, and what to do there
     if not has_vars:
-        current, action = SETUP, "Define at least one input variable — \"+ Add variable\""
+        current, action = SETUP, tr("Define at least one input variable — \"+ Add variable\"")
     elif n_rows == 0:
-        current, action = DATA, "Enter measurements — import a file · Ctrl+V · add rows"
+        current, action = DATA, tr("Enter measurements — import a file · Ctrl+V · add rows")
     elif n_cond < 2:
-        current, action = DATA, "Diagnosis needs at least 2 conditions"
+        current, action = DATA, tr("Diagnosis needs at least 2 conditions")
     elif gate is None:
-        current, action = DIAG, "Diagnosing…"
+        current, action = DIAG, tr("Diagnosing…")
     elif gate.locked:
-        current, action = DIAG, "Requirements unmet — see the prescription on the Diagnose tab"
+        current, action = DIAG, tr("Requirements unmet — see the prescription on the Diagnose tab")
     elif not unlocked:
-        current, action = DIAG, "Check the requirements"
+        current, action = DIAG, tr("Check the requirements")
+    elif n_pending == 1:
+        # one sentence per number: Korean has no plural, and English should not fake one with "(s)"
+        current, action = DATA, tr("1 recommended condition is waiting on the Data tab (gray row) — "
+                                   "measure it and fill in the value, and it enters the next diagnosis")
     elif n_pending:
-        s = "s" if n_pending != 1 else ""
-        current, action = DATA, (f"{n_pending} recommended condition{s} waiting on the Data tab (gray rows) — "
-                                 "measure them and fill in the values, and they enter the next diagnosis")
+        current, action = DATA, tr("{n} recommended conditions are waiting on the Data tab (gray rows) — "
+                                   "measure them and fill in the values, and they enter the next diagnosis",
+                                   n=n_pending)
     else:
-        current, action = RECOMMEND, "Requirements met — get your next candidates"
+        current, action = RECOMMEND, tr("Requirements met — get your next candidates")
 
     return Readiness(ready=ready, reason=reason, current=current, next_action=action)

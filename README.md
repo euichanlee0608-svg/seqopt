@@ -1,5 +1,8 @@
 # seqopt — sequential optimization for lab experiments
 
+*[한국어](README.ko.md)* · The program itself speaks both languages — switch it on the start
+screen or from the **Language** menu; the first run follows your OS language.
+
 **Enter your measurements and it tells you which condition to measure next —
 and whether that advice can be trusted at all.**
 

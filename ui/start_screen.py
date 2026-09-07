@@ -20,8 +20,10 @@ from pathlib import Path
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import (QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-                               QScrollArea, QSizePolicy, QVBoxLayout, QWidget)
+                               QScrollArea, QSizePolicy, QToolButton, QVBoxLayout, QWidget)
 
+from core import i18n
+from core.i18n import tr
 from . import theme
 from .resources import example_dir, icon_path
 
@@ -33,13 +35,15 @@ COLUMN_WIDTH = 560
 # opening the program for the first time should see "what it gives" before "what it
 # blocks", or the lock looks like a bug.
 EXAMPLES = (
-    ("synthetic_annealing.seqopt", "Open an example  —  Synthetic annealing (crystallinity)",
+    ("synthetic_annealing.seqopt",                                                      # i18n: skip
+     "Open an example  —  Synthetic annealing (crystallinity)",                          # i18n: key
      "Simulated data, 42 runs (temperature × time). This one <b>passes all four requirements "
-     "and yields a recommendation</b>, so you can see what the next condition looks like and why."),
-    ("p3ht_conductivity.seqopt", "Open an example  —  P3HT:CNT conductivity",
+     "and yields a recommendation</b>, so you can see what the next condition looks like and why."),  # i18n: key
+    ("p3ht_conductivity.seqopt",                                                        # i18n: skip
+     "Open an example  —  P3HT:CNT conductivity",                                        # i18n: key
      "Real published measurements of a thin-film composite "
      "(<i>Adv. Funct. Mater.</i> 2021, public dataset). Watch the gate "
-     "pass and a recommendation come out — or lock, once you thin the data."),
+     "pass and a recommendation come out — or lock, once you thin the data."),           # i18n: key
 )
 
 
@@ -87,6 +91,43 @@ class _Card(QFrame):
             self.clicked.emit()
 
 
+class _LangSwitch(QWidget):
+    """English | 한국어 — a two-button segmented control, top right of the start screen.
+
+    Each button keeps **its own** language: someone who reads only Korean has to be able to
+    find "한국어" on an English screen, and the word "Korean" would not help them.
+    """
+
+    changed = Signal(str)
+
+    def __init__(self, current: str, parent=None):
+        super().__init__(parent)
+        row = QHBoxLayout(self)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+        last = len(i18n.LANGUAGES) - 1
+        for n, code in enumerate(i18n.LANGUAGES):
+            end_l = "6px" if n == 0 else "0"
+            end_r = "6px" if n == last else "0"
+            b = QToolButton(self)
+            b.setText(i18n.NAMES[code])          # a language names itself — never translated
+            b.setCheckable(True)
+            b.setAutoExclusive(True)
+            b.setChecked(code == current)
+            b.setCursor(Qt.PointingHandCursor)
+            b.setStyleSheet(
+                f"QToolButton{{border:1px solid {theme.BORDER}; padding:3px 11px;"
+                f"background:{theme.BG}; color:{theme.TEXT_MUTED};"
+                f"margin-left:{'-1px' if n else '0'};"
+                f"border-top-left-radius:{end_l}; border-bottom-left-radius:{end_l};"
+                f"border-top-right-radius:{end_r}; border-bottom-right-radius:{end_r};}}"
+                f"QToolButton:checked{{background:{theme.ACCENT_SOFT}; color:{theme.TEXT};"
+                f"border-color:{theme.ACCENT};}}"
+                f"QToolButton:hover:!checked{{color:{theme.TEXT};}}")
+            b.clicked.connect(lambda _=False, c=code: self.changed.emit(c))
+            row.addWidget(b)
+
+
 def _clean_recents(paths: list[str]) -> list[str]:
     """Only files that exist, each once, and no single-letter junk names."""
     seen, out = set(), []
@@ -106,6 +147,7 @@ class StartScreen(QWidget):
     new_project = Signal()
     open_file = Signal()
     open_path = Signal(str)
+    language_changed = Signal(str)
 
     def __init__(self, recents: list[str] | None = None, parent=None):
         super().__init__(parent)
@@ -133,11 +175,11 @@ class StartScreen(QWidget):
         brand.addWidget(logo, 0, Qt.AlignTop)
         tcol = QVBoxLayout()
         tcol.setSpacing(2)
-        title = QLabel(f"seqopt  <span style='font-size:{theme.SMALL}px; font-weight:400;"
+        title = QLabel(f"seqopt  <span style='font-size:{theme.SMALL}px; font-weight:400;"   # i18n: skip
                        f"color:{theme.TEXT_FAINT}'>v{APP_VERSION}</span>")
         title.setStyleSheet(f"font-size:32px; font-weight:700; color:{theme.TEXT};")
-        sub = QLabel("Enter your measurements and it tells you what to measure next —\n"
-                     "and whether that advice can be trusted at all.")
+        sub = QLabel(tr("Enter your measurements and it tells you what to measure next —\n"
+                        "and whether that advice can be trusted at all."))
         sub.setStyleSheet(f"font-size:{theme.FONT_SIZE}px; color:{theme.TEXT_MUTED};")
         tcol.addWidget(title)
         tcol.addWidget(sub)
@@ -145,27 +187,28 @@ class StartScreen(QWidget):
         col.addLayout(brand)
         col.addSpacing(10)
 
-        new = _Card("Start a new project",
-                    "Define your variables and objective, then draw the first measurement points.",
+        new = _Card(tr("Start a new project"),
+                    tr("Define your variables and objective, then draw the first measurement points."),
                     primary=True)
         new.clicked.connect(self.new_project)
         col.addWidget(new)
 
         texts = {name: (title, desc) for name, title, desc in EXAMPLES}
         for path in example_files():
-            title, desc = texts.get(path.name, (f"Open an example  —  {path.stem}", ""))
-            ex = _Card(title, desc)
+            title, desc = texts.get(path.name, (None, None))
+            ex = _Card(tr(title) if title else tr("Open an example  —  {name}", name=path.stem),
+                       tr(desc) if desc else "")
             ex.clicked.connect(lambda _=None, p=str(path): self.open_path.emit(p))
             col.addWidget(ex)
 
-        op = _Card("Open a saved project", "Open a .seqopt file you made earlier.")
+        op = _Card(tr("Open a saved project"), tr("Open a .seqopt file you made earlier."))
         op.clicked.connect(self.open_file)
         col.addWidget(op)
 
         recents = _clean_recents(recents)
         if recents:
             col.addSpacing(6)
-            lab = QLabel("Recent files")
+            lab = QLabel(tr("Recent files"))
             theme.set_role(lab, "desc")
             col.addWidget(lab)
             lst = QListWidget()
@@ -196,4 +239,12 @@ class StartScreen(QWidget):
         scroll.setWidget(page)
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+        switch = _LangSwitch(i18n.language())
+        switch.changed.connect(self.language_changed)
+        bar = QHBoxLayout()
+        bar.setContentsMargins(0, 10, 18, 0)
+        bar.addStretch(1)
+        bar.addWidget(switch)
+        root.addLayout(bar)
         root.addWidget(scroll)

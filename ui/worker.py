@@ -110,6 +110,11 @@ class DiagnosticsRunner(QObject):
         self.started.emit()
         self.pool.start(job)
 
+    def cancel(self) -> None:
+        """Throw away what is still computing — the screen that asked for it is going away."""
+        if self._current is not None:
+            self._current.cancel()
+
     def _on_fast(self, payload):
         self.fast_done.emit(payload)
 
